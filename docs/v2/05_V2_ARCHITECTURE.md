@@ -1,0 +1,94 @@
+# 05_V2_ARCHITECTURE.md
+
+> CampusCue V2 目标架构总览。M0 阶段为设计目标；各模块在对应 Milestone 中实现，代码存在≠验收通过。
+
+## 模块拓扑与依赖方向
+
+```
+QQ / NapCat
+   │ OneBot v11 (Reverse WebSocket)
+   ▼
+adapters/onebot/  ──►  core/events.CampusEvent
+   │                      │
+   │                      ▼
+   │                 core/bus.EventBus (async queue)
+   │                      │
+   │                      ▼
+   │                 core/router.Router
+   │                  ├──► tasks/extraction (Task Pipeline)
+   │                  └──► agents/ (Agent Chat)
+   ▼
+core/events (统一事件) ◄── 边界：OneBot 原始 JSON 不出 Adapter
+```
+
+依赖方向（唯一）：`external/platform → adapters → core → services → repositories → storage(database)`。
+
+- `agents/` 与 `tasks/extraction` 都调用 `tasks/service`（TaskService），**不**直接操作 DB。
+- `api/` 路由只做 HTTP 校验 → 调 Service → 响应；业务逻辑不进 Router。
+- `reminders/` 由 TaskService 驱动（任务截止变化 → 重建提醒），自身读写 reminders 表。
+
+## 运行时组件（CampusRuntime 管理）
+
+| 组件 | 职责 | 生命周期 |
+|---|---|---|
+| Config / Secrets | 配置加载（yaml/env）+ secret_reference 解析 | 最先启动 |
+| storage/database | SQLite + SQLAlchemy/SQLModel | 早启动 |
+| repositories | Task/Source/Extraction/Reminder/Provider/Setting 仓储 | 依赖 DB |
+| services | TaskService / ReminderService / NotificationService / ProviderService | 依赖仓储 |
+| core/bus | EventBus | 可早启动 |
+| adapters/onebot | OneBotAdapter（receive/send/status） | 收到新事件前启动 |
+| reminders | APScheduler 实例（DB resync） | 服务就绪后启动 |
+| api | FastAPI（REST + Realtime SSE） | 最后启动 |
+| agents | AgentRuntime（Provider + ToolRegistry） | API 前启动 |
+
+## 事件流（M1 范围）
+
+```
+CampusEvent(payload)
+  → bus.publish(event)
+  → Router.route(event)
+      ├─ guard: source enabled / self-message / rate limit
+      ├─ TaskExtractionHandler（M2 起）
+      ├─ AgentChatHandler（M4 起）
+      └─ CommandHandler / SystemHandler
+  → Response 经 bus 回 Adapter 发送
+```
+
+## 任务流（M2 范围）
+
+```
+CampusEvent
+  → SourcePolicy (L0)
+  → Prefilter (L1 本地规则, 省 token)
+  → ContextCollector (L2 最小上下文)
+  → LLM Classifier/Extractor (L3 结构化 Schema 输出)
+  → TimeNormalizer (L4 显式 timezone/current_time 注入)
+  → Deduplicator (L5 指纹组合 + explainable reason)
+  → TaskService.create (L7)
+  → ReminderService (L8)
+  → Realtime 通知 (L9)
+```
+
+## Agent 流（M4 范围）
+
+```
+User Input → AgentContext(conversation + budget)
+  → Provider (LLM)
+  → tool_calls? → validate args → ToolRegistry.execute → ToolResult → append → LLM again (max 6-8 steps, timeout, abort)
+  → Final Response
+```
+
+## Web 流（M6 范围）
+
+```
+WebUI → FastAPI (REST) → Service → Repository → SQLite
+WebUI → SSE (notification only) → 断线重连 → REST refresh canonical state
+```
+
+## 关键约束（设计红线）
+
+1. DB = 唯一业务事实源；Runtime cache / APScheduler / Pinia / SSE 均为派生。
+2. 任何调用方不得绕过 Service 层直接写 DB。
+3. OneBot JSON 不出 Adapter 边界。
+4. 禁止 `import astrbot`（Anti-AstrBot Gate，M1 起扫描）。
+5. 每轮修改：单一目标、小 diff、可回滚、可测试。
