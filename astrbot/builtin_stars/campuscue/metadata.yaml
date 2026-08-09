@@ -1,0 +1,4 @@
+name: campuscue
+desc: 课讯 CampusCue - observes campus group messages and turns notices into tasks.
+author: CampusCue Team
+version: 0.1.0

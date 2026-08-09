@@ -1,0 +1,162 @@
+/* 课讯 CampusCue — design tokens
+ *
+ * Direction: a study desk, not a SaaS dashboard. Warm paper ground, ink-dark
+ * text, one accent borrowed from a red correction pen. The reference is a
+ * well-kept paper planner — students trust those, and it reads as calm rather
+ * than as another app demanding attention.
+ *
+ * Deliberately avoided: purple-blue gradients, glassmorphism, neon-on-charcoal.
+ * Those are the default look of an AI demo and they say "generated" before the
+ * content says anything at all. This has to look like a tool someone chose.
+ *
+ * Constraint that shaped most decisions: this gets projected. Beamers crush
+ * dark values, shift hues warm, and lose fine strokes. So contrast targets are
+ * above WCAG AA rather than at it, urgency is never encoded in colour alone,
+ * and nothing meaningful is thinner than 1.5px.
+ */
+
+:root {
+  /* --- ground ---------------------------------------------------------
+   * Not #fff. Pure white on a projector blooms and makes text edges buzz;
+   * a warm off-white keeps the page calm and the ink readable.           */
+  --paper: #faf8f4;
+  --paper-raised: #ffffff;
+  --paper-sunken: #f2efe8;
+  --rule: #e2ddd2;
+  --rule-strong: #cec7b8;
+
+  /* --- ink ------------------------------------------------------------
+   * Warm near-black rather than #000: less glare, and it sits correctly
+   * against the paper ground instead of looking punched out.             */
+  --ink: #1f1c17;
+  --ink-muted: #55504a;
+  --ink-faint: #857f76;
+
+  /* --- accent: correction-pen red -------------------------------------
+   * Used for urgency and for the primary action, nothing else. Scarcity is
+   * what makes it read as "look here".                                   */
+  --accent: #c0392b;
+  --accent-strong: #96271c;
+  --accent-wash: #fbeae7;
+
+  /* --- urgency scale --------------------------------------------------
+   * Always paired with a text label and a left-edge weight in the markup;
+   * these are reinforcement, never the only signal.                      */
+  --urgent: #c0392b;      /* overdue / within hours */
+  --urgent-wash: #fbeae7;
+  --soon: #b06d18;        /* within a day */
+  --soon-wash: #fdf1de;
+  --later: #4a7c59;       /* comfortable */
+  --later-wash: #eaf2ec;
+  --none: #6b7280;        /* undated */
+  --none-wash: #f1f2f4;
+
+  /* --- task type tints ------------------------------------------------ */
+  --type-homework: #2f6f8f;
+  --type-exam: #8f2f5f;
+  --type-competition: #7a5cb0;
+  --type-activity: #3f7d54;
+  --type-notice: #6b6560;
+
+  /* --- type -----------------------------------------------------------
+   * Chinese first. Most stacks lead with a Latin face and let the browser
+   * fall back for CJK, which mixes two unrelated designs mid-sentence and
+   * looks cheap. The Latin faces here are chosen to sit next to Chinese
+   * glyphs: Inter's x-height and weight match PingFang/Source Han closely.
+   *
+   * Order matters: PingFang (macOS), Microsoft YaHei UI (Windows 10+),
+   * Source Han / Noto (Linux and installed), then the generic.           */
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans SC",
+    "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif;
+  /* Tabular figures for deadlines and counters so numbers do not jitter as
+   * they tick down.                                                      */
+  --font-numeric:
+    "Inter", "SF Mono", "Cascadia Mono", "Consolas", ui-monospace, monospace;
+
+  /* 1.25 ratio. Chinese needs a little more leading than Latin at the same
+   * size because the glyphs fill their box.                              */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.4375rem;
+  --text-2xl: 1.8125rem;
+  --text-3xl: 2.25rem;
+
+  --leading-tight: 1.3;
+  --leading-normal: 1.65;
+
+  /* --- space: 4px base ------------------------------------------------ */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* --- radius: restrained. Heavily rounded cards read as toy-like. ---- */
+  --radius-sm: 3px;
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  /* --- elevation: shadows tinted warm to match the paper ground ------- */
+  --shadow-sm: 0 1px 2px rgba(31, 28, 23, 0.06);
+  --shadow: 0 2px 8px rgba(31, 28, 23, 0.08), 0 1px 2px rgba(31, 28, 23, 0.04);
+  --shadow-lg: 0 8px 28px rgba(31, 28, 23, 0.12), 0 2px 6px rgba(31, 28, 23, 0.06);
+
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration: 220ms;
+}
+
+/* Dark mode: an evening desk under a lamp. Same warmth, inverted values --
+ * not a different product. Students check deadlines at night, in bed, and a
+ * cold blue-grey panel at that hour is unpleasant to look at. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14120f;
+    --paper-raised: #1e1b17;
+    --paper-sunken: #100e0c;
+    --rule: #2e2a24;
+    --rule-strong: #423c33;
+
+    --ink: #f2eee6;
+    --ink-muted: #b3aca1;
+    --ink-faint: #837c72;
+
+    --accent: #e8705f;
+    --accent-strong: #f08d7e;
+    --accent-wash: #2e1c19;
+
+    --urgent: #e8705f;
+    --urgent-wash: #2e1c19;
+    --soon: #d9a04f;
+    --soon-wash: #2c2416;
+    --later: #7ab98d;
+    --later-wash: #17251b;
+    --none: #9ca3af;
+    --none-wash: #1c1c1e;
+
+    --type-homework: #6fb3d4;
+    --type-exam: #d4749f;
+    --type-competition: #a992e0;
+    --type-activity: #74bd8e;
+    --type-notice: #a8a29a;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

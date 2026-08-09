@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The board's own accent on its own paper, so the tab reads as part of the
+       product rather than as a default globe. -->
+  <rect width="32" height="32" rx="7" fill="#c0392b"/>
+  <text x="16" y="23" font-family="'PingFang SC','Microsoft YaHei',sans-serif"
+        font-size="20" font-weight="700" fill="#faf8f4" text-anchor="middle">课</text>
+</svg>

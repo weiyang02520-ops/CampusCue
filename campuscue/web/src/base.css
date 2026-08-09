@@ -1,0 +1,59 @@
+/* Reset and page ground. Tokens are imported after this so they win. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Chinese text at the default 16px is slightly large for dense lists; 15px
+   * base with generous leading reads better and fits more per screen. */
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--ink);
+  background: var(--paper);
+  /* Antialiasing tuned for CJK: subpixel rendering makes Chinese strokes look
+   * uneven on non-retina displays, which is most projectors. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+dl,
+dd,
+figure,
+blockquote {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-wash);
+  color: var(--accent-strong);
+}
+
+/* Keep scrollbars from shifting layout when a panel opens. */
+html {
+  scrollbar-gutter: stable;
+}

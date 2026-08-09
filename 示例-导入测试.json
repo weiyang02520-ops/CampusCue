@@ -1,0 +1,30 @@
+{
+  "kind": "campuscue.tasks",
+  "version": 1,
+  "tasks": [
+    {
+      "title": "交高等数学第七章习题",
+      "task_type": "homework",
+      "deadline": "2026-07-31T15:59:00Z",
+      "detail": "手写，交到讲台前的收纳筐",
+      "confidence": 1.0,
+      "source_kind": "manual",
+      "source_group_name": "导入测试",
+      "source_sender_name": "王老师",
+      "raw_text": "高数第七章习题周五下班前交，写在作业本上",
+      "extract_reason": "这条是手写的测试文件，不是 AI 抽的"
+    },
+    {
+      "title": "期末考试",
+      "task_type": "exam",
+      "deadline": "2026-08-05T01:00:00Z",
+      "location": "教一 305",
+      "items": ["学生证", "2B 铅笔", "黑色签字笔"],
+      "confidence": 1.0,
+      "source_kind": "manual",
+      "source_group_name": "导入测试",
+      "raw_text": "8月5日上午9点教一305期末考，带学生证和文具",
+      "extract_reason": "这条是手写的测试文件，不是 AI 抽的"
+    }
+  ]
+}

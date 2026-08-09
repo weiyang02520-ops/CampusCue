@@ -1,0 +1,5 @@
+# pnpm 11 no longer reads settings from the "pnpm" field in package.json.
+# esbuild needs its install script to unpack the platform binary; Vite cannot
+# build without it.
+allowBuilds:
+  esbuild: true
