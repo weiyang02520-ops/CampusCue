@@ -68,7 +68,7 @@ CREATED → STARTING → RUNNING → STOPPING → STOPPED
 ## 失败隔离
 
 - EventBus handler 异常：捕获并记录（trace_id + handler name），不拖垮整个 bus。
-- Adapter 断线：视为可恢复，指数退避重连，日志限频。
+- Adapter 连接断开（OneBot Reverse WS）：视为可恢复，但 **CampusCue 是 WS SERVER，不进行 outbound reconnect/指数退避**——NapCat（CLIENT）会重连。CampusCue 侧：detect disconnect → 清理 active/stale 连接 → fail 并清理 pending action futures → server 保持监听 → 接受 NapCat 重连 → 替换 stale 连接 → resume；断开/重连日志限频。（SSE 等未来确有 client reconnect/backoff 的模块另行设计，不在此列。）
 - Provider 错误：分类（timeout/auth/rate_limit/model/network），不把原始异常堆栈抛给用户。
 - 组件级隔离：任一组件 FAILED 不阻止其他组件继续运行（除非启动阶段）。
 

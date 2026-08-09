@@ -23,14 +23,15 @@ class BaseProvider(ABC):
     async def test(self) -> ProviderTestResult   # 最小 chat 连通性测试
 ```
 
-- **LLMRequest**：messages（system + user + tool results）、model、temperature、max_tokens、timeout、tool_schema（ToolSet 转换后）、`disable_thinking`（能力位，V1 直连 Ark 的原因在此表达，不绕过 Provider 层）
-- **LLMResponse**：role、content、tool_calls（name/args/id）、usage、raw（不落日志）
+- **LLMRequest（M2 最小集合，不依赖 Tool System）**：messages（system + user）、model、temperature、max_tokens、timeout、structured output / response schema（json_schema 约束）、`disable_thinking`（能力位，V1 直连 Ark 的原因在此表达，不绕过 Provider 层）。**M2 Provider Foundation 独立于 Tool System 存在**（无 ToolSet/ToolRegistry/ToolDefinition/AgentRuntime 依赖）。
+- **LLMResponse（M2 最小集合）**：role、content、usage、raw（不落日志）。`tool_calls` 字段：**M4 EXTENSION / inactive until M4**——provider-neutral optional capability（openai 协议天然会回传，解析为可选字段即可），不要求 M2 实现任何 Tool 系统；M4 再正式启用。
 - **ProviderManager**：注册表（name → provider 工厂）+ 配置驱动实例化 + `get_default()` / `get_by_id()` + 测试连接；**不实现**热更新/多 provider 偏好/fallback 链（第一版一个默认 provider 足够）
 
 ### OpenAICompatibleProvider
 
 - 用 httpx 直连 `{base_url}/chat/completions`（不做 SDK 依赖）
-- 支持：tools schema 传入、tool_choice、json_schema 约束（structured output，供提取管道复用）
+- M2 支持：json_schema / response_format 约束（structured output，供 Task Extraction 使用）、timeout、disable_thinking（若端点支持）
+- **tools / tool_choice 传入：M4 EXTENSION**（M2 不实现、不使用；协议层字段存在即可，不接线）
 - 错误分类（V1 教训：不能 except Exception → "AI 请求失败"）：
 
 | 分类 | 特征 | UI 文案 |

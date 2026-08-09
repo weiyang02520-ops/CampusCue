@@ -23,10 +23,10 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = PASS（条件）；M1 = READY_NOT_STARTED** |
-| 仓库 | weiyang02520-ops/CampusCue（public） |
-| V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter 边界；TaskService 唯一入口 |
-| 代码 | **V2 无任何正式源码**（M0/M0.1 全文档） |
+| 当前门 | **M0 = AWAITING FINAL EXTERNAL CONFIRMATION（M0.2 修复已提交）；M1 = READY_NOT_STARTED** |
+| 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
+| V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
+| 代码 | **V2 无任何正式源码**（M0/M0.1/M0.2 全文档） |
 
 ## 3. CURRENT MILESTONE / GATE
 
@@ -46,6 +46,9 @@
 8. **无 Plugin System**（第一版）；Handler + ToolRegistry 够用。
 9. **时区/时钟显式注入**：禁 `datetime.now()` 直用；测试固定时钟。
 10. **日志脱敏**：不记录消息正文/发送者/群号/任务标题/截止/推送目标/secret；LLM 原始输出只落溯源库。
+11. **OneBot Reverse WS：CampusCue 是 SERVER**，等 NapCat client 重连；**CampusCue 不 outbound 指数退避重连**（M0.2）。
+12. **Memory 不维护动态 Git HEAD**：current HEAD 在 recovery 时从 Git/GitHub 获取；Memory 只记里程碑 commit 与历史基线（M0.2）。
+13. **M2 Provider Foundation 不依赖 M4 Tool System**：无 ToolSet/ToolRegistry/ToolDefinition/AgentRuntime 依赖；tool-calling 字段标 M4 EXTENSION / inactive until M4（M0.2）。
 
 ## 5. DEPENDENCY DIRECTION
 
@@ -75,6 +78,7 @@ external/platform → adapters → core(events/bus/router) → services → repo
 | 状态不同步 | SSE 当事实源 | REST 补拉 canonical state（ADR-003） |
 | 时区错 | 硬编码偏移 | 显式 timezone 注入（ADR-010） |
 | LLM 路径无测试 | extract() 从未被测 | Provider transport 可注入 mock（B13） |
+| **文档一致性假绿** | keyword-based 检查漏跨文件语义冲突（M0.1 漏掉 05 任务流 L8/L9 与 10/17 矛盾） | **一致性检查必须比较同一概念在多个 canonical docs 中的语义，不能只搜关键词**（M0.2 教训） |
 
 ## 8. EVIDENCE FIRST（置信度纪律）
 
@@ -144,5 +148,7 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **M1（等外部审核 M0 PASS 确认后开始）**：CampusRuntime / CampusEvent / 有界 EventBus / Router(Guard) / OneBotAdapter（Reverse WS SERVER + echo correlation + transport dedup）/ Echo Handler；真实 QQ `hello` → 控制台打印 `platform=onebot ...` → QQ 收到 `received: hello`；Anti-AstrBot Gate 通过。
-- 详查 docs/v2/04、17_MILESTONES（M1）、07、06。
+- **M1（等外部审核确认 M0 最终 PASS 后开始）**：CampusRuntime / CampusEvent / 有界 EventBus / Router(Guard) / OneBotAdapter（Reverse WS SERVER + echo correlation + transport dedup）/ Echo Handler；真实 QQ `hello` → 控制台打印 `platform=onebot ...` → QQ 收到 `received: hello`；Anti-AstrBot Gate 通过。
+- **M2 提醒**：Provider Foundation（BaseProvider/LLMRequest 最小集/LLMResponse/taxonomy/OpenAICompatible/最小 Manager/structured output）**独立于 Tool System**；Source/Extraction/Task 仓储；L0-L7 管道。
+- **M4 提醒**：只在 Provider Foundation 上加 Tool/AgentRuntime，**不重新造 Provider**。
+- 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。

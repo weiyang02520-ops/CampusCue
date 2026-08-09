@@ -62,20 +62,22 @@ CampusEvent(payload)
   → Handler result → OutgoingMessage → dispatcher → Adapter.send()（Outbound 不经 EventBus）
 ```
 
-## 任务流（M2 范围）
+## 任务流 — progressive activation（最终流程，按 Milestone 渐进激活）
 
 ```
 CampusEvent
-  → SourcePolicy (L0)
-  → Prefilter (L1 本地规则, 省 token)
-  → ContextCollector (L2 最小上下文)
-  → LLM Classifier/Extractor (L3 结构化 Schema 输出)
-  → TimeNormalizer (L4 显式 timezone/current_time 注入)
-  → Deduplicator (L5 指纹组合 + explainable reason)
-  → TaskService.create (L7)
-  → ReminderService (L8)
-  → Realtime 通知 (L9)
+  → SourcePolicy (L0)            [ACTIVE FROM M2]
+  → Prefilter (L1 本地规则, 省 token)      [ACTIVE FROM M2]
+  → ContextCollector (L2 最小上下文)       [ACTIVE FROM M2]
+  → LLM Classifier/Extractor (L3 结构化 Schema 输出，走 M2 Provider Foundation) [ACTIVE FROM M2]
+  → TimeNormalizer (L4 显式 timezone/current_time 注入) [ACTIVE FROM M2]
+  → Deduplicator (L5 指纹组合 + explainable reason)     [ACTIVE FROM M2]
+  → TaskService.create (L7)     [ACTIVE FROM M2]
+  → ReminderService (L8)        [ACTIVE FROM M3]
+  → Realtime 通知 (L9)          [ACTIVE FROM M5]
 ```
+
+M2 不实现：Reminder（M3）、Realtime（M5）。TaskService 的提醒/通知钩子在 M2 为可选/惰性接线，不依赖假实现（与 [10_TASK_PIPELINE](10_TASK_PIPELINE.md)、[17_MILESTONES](17_MILESTONES.md)、[07_RUNTIME_LIFECYCLE](07_RUNTIME_LIFECYCLE.md) 一致）。
 
 ## Agent 流（M4 范围）
 

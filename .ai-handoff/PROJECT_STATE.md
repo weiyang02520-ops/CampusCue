@@ -14,17 +14,18 @@
 
 ## current_milestone
 
-- M0 = **PASS**（外部审核条件性通过，M0.1 全部 finding 已修复）
+- M0 = **AWAITING FINAL EXTERNAL CONFIRMATION**（M0.2 最终一致性修复已提交，等待外部复核确认）
 - M1 = **READY_NOT_STARTED**（等待外部审核确认后开始）
-- status：**M0.1 REVIEW FIX COMPLETE，AWAITING M1 GO**
+- status：**M0.2 FINAL CONSISTENCY FIX COMPLETE**
 
 ## completed
 
 - M0 全部文档：docs/v2/00-19 + adr/（ADR-001 ~ ADR-010）
 - AstrBot 固定基准 commit `30e20318c` 研究（9 条链路，CONFIRMED）
 - CampusCue V1 完整审计
-- **M0.1 外部审核修复**（B~N 共 14 项 finding 全部应用）
-- **双 Memory 建立**：docs/context/CHATGPT_MEMORY.md + AGENT_MEMORY.md
+- **M0.1 外部审核修复**（14 项 finding 全部应用，已通过复核）
+- **M0.2 外部复核修复**（4 项残留：07 断线 server 语义、05 任务流渐进激活、Memory 动态 HEAD 反模式、Provider Foundation/Tool System 解耦）
+- **双 Memory**：docs/context/CHATGPT_MEMORY.md + AGENT_MEMORY.md（含 M0.2 MEMORY DELTA 4 条）
 
 ## in_progress
 
@@ -53,10 +54,10 @@
 
 ## next_gate
 
-- 外部 ChatGPT 读取 GitHub（M0.1 提交）→ 确认 M0 PASS → 发布 M1 prompt
+- 外部 ChatGPT 读取 GitHub（M0.2 提交）→ 确认 M0 最终 PASS → 发布 M1 prompt
 
-## external_review_focus（M0.1 审核点）
+## external_review_focus（M0.2 复核点）
 
-- 14 项 finding 是否全部正确修复
-- 双 Memory 是否满足 high-fidelity recovery
-- Milestone dependency（Provider 在 M2）是否一致
+- 4 项残留修复是否正确（07 断线语义 / 05 任务流激活 / Memory HEAD / Provider-Tool 解耦）
+- 双 Memory health（无动态 HEAD、Current vs History 无冲突）
+- 跨文档语义一致性（8 概念 × 8 文件）

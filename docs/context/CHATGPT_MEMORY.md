@@ -32,7 +32,7 @@
 | V2 立项原因 | V1 = AstrBot Runtime + CampusCue 业务层（main.py:44-47 InitialLoader；astrbot/ 完整目录；底座 4 处侵入）；V2 零 AstrBot 依赖 | [REPO_CONFIRMED] |
 | V1 仓库 | weiyang02520-ops/CampusCue @ `db35d77`（单 commit 发布，public） | [REPO_CONFIRMED] |
 | AstrBot 基准 | commit `30e20318c`（本地副本已 checkout） | [EXTERNAL_REVIEW 固定] |
-| V2 仓库 | 同 V1 仓库（docs/v2/ 与 .ai-handoff/ 已推入，HEAD `6480ad2`） | [REPO_CONFIRMED] |
+| V2 仓库 | 同 V1 仓库（docs/v2/ 与 .ai-handoff/ 已推入）；**current remote HEAD：RESOLVE FROM GIT/GITHUB AT RECOVERY TIME（不维护为长期 Memory 字段）** | [REPO_CONFIRMED] + [EXTERNAL_REVIEW] |
 | 双 Memory | docs/context/CHATGPT_MEMORY.md + AGENT_MEMORY.md（本轮建立） | [DESIGN_DECISION] |
 
 ## 2. GLOBAL WORKING MODE（长期 AI 协作模式）[USER_STATED][GLOBAL_WORKFLOW][CURRENT]
@@ -96,7 +96,15 @@ User
 
 - V1（2026-07~08）：AstrBot fork + campuscue/ 业务层（8.7k 行）。七轮修复：SSE 日志洪水（B01）、状态不同步（B02）、重复创建（B03）、测试污染数据（B07）等，399 tests passed。**业务核心（L1/L3/dedup/backup/web 纯函数）与 AstrBot 零耦合**。
 - V2 M0（2026-08-09）：AstrBot 9 条链路研究（30e20318c）+ V1 全量审计 + 20 份设计文档 + 10 份 ADR。commit `6480ad2`。
-- V2 M0.1（2026-08-09）：外部审核 → 修正文档精度（llm 耦合、stop 顺序、Platform 契约、Reverse WS 所有权、帧关联、有界队列、transport dedup、Guard 范围、Provider 前移 M2、M2 仓储、删消息页验收、阶段激活、Outbound 直连）+ 建立双 Memory。
+- V2 M0.1（2026-08-09）：外部审核 → 修正文档精度（llm 耦合、stop 顺序、Platform 契约、Reverse WS 所有权、帧关联、有界队列、transport dedup、Guard 范围、Provider 前移 M2、M2 仓储、删消息页验收、阶段激活、Outbound 直连）+ 建立双 Memory。commit `3d70da1`。
+- V2 M0.2（2026-08-09）：外部复核发现 4 个残留一致性问题 → 修正（07 断线 server 语义、05 任务流渐进激活标注、Memory 动态 HEAD 反模式、Provider Foundation 与 Tool System 解耦）+ 新增 4 条 MEMORY DELTA（见 §10A）。
+
+## 9A. MEMORY DELTA（M0.2 新增）
+
+- **[EXTERNAL_REVIEW][CORRECTION]**：文档级 consistency scan 报告通过 ≠ 语义一致。M0.1 的 keyword-based 检查漏掉了跨文件语义冲突（05 任务流含 L8/L9 与 10/17 矛盾）。**以后 consistency check 不能只靠关键词存在性或单文件检查，必须比较同一概念在多个 canonical docs 中的语义是否一致。**
+- **[EXTERNAL_REVIEW][DESIGN_DECISION]**：**Long-term Memory 不维护动态 Git HEAD**。Current HEAD 必须在 recovery 时直接从 Git/GitHub 获取；Memory 只记录重要 milestone commits / historical baselines / contextual meaning。原因：动态 HEAD 在写 Memory 的同一次 commit 后即可过期。Git/GitHub = current HEAD source of truth；Memory = historically important milestones / context。
+- **[EXTERNAL_REVIEW][CORRECTION]**：OneBot Reverse WS：CampusCue server 等待 NapCat client reconnect；**CampusCue 不进行 outbound exponential reconnect**。
+- **[EXTERNAL_REVIEW][CORRECTION]**：**M2 Provider Foundation 不依赖 M4 Tool System**（无 ToolSet/ToolRegistry/ToolDefinition/AgentRuntime 依赖）；tool-calling 能力标注 M4 EXTENSION / inactive until M4。
 
 ## 9. REJECTED / SUPERSEDED APPROACHES
 
@@ -143,7 +151,7 @@ User
 
 - M0 = PASS（外部审核条件性通过，finding 已修复）
 - M1 = READY_NOT_STARTED（严禁开始）
-- 仓库 HEAD：`6480ad2`（docs: apply M0 external review and bootstrap AI memory，本 M0.1 提交后更新）
+- 仓库 HEAD：**RESOLVE FROM GIT/GITHUB AT RECOVERY TIME**（动态 HEAD 不维护为长期 Memory 字段；M0.2 起规则）。历史 checkpoint：M0 commit `6480ad2`；M0.1 commit `3d70da1`
 - 未验证项：无代码、无 REAL ENV、无视觉（M6 才有）
 - 已知缺口（V1 遗留）：B12 时区硬编码（M2 修）、B13 LLM 测试缺口（M2 修）
 
@@ -158,4 +166,6 @@ User
 | 2026-08-03 | V1 七轮修复完成（399 tests） | —（交付包） |
 | 2026-08-09 | V1 发布 public 仓库 | `db35d77` |
 | 2026-08-09 | V2 M0：研究+审计+设计文档 | `6480ad2` |
+| 2026-08-09 | V2 M0.1：外部审核修复 + 双 Memory | `3d70da1` |
+| 2026-08-09 | V2 M0.2：最终一致性修复（4 项）+ Memory 语义规则 | 本轮 |
 | 2026-08-09 | V2 M0.1：外部审核修复 + 双 Memory | 本轮 |

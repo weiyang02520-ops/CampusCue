@@ -20,3 +20,17 @@
   - .ai-handoff/ 6 文件更新（含 AGENT_DISCOVERED_DELTA = None beyond corrections）
 - **测试**：无（纯文档）；一致性检查 + secret scan 已执行；确认零 V2 代码
 - **审核状态**：M0 = PASS（条件），M1 = READY_NOT_STARTED，等待外部审核确认
+
+## 2026-08-09 · M0.2 FINAL CONSISTENCY FIX
+
+- **任务**：修复外部复核 4 项残留 + MEMORY DELTA 写入 + 语义一致性检查
+- **Commit**：docs: finalize M0 consistency and memory semantics（本轮）
+- **主要修改**：
+  - 07：失败隔离改 Reverse WS server 语义（无 outbound 指数退避）
+  - 05：任务流改 progressive activation（L0-L7 M2 / L8 M3 / L9 M5）
+  - CHATGPT_MEMORY：动态 HEAD 反模式修复（recovery 时从 Git 获取；里程碑 commit 留 HISTORY）+ §9A 新增 4 条 MEMORY DELTA
+  - AGENT_MEMORY：rules 11-13 + §7 新增"文档一致性假绿"失败模式 + §18 M2/M4 提醒
+  - 08：M2 Provider Foundation 与 M4 Tool System 解耦（LLMRequest 无 ToolSet 依赖；tool_calls/tools 标 M4 EXTENSION）
+  - .ai-handoff/ 5 文件更新（AGENT_DISCOVERED_DELTA = None beyond corrections）
+- **测试**：无（纯文档）；跨文档语义一致性检查（8 概念×8 文件）+ Memory health check + secret scan 已执行；确认零 V2 代码
+- **审核状态**：M0 = AWAITING FINAL EXTERNAL CONFIRMATION；M1 = READY_NOT_STARTED

@@ -1,47 +1,44 @@
 # HANDOFF.md
 
-> M0.1 REVIEW FIX 交接记录。由工作区 AI 在 checkpoint 前更新。
+> M0.2 FINAL CONSISTENCY FIX 交接记录。由工作区 AI 在 checkpoint 前更新。
 
 ## 本轮目标
 
-执行 M0.1：修复外部审核 14 项文档 finding、建立双 Memory、更新 handoff、checkpoint 后 STOP。**未创建任何 V2 正式代码。**
+执行 M0.2：修复外部复核发现的 4 个残留一致性问题、写入 MEMORY DELTA、语义一致性检查、checkpoint 后 STOP。**未创建任何 V2 正式代码。**
 
 ## 本轮完成
 
-### 外部审核 finding 修复（B~N 全部应用）
+### 外部复核修复（4 项）
 
-| Finding | 修改 |
-|---|---|
-| B llm.py 耦合矛盾 | 02 表：MEDIUM（走 AstrBot provider）→ **NONE/LOW**（plain HTTP 无依赖）+ REWRITE_INTEGRATION；16 同步 |
-| C stop() 过度绝对化 | 03/19：**显式有序 lifecycle-owned cleanup**（非严格逆序）；Platform 写 abstract requirements run()/meta() + 基类其余方法 |
-| D Reverse WS 所有权 | 04 重写：**NapCat=CLIENT / CampusCue=SERVER**；断线恢复模型（NapCat 重连 + stale replacement）；server 配置项（host/port/path/token）；07/17 同步 |
-| E 帧关联 | 04 新增：Event Frame vs Action Response Frame 分类；echo correlation（unique echo → pending Future → 匹配回帧；timeout/pending cleanup/断连 fail-all）；**禁把 action response 当 CampusEvent** |
-| F 队列背压 | 04/07：**有界队列**（maxsize 配置）+ `await put` 背压 + shutdown drain |
-| G transport dedup | 04/05：`(self_id, message_id)` bounded TTL dedup，与 M2 semantic dedup 区分 |
-| H Guard 范围 | 04/17：M1 Guard 不做 source-enabled；只做 valid/self/duplicate/rate；SourcePolicy 自 M2 |
-| I Provider 前移 | 08/17/10：**M2a Provider Foundation**（BaseProvider/LLMRequest/LLMResponse/Error taxonomy/OpenAICompatible/最小 Manager/structured output/secret_reference，无 Agent 无 Tool）；M4 只加 Tool/Agent |
-| J M2 仓储 | 06/09/17：M2 实现 SourceRepository + ExtractionRepository + SourceService（不等 M5） |
-| K 删消息页验收 | 17：M2 验收改 DB 断言（source/extraction/task row + deadline + dedup），非 Web 页面 |
-| L 阶段激活 | 10：L0-L7 自 M2；L8 自 M3；L9 自 M5；TaskService 钩子可选/惰性不依赖假实现 |
-| M Runtime 激活表 | 07：Milestone 激活表（M1 只 Config/EventBus/Router/Adapter/Echo） |
-| N Outbound 直连 | 05/04：Handler → dispatcher → Adapter.send()，**不经 EventBus** |
+| # | 问题 | 修改 |
+|---|---|---|
+| 1 | 07_RUNTIME_LIFECYCLE 失败隔离残留"指数退避重连"（client 思维） | 改为 server 语义：detect disconnect → 清理 stale 连接 → fail/清理 pending action futures → server 保持监听 → 等 NapCat 重连 → 接受新连接 → 替换 stale → resume；日志限频。注明 SSE 等未来 client 模块不在此列 |
+| 2 | 05_V2_ARCHITECTURE "任务流（M2 范围）"含 L8/L9，与 10/17 矛盾 | 改为 "任务流 — progressive activation"：L0-L7 [ACTIVE FROM M2]、L8 [M3]、L9 [M5]；明确 M2 不实现 Reminder/Realtime、TaskService 钩子惰性接线 |
+| 3 | CHATGPT_MEMORY CURRENT TRUTH 维护动态 HEAD `6480ad2`（已过期为 `3d70da1`） | 删除动态 HEAD 字段，改为 "RESOLVE FROM GIT/GITHUB AT RECOVERY TIME"；历史 checkpoint commit（6480ad2/3d70da1）保留在 HISTORY；AGENT_MEMORY 未新增动态 HEAD 字段 |
+| 4 | 08_PROVIDER_AND_AGENT M2 LLMRequest 含 tool_schema（ToolSet 转换后）→ 阶段依赖混乱 | LLMRequest 改 M2 最小集合（messages/model/temperature/max_tokens/timeout/structured output/disable_thinking），**无 ToolSet/ToolRegistry/ToolDefinition/AgentRuntime 依赖**；LLMResponse.tool_calls 标注 M4 EXTENSION / inactive until M4；OpenAICompatibleProvider tools 传入标注 M4 EXTENSION |
 
-### 双 Memory 建立（O~Z）
+### MEMORY DELTA 写入（4 条）
 
-- `docs/context/CHATGPT_MEMORY.md`：外部 ChatGPT 长期认知（17 节：RECOVERY MODE / CURRENT TRUTH / GLOBAL WORKING MODE / USER INTENT / DECISION MODEL / PRODUCT INTENT+TASTE / ARCHITECTURE INTENT / HISTORY / REJECTED-SUPERSEDED / REVIEW FINDINGS / MEMORY PROTOCOL / provenance 标签 / 时间线）
-- `docs/context/AGENT_MEMORY.md`：Workspace Agent 执行认知（18 节：BOOTSTRAP / TRUTH / GATE / RULES / 依赖方向 / AstrBot 边界 / FAILURE MODES / EVIDENCE / MODIFY PROTOCOL / YAGNI / VERIFY LEVELS / NO-VISION / NO-EMOJI / SECRET / CHECKPOINT / MEMORY 维护 / STOP / NEXT TASK）
-- 两文件均含 `[USER_STATED]` 全局工作流（双模型接力）与 Memory 协议
+- **[EXTERNAL_REVIEW][CORRECTION]**：consistency scan 必须比较同一概念在多个 canonical docs 的语义，不能只搜关键词（M0.1 漏跨文件语义冲突教训）
+- **[EXTERNAL_REVIEW][DESIGN_DECISION]**：Long-term Memory 不维护动态 Git HEAD；recovery 时从 Git/GitHub 获取；Memory 只记里程碑 commit/历史基线
+- **[EXTERNAL_REVIEW][CORRECTION]**：OneBot Reverse WS——CampusCue server 等 NapCat client 重连，不 outbound exponential reconnect
+- **[EXTERNAL_REVIEW][CORRECTION]**：M2 Provider Foundation 不依赖 M4 Tool System
+
+两 Memory 均已写入（CHATGPT_MEMORY §9A + HISTORY/时间线；AGENT_MEMORY rules 11-13 + §7 新增失败模式 + §18 M2/M4 提醒）。
 
 ## 实际修改文件
 
-- docs/v2/02、03、04（重写）、05、06、07、08、09、10_TASK_PIPELINE、16、17、19
-- docs/context/CHATGPT_MEMORY.md、AGENT_MEMORY.md（新增）
-- .ai-handoff/：PROJECT_STATE / STATUS / HANDOFF / REVIEW_REQUEST / CHANGELOG_AI / NEXT_TASKS（本轮全部更新）
+- docs/v2/07_RUNTIME_LIFECYCLE.md（Fix 1）
+- docs/v2/05_V2_ARCHITECTURE.md（Fix 2）
+- docs/context/CHATGPT_MEMORY.md（Fix 3 + §9A + 时间线）
+- docs/context/AGENT_MEMORY.md（rules 11-13 + §7 + §18）
+- docs/v2/08_PROVIDER_AND_AGENT.md（Fix 4）
+- .ai-handoff/：PROJECT_STATE / STATUS / HANDOFF / REVIEW_REQUEST / CHANGELOG_AI（本轮全部更新）
 
 ## 真实测试
 
-- 无代码变更，无测试运行（M0.1 纯文档）
-- 执行验证：Markdown 一致性检查（AD 检查项）、reference path 验证、Anti-AstrBot 表述一致性、Milestone dependency 一致性、secret scan、git diff inspection
+- 无代码变更，无测试运行（M0.2 纯文档）
+- 执行验证：跨文档语义一致性检查（8 概念：Reverse WS ownership / OneBot reconnect / M2 scope / M3 Reminder / M5 Realtime / Provider Foundation / Tool activation / Git HEAD source of truth × 8 文件：04/05/07/08/10/17/CHATGPT_MEMORY/AGENT_MEMORY）、Memory health check、Anti-AstrBot 表述一致性、secret scan、git diff inspection
 - **确认：未创建任何正式 V2 source code**
 
 ## Mock Tests / 未验证
@@ -51,24 +48,24 @@
 
 ## AGENT_DISCOVERED_DELTA（W 协议）
 
-None beyond externally requested corrections.
+None beyond externally requested M0.2 corrections.
 
-（本轮全部变更均来自外部审核 finding；无新增仓库事实/设计冲突/运行时发现。）
+（本轮全部变更来自外部复核 finding；无新增仓库事实/设计冲突/运行时发现。）
 
 ## Known Bugs
 
-- V1 审计新发现 B12（时区硬编码）、B13（LLM 测试缺口）已入 13_BUG_LESSONS.md，M2 修
+- V1 审计发现 B12（时区硬编码）、B13（LLM 测试缺口）已入 13_BUG_LESSONS.md，M2 修
 
 ## Architecture Changes / Decisions
 
-- M0.1 修正 14 项（见上表）；双 Memory 协议（docs/context/）；REJECTED/SUPERSEDED 见 CHATGPT_MEMORY §9
+- M0.2 修复 4 项（见上表）；Memory 语义规则（动态 HEAD 不维护）已入双 Memory
 
 ## Branch / Remote / Base
 
 - 仓库：weiyang02520-ops/CampusCue（public）
-- 本次提交：docs: apply M0 external review and bootstrap AI memory
-- Base：6480ad2（M0 commit）
+- 本次提交：docs: finalize M0 consistency and memory semantics
+- Base：3d70da1（M0.1 commit）
 
 ## External Review Focus
 
-- 见 REVIEW_REQUEST.md（14 项 finding 修复对照 + 双 Memory 验收）
+- 见 REVIEW_REQUEST.md（4 项残留修复对照 + Memory health + 语义一致性）
