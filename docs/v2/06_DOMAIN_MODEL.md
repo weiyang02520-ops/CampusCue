@@ -131,3 +131,4 @@ class ToolResult:
 
 tables: `sources`, `tasks`, `extractions`, `reminders`, `provider_configs`, `settings`。
 `messages` 表视隐私策略决定（默认不存全文，只存被识别任务的来源消息）。
+**J 修正：`sources` 与 `extractions` 表及对应 Repository（SourceRepository/ExtractionRepository）在 M2 即实现**（Task Pipeline 的 SourcePolicy 与 extraction audit 依赖它们），不等 M5。`reminders`/`provider_configs` 表随 M3/M2a 建。

@@ -9,7 +9,7 @@
 
 - `InitialLoader`（`B/core/initial_loader.py`, 57 行）职责仅为组装+拉起：建 `AstrBotCoreLifecycle` → `initialize()` → `start()` → 建 Dashboard → `asyncio.gather` 常驻。
 - `AstrBotCoreLifecycle.initialize()`（`B/core/core_lifecycle.py:158-294`）是单一 Composition Root，**单线程顺序初始化，顺序即依赖顺序**：db → config → event_queue → ProviderManager → PlatformManager → ConversationManager → CronJobManager → PluginManager(含 reload) → pipeline_scheduler_mapping（按 conf_id 分片，每配置一个 PipelineScheduler）→ EventBus → platform_manager.initialize()。
-- `stop()`（L381-422）逆序清理；`restart()` 用 daemon 线程做进程级重启。
+- `stop()`（L381-422）：**显式、有序的 lifecycle-owned cleanup**（并非严格逆序于 initialize）——cancel runtime tasks → shutdown cron → shutdown local booter → terminate plugins → terminate provider → terminate platform → terminate KB → signal dashboard shutdown → await tasks → dispose DB。`restart()` 用 daemon 线程做进程级重启。
 - 设计启示：**CampusCue 学单一顺序 Composition Root，但只管理自己需要的组件**（不造 20 个 Manager）。
 
 ## 2. EventBus（`B/core/event_bus.py`, 83 行）
@@ -21,7 +21,8 @@
 
 ## 3. Platform Adapter 边界
 
-- `Platform` 抽象（`B/core/platform/platform.py`）只有两个契约：`run()` + `meta()`；适配器向内的唯一出口 `commit_event(event)` = `queue.put_nowait`；`create_event(message)` 包统一事件。
+- `Platform`（`B/core/platform/platform.py`）的 **abstract requirements** 是两个：`run()` + `meta()`；但基类还定义：`terminate()`、`send_by_session()`、`commit_event()`、`create_event()`、`get_client()`、`webhook_callback()`、status/error 管理。适配器向内的唯一出口 `commit_event(event)` = `queue.put_nowait`；`create_event(message)` 包统一事件。
+- CampusCue 学的是：**明确 adapter lifecycle + inbound event boundary + outbound send boundary**，不是机械照抄 AstrBot Platform 基类。
 - `AstrBotMessage`（纯数据结构）+ `AstrMessageEvent`（运行时事件）分离。
 - `unified_msg_origin = "platform:message_type:session_id"` 是跨平台统一路由键（EventBus / Provider 选择 / 会话历史全用它）。
 - `PlatformManager`（`B/core/platform/manager.py`）延迟 import + 注册表（`@register_platform_adapter`），`_task_wrapper` 统一管理状态（RUNNING/STOPPED/ERROR）与异常记录。

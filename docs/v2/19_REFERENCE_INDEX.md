@@ -8,9 +8,9 @@
 | 主题 | 路径 | 关键内容 | 详见 03 文档 |
 |---|---|---|---|
 | Composition Root | core/initial_loader.py（57 行） | InitialLoader：建 lifecycle → init → start → gather | §1 |
-| Lifecycle | core/core_lifecycle.py（480 行） | initialize() 顺序组装（L158-294）；stop() 逆序（L381-422） | §1 |
+| Lifecycle | core/core_lifecycle.py（480 行） | initialize() 顺序组装（L158-294）；stop() 显式有序 cleanup（L381-422，非严格逆序） | §1 |
 | EventBus | core/event_bus.py（83 行） | asyncio.Queue + 每事件 Task + 强引用防 GC | §2 |
-| Platform 抽象 | core/platform/platform.py | run()/meta() 契约；commit_event = queue.put_nowait | §3 |
+| Platform 抽象 | core/platform/platform.py | abstract requirements: run()/meta()；基类另有 terminate/send_by_session/commit_event/create_event/get_client/webhook_callback 等 | §3 |
 | PlatformManager | core/platform/manager.py（360 行） | 延迟 import + 注册表；_task_wrapper 状态管理 | §3 |
 | 统一事件 | core/platform/astr_message_event.py | `unified_msg_origin = platform:type:session_id` | §3 |
 | OneBot 接收 | core/platform/sources/aiocqhttp/aiocqhttp_platform_adapter.py（513 行） | CQHttp → on_message → convert → handle_msg → create_event → commit_event | §4 |

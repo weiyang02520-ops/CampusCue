@@ -1,6 +1,19 @@
 # 07_RUNTIME_LIFECYCLE.md
 
 > CampusRuntime 生命周期设计。参考 AstrBot core_lifecycle 的 component wiring 思想，但实现是轻量自研（M1）。
+> **本文件描述最终 Composition Root；组件按 Milestone 激活（M 修正）——M1 不得为"完整 lifecycle"提前初始化 DB/Reminder/Agent/API。**
+
+## Milestone 激活表
+
+| 组件 | 激活于 | 说明 |
+|---|---|---|
+| Config | M1 | 含 OneBot token 等 secrets 解析 |
+| EventBus / Router / OneBotAdapter / Echo | M1 | M1 最小运行闭环 |
+| Database / Repositories / TaskService / Provider Foundation / Task Pipeline | M2 | 见 09_STORAGE / 08_PROVIDER_AND_AGENT（Provider 随 M2 移入） |
+| ReminderScheduler | M3 | DB resync + APScheduler |
+| AgentRuntime / ToolRegistry | M4 | 在 Provider Foundation 上扩展 |
+| FastAPI / Realtime | M5 | 见 11_API_SPEC |
+| WebUI | M6 | 见 12_WEB_UI_SPEC |
 
 ## 状态机
 
@@ -12,19 +25,19 @@ CREATED → STARTING → RUNNING → STOPPING → STOPPED
 - `FAILED`：startup 任一步骤抛出未恢复错误 → 记录根因 → 清理已启动组件 → 退出码非 0。
 - 状态由 `runtime.status` 暴露（health API）。
 
-## 启动顺序
+## 启动顺序（最终 Composition Root；实际按上面激活表执行对应子集）
 
 ```
 1. Config           （加载配置，校验 CAMPUSCUE_ENV）
-2. Secrets          （解析 secret_reference → env）
-3. DB               （SQLite 连接、migrations、busy_timeout）
-4. Repositories     （Task/Source/Extraction/Reminder/ProviderConfig/Setting）
-5. Services         （TaskService / ReminderService / NotificationService）
-6. EventBus         （async queue + dispatch tasks）
-7. Adapter          （OneBotAdapter: connect reverse WS → 注册事件源）
-8. ReminderScheduler（从 DB resync 任务 → 重建 APScheduler jobs）
-9. AgentRuntime     （ProviderManager + ToolRegistry，M4 起）
-10. API             （FastAPI + SSE，最后启动；监听地址由配置决定，默认 127.0.0.1）
+2. Secrets          （解析 secret_reference → env；OneBot access token 在此）
+3. DB               （SQLite 连接、migrations、busy_timeout）—— M2 起
+4. Repositories     （Task/Source/Extraction/Reminder/ProviderConfig/Setting）—— M2 起
+5. Services         （TaskService / ReminderService / NotificationService）—— M2 起（Reminder M3 接）
+6. EventBus         （有界 async queue + dispatch tasks）—— M1
+7. Adapter          （OneBotAdapter: WS server 监听 + 接受 NapCat 连接）—— M1
+8. ReminderScheduler（从 DB resync 任务 → 重建 APScheduler jobs）—— M3 起
+9. AgentRuntime     （ProviderManager + ToolRegistry）—— M4 起（Provider Foundation 自 M2 存在）
+10. API             （FastAPI + SSE）—— M5 起
 ```
 
 任一环节失败：已启动组件按逆序回滚停止，进入 FAILED。

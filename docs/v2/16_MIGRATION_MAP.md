@@ -8,7 +8,7 @@
 |---|---|---|---|
 | L1 规则预筛 | tasks/extraction/prefilter | **REUSE_BEHAVIOR** | 纯逻辑零耦合，直接迁移；V2 保持可单测 |
 | L3 时间解析 | tasks/extraction/time_parser | **REUSE_BEHAVIOR** | 保留全部 V1 已验证约定；**修复时区注入缺口**（B12） |
-| LLM 结构化抽取 | tasks/extraction/extractor | **REUSE_BEHAVIOR** | 保留 json_object + 宽容解析防御；**升级 JSON Schema 约束 + Provider 层调用**（不再直连/绕过 Provider） |
+| LLM 结构化抽取 | tasks/extraction/extractor | **REUSE_BEHAVIOR + REWRITE_INTEGRATION** | 保留 json_object + 宽容解析防御与 extraction 行为思想；**M2 起改走 V2 Provider abstraction**（不再业务层裸写厂商 HTTP，`disable_thinking` 以 Provider 能力位表达） |
 | 提示词制品 | tasks/extraction/prompts | **REUSE_BEHAVIOR** | 调优产物，保留 |
 | 去重（dedup_key + 36h 窗口） | tasks/dedup | **REUSE_BEHAVIOR**（补强） | 保留核心；补 source_message_id 指纹 + explainable reason |
 | 5 张 campus_ 表 schema | storage/models | **REUSE_BEHAVIOR** | 表结构/枚举/UTC 约定照搬；换自有 engine |

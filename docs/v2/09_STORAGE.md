@@ -35,6 +35,8 @@ storage/database (engine + session factory)
   → 消费方: API / Agent Tool / Task Pipeline / Reminder / Adapter
 ```
 
+**激活**（J 修正）：SourceRepository / ExtractionRepository / TaskRepository 随 M2 实现（Task Pipeline 依赖）；ReminderRepository 随 M3；ProviderConfigRepository 随 M2a（Provider Foundation）。
+
 **规则（V1 教训）**：
 - 消费方只能调 Service，不能绕过 Repository 直接开 session 写表
 - Service 是唯一知道"业务不变式"的地方（如：deadline 变化必须重建提醒）

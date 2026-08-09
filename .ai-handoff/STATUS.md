@@ -2,10 +2,10 @@
 
 > 当前状态摘要（checkpoint 时自动刷新）。实时信息（HEAD/visibility）由脚本获取，不手写。
 
-- 阶段：**M0 Architecture / Audit**
-- 状态：文档完成，等待外部审核
-- 验证层级：文档均为 RESEARCH/BUILD-DOC 级；**无代码、无 REAL ENV VERIFIED**（M0 不实现）
-- 已知 Bug Inventory：docs/v2/13_BUG_LESSONS.md（B01-B13，含 V1 新发现 B12 时区硬编码、B13 LLM 测试缺口）
-- 下一步：外部审核 → M1
+- 阶段：**M0.1 REVIEW FIX**
+- 状态：**COMPLETE** — 外部审核 14 项 finding 全部修复；双 Memory 建立；M1 = READY_NOT_STARTED
+- 验证层级：无代码、无测试运行（M0.1 纯文档）；一致性检查 + secret scan + reference path 验证已执行
+- 已知 Bug Inventory：docs/v2/13_BUG_LESSONS.md（B01-B13）
+- 下一步：外部审核确认 → M1
 
 （本文件由 checkpoint 流程生成/刷新，详细见 HANDOFF.md 与 PROJECT_STATE.md）

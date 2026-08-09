@@ -6,19 +6,25 @@
 
 ```
 QQ / NapCat
-   │ OneBot v11 (Reverse WebSocket)
+   │ OneBot v11 (Reverse WebSocket — NapCat 为 CLIENT，主动拨入)
    ▼
-adapters/onebot/  ──►  core/events.CampusEvent
+adapters/onebot/  ◄── WebSocket SERVER（监听 127.0.0.1:6199，接受 NapCat 连接）
    │                      │
-   │                      ▼
-   │                 core/bus.EventBus (async queue)
+   │  帧分类：Event Frame → converter → CampusEvent；Action Response Frame → echo 关联
    │                      │
-   │                      ▼
-   │                 core/router.Router
-   │                  ├──► tasks/extraction (Task Pipeline)
-   │                  └──► agents/ (Agent Chat)
+   ▼                      ▼
+core/events (CampusEvent) │
+   │                      │
+   ▼                      │
+core/bus.EventBus (有界 async queue, backpressure)
+   │                      │
+   ▼                      │
+core/router.Router        │
+   ├──► tasks/extraction (Task Pipeline)
+   └──► agents/ (Agent Chat)
+   │
    ▼
-core/events (统一事件) ◄── 边界：OneBot 原始 JSON 不出 Adapter
+OutgoingMessage → dispatcher/runtime → Adapter.send()（Outbound 直连，不经 EventBus）
 ```
 
 依赖方向（唯一）：`external/platform → adapters → core → services → repositories → storage(database)`。
@@ -26,6 +32,7 @@ core/events (统一事件) ◄── 边界：OneBot 原始 JSON 不出 Adapter
 - `agents/` 与 `tasks/extraction` 都调用 `tasks/service`（TaskService），**不**直接操作 DB。
 - `api/` 路由只做 HTTP 校验 → 调 Service → 响应；业务逻辑不进 Router。
 - `reminders/` 由 TaskService 驱动（任务截止变化 → 重建提醒），自身读写 reminders 表。
+- **Outbound 不经过 EventBus**：Handler result / OutgoingMessage → dispatcher/runtime → `Adapter.send()`。第一版不造第二条 outbound bus（N 修正）。
 
 ## 运行时组件（CampusRuntime 管理）
 
@@ -45,13 +52,14 @@ core/events (统一事件) ◄── 边界：OneBot 原始 JSON 不出 Adapter
 
 ```
 CampusEvent(payload)
-  → bus.publish(event)
+  → transport dedup（self_id, message_id）
+  → bus.publish(event)（有界队列，await put → 背压）
   → Router.route(event)
-      ├─ guard: source enabled / self-message / rate limit
+      ├─ guard: valid message / self-message / duplicate / minimal rate
       ├─ TaskExtractionHandler（M2 起）
       ├─ AgentChatHandler（M4 起）
       └─ CommandHandler / SystemHandler
-  → Response 经 bus 回 Adapter 发送
+  → Handler result → OutgoingMessage → dispatcher → Adapter.send()（Outbound 不经 EventBus）
 ```
 
 ## 任务流（M2 范围）

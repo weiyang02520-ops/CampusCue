@@ -1,8 +1,17 @@
 # 08_PROVIDER_AND_AGENT.md
 
-> Provider / Tool / Agent Runtime 设计（M4 实现）。参考 AstrBot 思想（统一签名 + 注册表 + 请求实体承载工具链路），但只实现最小稳定版本。
+> Provider / Tool / Agent Runtime 设计。参考 AstrBot 思想（统一签名 + 注册表 + 请求实体承载工具链路），但只实现最小稳定版本。
+> **Milestone 边界（I 修正）：Provider Foundation 在 M2 完成（Task Extraction 使用它）；M4 只在已有基础上增加 Tool 系统与 AgentRuntime，不重新造 Provider。**
 
-## Provider
+## Milestone 分配
+
+| 组件 | 激活于 |
+|---|---|
+| BaseProvider / LLMRequest / LLMResponse / ProviderError taxonomy / OpenAICompatibleProvider / 最小 ProviderManager / structured output / secret_reference | **M2**（Task Extraction 的 LLM 调用走它） |
+| ToolDefinition / ToolResult / ToolRegistry / Task Tools / CampusAgentRuntime / ContextBudget / Tool Loop / conversation 最小实现 | **M4** |
+| 流式 / fallback provider 链 / 多 provider 偏好 | FUTURE |
+
+## Provider（M2 激活）
 
 ### 抽象（第一版只做一类）
 
@@ -34,7 +43,7 @@ class BaseProvider(ABC):
 | network | 连接失败 | 无法连接模型服务，请检查 Base URL |
 | malformed_output | 结构化输出解析失败 | 模型返回格式异常（重试一次后报错） |
 
-## Tool
+## Tool（M4 激活）
 
 ```python
 class ToolDefinition:
@@ -71,7 +80,7 @@ class ToolRegistry:
 - 执行中：超时（如 30s）；异常 → error 回填（不让 LLM 看到堆栈）
 - 作用域：默认按来源会话（V1：工具只能看/改本群任务——保留该边界）
 
-## Agent Runtime（最小 Tool Loop）
+## Agent Runtime（M4 激活，最小 Tool Loop）
 
 ```
 User Input

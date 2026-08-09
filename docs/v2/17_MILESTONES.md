@@ -7,14 +7,14 @@
 **范围**：CampusRuntime / CampusEvent / EventBus / Router / OneBotAdapter / Echo Handler。
 
 **实现**：
-- `campuscue/app/runtime.py` 生命周期（07_RUNTIME_LIFECYCLE）
+- `campuscue/app/runtime.py` 生命周期（07_RUNTIME_LIFECYCLE，M1 只激活 Config/EventBus/Router/OneBotAdapter/Echo）
 - `core/events.py` CampusEvent（06_DOMAIN_MODEL 第一版字段：event_id/trace_id/platform/conversation_id/conversation_type/group_id/sender_id/message_id/text/segments）
-- `core/bus.py` asyncio.Queue + 每事件 Task + 强引用 + 异常隔离
-- `core/router.py` Guard（self-message/source-enabled/rate limit 简化）+ Echo Handler
-- `adapters/onebot/` client(WS server) + converter（纯函数）+ sender（text）
+- `core/bus.py` **有界** asyncio.Queue（`await put` 背压）+ 每事件 Task + 强引用 + 异常隔离 + shutdown drain
+- `core/router.py` Guard（valid message / self-message / **transport dedup** / minimal rate）+ Echo Handler
+- `adapters/onebot/` **Reverse WebSocket SERVER**（NapCat 为 client 拨入；configurable host/port/path、token 校验、单 active connection + stale replacement、disconnect cleanup）+ converter（纯函数，Event Frame vs Action Response Frame 分类）+ sender（text，echo correlation：unique echo → pending Future → 匹配回帧，timeout/pending cleanup/断连 fail-all）
 - `adapters/base.py` PlatformAdapter 边界（start/stop/send/status）
 
-**明确不做**：Task Pipeline、Agent、Reminder、API、WebUI、at/reply/image 发送（仅解析到段）。
+**M1 明确不做**：DB、Task Pipeline、SourceRepository/SourcePolicy（M2 起）、Agent、Reminder、API、WebUI、at/reply/image 发送（仅解析到段）。
 
 **验收（REAL ENV VERIFIED 才 PASS）**：
 - 真实 QQ 群发送 `hello`，控制台输出 `platform=onebot conversation_type=group group_id=... sender_id=... message_id=... text=hello`
@@ -22,17 +22,33 @@
 - **AstrBot 完全不运行**；代码无 `import astrbot`（Anti-AstrBot Gate 扫描通过）
 - 隔离数据目录启动成功
 
-## M2：Task Pipeline
+## M2：Task Pipeline（含 Provider Foundation）
 
-**范围**：SourcePolicy / Prefilter / ContextCollector / LLM Extraction / TimeNormalizer / Dedup / TaskRepository / TaskService / SQLite。
+**范围**：
+- **M2a Provider Foundation**（原 M4 部分，**I 修正：Provider 前移至 M2**，M4 不重新造）：
+  - `BaseProvider` / `LLMRequest` / `LLMResponse` / `ProviderError` taxonomy（timeout/auth/rate_limit/network/model/malformed）
+  - `OpenAICompatibleProvider`（structured output / json_schema 能力、timeout、secret_reference）
+  - 最小 `ProviderManager`（配置驱动实例化 + get_default + test 连接）
+  - **无 Agent、无 Tool 系统**（M4 才加）
+- **M2b Task Pipeline**：
+  - `SourceRepository` + `SourceService`（来源配置最小逻辑，J 修正：M2 就要，不等 M5）
+  - `ExtractionRepository`（抽取审计落库）
+  - `TaskRepository` / `TaskService`
+  - SourcePolicy / Prefilter / ContextCollector / LLM Extraction / TimeNormalizer / Dedup
+  - SQLite（sources/tasks/extractions 表，09_STORAGE）
+- 详见 10_TASK_PIPELINE（L0-L7 自 M2 激活；L8 Reminder 自 M3；L9 Realtime 自 M5）
 
-**实现**：见 10_TASK_PIPELINE + 09_STORAGE（sources/tasks/extractions 表）。
+**明确不做**：Reminder（M3）、Agent/Tool（M4）、API/Realtime（M5）、WebUI（M6）、消息页。
 
 **验收（REAL ENV VERIFIED）**：
-- 真实 QQ："高数第三章作业周五晚上12点前交学习通。" → 数据库产生正确 Task（title=第三章作业、category=homework、course=高等数学、deadline=本周五 23:59 +08:00、source_text_reference 保留）
-- 同消息重发 → 去重（dedup_key 命中，不重复创建）
-- 消息页可见 extraction 记录与"为何创建/为何未创建"
-- LLM mock 路径有测试（B13 修复）
+- 真实 QQ："高数第三章作业周五晚上12点前交学习通。" → 真实 Provider → 真实 Task Pipeline → SQLite
+- 验证（integration inspection / CLI / test helper / direct DB assertion，**不是 Web 页面**，K 修正）：
+  - source row（来源已登记并启用）
+  - extraction row（L1 分数 / L3 原始与解析 / 决议）
+  - task row（title=第三章作业、category=homework、course=高等数学、deadline=本周五 23:59 +08:00、source_text_reference 保留）
+  - normalized deadline 正确
+  - dedup result（同消息重发 → dedup_key 命中，不重复创建）
+- LLM mock 路径有测试（B13 修复）；Provider 错误分类各路径有测试
 
 ## M3：Reminder
 
@@ -47,9 +63,13 @@
 - 防重复：同一 task 重复 plan 不产生重复 job
 - 过期（停机期间到期）不补发
 
-## M4：Agent
+## M4：Agent（在 M2 Provider Foundation 上扩展）
 
-**范围**：BaseProvider / OpenAICompatibleProvider / ProviderManager / ToolDefinition / ToolRegistry / CampusAgentRuntime / Task Tools。
+**范围**（I 修正：Provider 已在 M2 完成，M4 不重新造）：
+- ToolDefinition / ToolResult / ToolRegistry
+- Task Tools（task_list/task_get/task_create/task_update/task_complete/task_dismiss/reminder_list/source_list）
+- CampusAgentRuntime / ContextBudget / Tool Loop
+- conversation/thread 最小实现
 
 **实现**：见 08_PROVIDER_AND_AGENT。
 

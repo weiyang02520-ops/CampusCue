@@ -32,7 +32,7 @@
 |---|---|---|---|
 | campuscue/models.py | SQLModel 表（campus_tasks 等） | LOW（仅共享 db metadata） | REUSE_BEHAVIOR（重写独立） |
 | extractor/prefilter.py | 本地规则预筛，省 token | LOW | REUSE_BEHAVIOR |
-| extractor/llm.py | LLM 结构化抽取 | MEDIUM（走 AstrBot provider） | REWRITE |
+| extractor/llm.py | LLM 结构化抽取（直连 Ark HTTP，绕过 ProviderManager） | NONE / LOW（plain HTTP，无 astrbot 依赖） | REUSE_BEHAVIOR + REWRITE_INTEGRATION（M2 起改走 V2 Provider abstraction） |
 | extractor/timeresolve.py | 相对时间解析 | LOW | REUSE_BEHAVIOR |
 | extractor/pipeline.py | 三级管道编排 | MEDIUM（logger 等） | REWRITE（框架轻量化） |
 | store.py | 数据访问层 | HIGH（`db_helper` 共享 SQLite） | REWRITE（Repository/Service） |
@@ -69,7 +69,7 @@
 
 - AstrBot `InitialLoader` / `AstrBotCoreLifecycle` 启动体系 → V2 自建 `CampusRuntime`（轻量 lifecycle）。
 - AstrBot EventBus / Pipeline 通用 DSL → V2 轻量 EventBus + Router。
-- AstrBot Provider/Agent/Tool 体系 → V2 最小 BaseProvider + ToolRegistry + AgentRuntime（M4）。
+- AstrBot Provider/Agent/Tool 体系 → V2 自研 BaseProvider + ToolRegistry + AgentRuntime（Provider Foundation 在 M2 建立供 Task Pipeline 使用；Tool/AgentRuntime 在 M4）。
 - AstrBot Dashboard 认证体系 → V2 本地优先，默认 loopback，LAN 需安全模型重审。
 - AstrBot platform 多适配器框架 → V2 第一版仅 OneBotAdapter。
 

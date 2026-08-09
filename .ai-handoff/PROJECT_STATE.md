@@ -14,53 +14,49 @@
 
 ## current_milestone
 
-- M0（Architecture / Audit）
-- status：**AWAITING_EXTERNAL_REVIEW**（文档已提交，等待外部 ChatGPT 审核）
+- M0 = **PASS**（外部审核条件性通过，M0.1 全部 finding 已修复）
+- M1 = **READY_NOT_STARTED**（等待外部审核确认后开始）
+- status：**M0.1 REVIEW FIX COMPLETE，AWAITING M1 GO**
 
 ## completed
 
 - M0 全部文档：docs/v2/00-19 + adr/（ADR-001 ~ ADR-010）
-- AstrBot 固定基准 commit `30e20318c` 研究完成（9 条链路，全部 CONFIRMED）
-- CampusCue V1 完整审计（25 文件 + 前端 + 测试 + PROGRESS 七轮修复）
+- AstrBot 固定基准 commit `30e20318c` 研究（9 条链路，CONFIRMED）
+- CampusCue V1 完整审计
+- **M0.1 外部审核修复**（B~N 共 14 项 finding 全部应用）
+- **双 Memory 建立**：docs/context/CHATGPT_MEMORY.md + AGENT_MEMORY.md
 
 ## in_progress
 
-- 无（M0 完成，等待审核）
+- 无（M0.1 完成，等待外部审核 M1 GO）
 
 ## blocked
 
-- 无
+- 无（M1 启动依赖外部审核确认）
 
 ## verified
 
-- AstrBot 基准 commit 锁定（本地 git checkout 验证）
-- V1 仓库克隆 + 关键文件读取（main.py / PROGRESS / campuscue/ 模块规模 / 耦合 import 清单）
-- 两轮独立代理研究：AstrBot 9 条链路 + V1 25 文件审计，结论均为 CONFIRMED（读码所得）
+- 外部审核 verdict：M0 架构方向 PASS；文档精度 CHANGES_REQUESTED → 已全部修复（见 HANDOFF finding 清单）
+- AstrBot 基准 commit 锁定；V1 仓库克隆
+- 文档一致性检查（AD 检查项）：见 M0.1 轮验证记录
 
 ## unverified / known unknowns
 
-- V1 `extract()` LLM 抽取从未在测试跑过（B13）——V2 必须补
-- V1 profile.timezone 字段存在但解析/前端均硬编码 Asia/Shanghai（B12）——V2 必修
-- AstrBot 发送管线流式降级、Dashboard 认证细节未深入研究（非 V2 需要，见 03 文档 §9 边界）
-- NapCat 真实联调未做（M1 验收阶段做 REAL ENV VERIFIED）
+- V1 `extract()` LLM 抽取从未在测试跑过（B13）——M2 修
+- V1 profile.timezone 字段存在但解析/前端均硬编码 Asia/Shanghai（B12）——M2 修
+- NapCat 真实联调未做（M1 验收 REAL ENV）
+- V2 无任何代码，无 REAL ENV 验证
 
 ## architecture_decisions
 
-- 见 docs/v2/18_DECISIONS.md（ADR-001 ~ ADR-010），核心 5 条：
-  1. OneBot 协议不泄漏进 Domain（converter 边界）
-  2. DB = 唯一业务事实源
-  3. Realtime（SSE）只是通知传输，不是状态源
-  4. 零 AstrBot 依赖（Anti-AstrBot Gate）
-  5. TaskService 唯一创建/变更入口
+- 见 docs/v2/18_DECISIONS.md + adr/（ADR-001~010）+ M0.1 修正（Reverse WS server 所有权、Provider 前移 M2、有界队列、transport dedup、Outbound 直连等，详见 CHATGPT_MEMORY §9 REJECTED/SUPERSEDED）
 
 ## next_gate
 
-- 外部 ChatGPT 审核 M0 文档（重点：03_ASTRBOT_ARCHITECTURE、05_V2_ARCHITECTURE、17_MILESTONES、18_DECISIONS）
-- 审核通过 → 进入 M1（Independent QQ Runtime）
+- 外部 ChatGPT 读取 GitHub（M0.1 提交）→ 确认 M0 PASS → 发布 M1 prompt
 
-## external_review_focus
+## external_review_focus（M0.1 审核点）
 
-- M0 文档是否诚实（有无把 UNKNOWN 写成 CONFIRMED）
-- 架构方向是否成立（轻量 EventBus/Router、OneBotAdapter 边界、TaskService 唯一入口）
-- M1 最小实现范围是否真的最小
-- ADR 是否合理
+- 14 项 finding 是否全部正确修复
+- 双 Memory 是否满足 high-fidelity recovery
+- Milestone dependency（Provider 在 M2）是否一致

@@ -1,21 +1,23 @@
 # 10_TASK_PIPELINE.md
 
 > Campus Task Pipeline（M2 实现）详细设计。核心目标：减少无意义 LLM 请求、提高正确率、减少重复任务、保留可追溯来源。
+> **阶段激活（L 修正）：L0-L7 自 M2 激活；L8 ReminderService 自 M3 激活；L9 Realtime 自 M5 激活。**
+> **M2 TaskService 不得因未来 Reminder/Realtime 尚未存在而依赖假实现（对应钩子为可选/惰性接线，M3/M5 再接入）。**
 
 ## 分层设计
 
 ```
 CampusEvent
-  → L0 SourcePolicy    来源是否启用（group 白名单 + auto_extract）
-  → L1 LocalPrefilter  本地规则预筛（省 token，纯代码）
-  → L2 ContextCollector 最小上下文（当前消息 + 必要最近上下文，不拉群历史）
-  → L3 LLM Extract     结构化 Schema 输出（必须 JSON Schema 约束）
-  → L4 TimeNormalizer  时间标准化（显式 timezone / current_time 注入）
-  → L5 Deduplicator    去重（指纹组合 + explainable reason）
-  → L6 Confidence      低置信度 → 待确认状态
-  → L7 TaskService.create（统一创建入口，唯一写路径）
-  → L8 ReminderService 建立提醒
-  → L9 Realtime        通知 Web
+  → L0 SourcePolicy    来源是否启用（group 白名单 + auto_extract）        [ACTIVE FROM M2]
+  → L1 LocalPrefilter  本地规则预筛（省 token，纯代码）                    [ACTIVE FROM M2]
+  → L2 ContextCollector 最小上下文（当前消息 + 必要最近上下文，不拉群历史）  [ACTIVE FROM M2]
+  → L3 LLM Extract     结构化 Schema 输出（必须 JSON Schema 约束）         [ACTIVE FROM M2，走 M2 Provider Foundation]
+  → L4 TimeNormalizer  时间标准化（显式 timezone / current_time 注入）     [ACTIVE FROM M2]
+  → L5 Deduplicator    去重（指纹组合 + explainable reason）               [ACTIVE FROM M2]
+  → L6 Confidence      低置信度 → 待确认状态                               [ACTIVE FROM M2]
+  → L7 TaskService.create（统一创建入口，唯一写路径）                      [ACTIVE FROM M2]
+  → L8 ReminderService 建立提醒                                           [ACTIVE FROM M3]
+  → L9 Realtime        通知 Web                                           [ACTIVE FROM M5]
 ```
 
 ## L0 SourcePolicy
@@ -40,6 +42,7 @@ CampusEvent
 
 - 输入：candidate message + minimal context
 - **必须使用 JSON Schema 约束结构化输出**（V1 用 `json_object` + 宽容解析，V2 优先 API 级 `response_format: json_schema` 或等价约束；不支持时降级 + 宽容解析）
+- **调用走 M2 Provider Foundation（BaseProvider/OpenAICompatibleProvider）**——V2 不继续业务层裸写厂商 HTTP（I 修正；V1 llm.py 直连 Ark 的理由——thinking:disabled + 无会话历史污染——以 Provider 能力位 `disable_thinking` 表达）
 - 输出 Schema（草案）：
 ```json
 {
@@ -55,7 +58,7 @@ CampusEvent
 ```
 - 解析失败策略：重试一次（若合理）→ 仍失败记 extraction error → 不创建任务
 - 未知字段：忽略并记录；缺 deadline：允许（进入待确认，非失败）
-- Provider 通过 ProviderManager 调用（V1 直连 Ark 的原因——thinking:disabled + 无会话历史污染——应在 BaseProvider 配置能力中表达，如 `disable_thinking` 能力位，而不是绕过 Provider 层）
+- Provider 通过 M2 Provider Foundation 调用（V1 直连 Ark 的原因——thinking:disabled + 无会话历史污染——应在 Provider 配置能力中表达，如 `disable_thinking` 能力位，而不是绕过 Provider 层）
 
 ## L4 TimeNormalizer（REUSE_BEHAVIOR from V1 timeresolve.py + 修复）
 
@@ -84,7 +87,7 @@ CampusEvent
 ## L7 TaskService.create（唯一创建入口）
 
 - 签名：`create_from_extraction(extraction, dedup_result, source) -> Task | DuplicateError`
-- 职责：校验 → 查重 → 落库 → 触发 ReminderService → 发 Realtime 通知
+- 职责：校验 → 查重 → 落库 → 触发提醒（**M3 接入**；M2 阶段该钩子可选/惰性，不依赖假实现）→ 发 Realtime 通知（**M5 接入**；M2 阶段无此钩子）
 - **禁止**：API 直接建任务、Agent Tool 直接建任务（都必须走 TaskService）
 - 重复返回 DuplicateError（409），附带 explainable reason
 
