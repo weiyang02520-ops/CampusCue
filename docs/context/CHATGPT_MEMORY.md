@@ -106,6 +106,16 @@ User
 - **[EXTERNAL_REVIEW][CORRECTION]**：OneBot Reverse WS：CampusCue server 等待 NapCat client reconnect；**CampusCue 不进行 outbound exponential reconnect**。
 - **[EXTERNAL_REVIEW][CORRECTION]**：**M2 Provider Foundation 不依赖 M4 Tool System**（无 ToolSet/ToolRegistry/ToolDefinition/AgentRuntime 依赖）；tool-calling 能力标注 M4 EXTENSION / inactive until M4。
 
+## 9B. MEMORY DELTA（M1 新增）
+
+- **[EXTERNAL_REVIEW][CURRENT]**：M0 / M0.1 / M0.2 最终外部审核完成。**M0 FINAL = PASS。M1 = AUTHORIZED_TO_START**（2026-08-09）。
+- **[DESIGN_DECISION][CURRENT]**：**CampusCue V2 implementation 与 Legacy V1 物理隔离**（ADR-011）：V2 源码在独立 `v2/` implementation root（`v2/src/campuscue/`），Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结为 reference。V2 package 必须可独立安装/测试（fresh venv 验证）。
+- **[DESIGN_DECISION][CURRENT]**：**EventBus backpressure 不仅限队列还限 in-flight handler 并发**（queue maxsize + semaphore）；否则 dispatch 无限 create_task 仍会造成内存无界增长。
+- **[DESIGN_DECISION][CURRENT]**：**M1 transport dedup canonical enforcement point = OneBot Adapter ingress**（converter 后、bus.publish 前）；Router 不再次调用同一 stateful deduper。
+- **[DESIGN_DECISION][CURRENT]**：**M1 EchoHandler 只响应明确测试触发 `hello`**（trimmed text 全等），不是全消息复读器；真实群消息不回复。
+- **[EXTERNAL_REVIEW][SECURITY_CORRECTION]**：**Normal runtime logs 不记录完整 QQ ID/群号/消息正文**；M1 真实验收需观察这些字段时必须使用 explicit diagnostic mode（`CAMPUSCUE_DIAGNOSTIC=1`，默认 OFF，真实 ID 不得 commit，token 永不打印）。
+- **[EXTERNAL_REVIEW][CURRENT]**：**M1 PASS 仍需要真实 QQ/NapCat 验证**；Fake WebSocket integration ≠ REAL ENV VERIFIED。本机无 NapCat → M1 = IMPLEMENTED_AWAITING_REAL_ENV。
+
 ## 9. REJECTED / SUPERSEDED APPROACHES
 
 | 旧方案 | 何时 | 为何改 | 替代 |
@@ -167,5 +177,6 @@ User
 | 2026-08-09 | V1 发布 public 仓库 | `db35d77` |
 | 2026-08-09 | V2 M0：研究+审计+设计文档 | `6480ad2` |
 | 2026-08-09 | V2 M0.1：外部审核修复 + 双 Memory | `3d70da1` |
-| 2026-08-09 | V2 M0.2：最终一致性修复（4 项）+ Memory 语义规则 | 本轮 |
+| 2026-08-09 | V2 M0.2：最终一致性修复（4 项）+ Memory 语义规则 | `2014a78` |
+| 2026-08-09 | V2 M1：独立 QQ Runtime（v2/ 实现 + 65 tests + fake NapCat 全链路；真实 NapCat 待联调） | 本轮 |
 | 2026-08-09 | V2 M0.1：外部审核修复 + 双 Memory | 本轮 |

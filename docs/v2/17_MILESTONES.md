@@ -7,20 +7,26 @@
 **范围**：CampusRuntime / CampusEvent / EventBus / Router / OneBotAdapter / Echo Handler。
 
 **实现**：
-- `campuscue/app/runtime.py` 生命周期（07_RUNTIME_LIFECYCLE，M1 只激活 Config/EventBus/Router/OneBotAdapter/Echo）
-- `core/events.py` CampusEvent（06_DOMAIN_MODEL 第一版字段：event_id/trace_id/platform/conversation_id/conversation_type/group_id/sender_id/message_id/text/segments）
-- `core/bus.py` **有界** asyncio.Queue（`await put` 背压）+ 每事件 Task + 强引用 + 异常隔离 + shutdown drain
-- `core/router.py` Guard（valid message / self-message / **transport dedup** / minimal rate）+ Echo Handler
-- `adapters/onebot/` **Reverse WebSocket SERVER**（NapCat 为 client 拨入；configurable host/port/path、token 校验、单 active connection + stale replacement、disconnect cleanup）+ converter（纯函数，Event Frame vs Action Response Frame 分类）+ sender（text，echo correlation：unique echo → pending Future → 匹配回帧，timeout/pending cleanup/断连 fail-all）
-- `adapters/base.py` PlatformAdapter 边界（start/stop/send/status）
+- `v2/src/campuscue/`（独立 implementation root，ADR-011；与 Legacy `campuscue/` 物理隔离）
+- `app/runtime.py` 生命周期（07_RUNTIME_LIFECYCLE，M1 只激活 Config/EventBus/Router/OneBotAdapter/Echo）
+- `core/events.py` CampusEvent（06_DOMAIN_MODEL 第一版字段：event_id/trace_id/platform/conversation_id/conversation_type/group_id/sender_id/message_id/text/segments；ID 全字符串，时间 UTC-aware）
+- `core/bus.py` **有界** asyncio.Queue（`await put` 背压）+ **有界 in-flight handler 并发**（semaphore）+ 每事件 Task + 强引用 + 异常隔离 + shutdown drain
+- `core/router.py` Guard（valid message / stateless self-message defense / EchoHandler 选择）+ `handlers/echo.py`
+- `adapters/onebot/` **Reverse WebSocket SERVER**（NapCat 为 client 拨入；configurable host/port/path、token 校验、单 active connection + stale replacement + **generation 竞态保护**、disconnect cleanup）+ `converter.py`（纯函数，Event Frame vs Action Response Frame 分类）+ `protocol.py`（action 构建/校验）+ `dedup.py`（transport dedup）+ sender（text，echo correlation：register-before-send、timeout/pending cleanup/断连 fail-all）
+- `core/outbound.py` OutgoingMessage（平台中立；业务层不构造 OneBot action JSON）
+- `config.py` 最小配置（host/port/path/token env/queue/in-flight/action timeout/pending bound/dedup TTL+capacity）
+- `scripts/check_no_astrbot.py`（Anti-AstrBot Gate：AST import 扫描 + 依赖扫描 + 隔离 smoke）
+- 日志：NORMAL MODE 脱敏（不记录 QQ ID/群号/消息正文）；`CAMPUSCUE_DIAGNOSTIC=1` 显式诊断模式（默认 OFF，仅验收用，真实 ID 不 commit）
+- 启动安全：非 loopback host 拒绝启动（除非显式 LAN opt-in + token，M1 未实现 LAN 安全）
 
 **M1 明确不做**：DB、Task Pipeline、SourceRepository/SourcePolicy（M2 起）、Agent、Reminder、API、WebUI、at/reply/image 发送（仅解析到段）。
 
 **验收（REAL ENV VERIFIED 才 PASS）**：
-- 真实 QQ 群发送 `hello`，控制台输出 `platform=onebot conversation_type=group group_id=... sender_id=... message_id=... text=hello`
+- 真实 QQ 群发送 `hello`，控制台（diagnostic 模式）输出 `platform=onebot conversation_type=group ... text=hello`
 - QQ 收到 `received: hello`
-- **AstrBot 完全不运行**；代码无 `import astrbot`（Anti-AstrBot Gate 扫描通过）
-- 隔离数据目录启动成功
+- **AstrBot 完全不运行**；代码无 `import astrbot`（Anti-AstrBot Gate 通过）
+- 独立安装验证：fresh venv 安装 v2/ 后 import + 运行成功（不依赖 Legacy root / AstrBot）
+- 真实 ID 在 HANDOFF 中脱敏（hash/last4）；token 永不出现
 
 ## M2：Task Pipeline（含 Provider Foundation）
 

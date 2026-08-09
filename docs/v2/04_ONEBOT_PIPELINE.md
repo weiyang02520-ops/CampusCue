@@ -58,8 +58,19 @@ NapCat
 |---|---|---|
 | **Event Frame** | OneBot 事件推送（`post_type` 存在，如 `message`） | → converter → CampusEvent → bus |
 | **Action Response Frame** | 对 Outbound Action 的响应（含 `echo` 字段） | → 不产生 CampusEvent；关联 pending Future（见下） |
+| **Ignored Meta** | `meta_event`（lifecycle/heartbeat）/ `notice` / `request` | 安全忽略（可更新连接状态），不进 Router |
+| **Unknown** | 其他 JSON / 非 dict / 非法 | 安全忽略 + 限频日志 |
 
 **禁止把 Action Response 当 CampusEvent 处理。**
+
+### 入站管线（canonical dedup point，G/H 修正）
+
+```
+raw frame → classify → (EVENT) converter → CampusEvent
+  → self-message suppression（sender_id == self_id，canonical point）
+  → transport dedup（self_id, message_id，唯一执行点——Router 不重复调用）
+  → bus.publish
+```
 
 ### Outbound Action 关联（echo correlation）
 
@@ -82,18 +93,18 @@ create unique echo (uuid)
 
 M1 Guard 不依赖 source-enabled（SourcePolicy 从 M2 开始，M1 无 SourceRepository/Service）。M1 只需要：
 
-- valid message（格式/字段校验）
-- self-message suppression（`user_id == self_id`，Adapter 内完成 + Guard 兜底）
-- **duplicate suppression（transport-level dedup，见下）**
-- minimal rate/backpressure safeguards
+- valid message（converter 校验，格式/字段）
+- self-message suppression（Adapter ingress canonical + Router stateless defense-in-depth）
+- **transport dedup（Adapter ingress 唯一执行点；Router 不重复调用）**
+- bounded ingress queue / bounded in-flight handlers / bounded pending actions / echo exact-trigger only（EchoHandler 仅响应 `hello`，不是全群复读机）
 
 ## Transport-level Dedup（G，M1）
 
-- key：`(self_id, message_id)`
+- key：`(self_id, message_id)`；**canonical enforcement point = Adapter ingress（converter 后、bus.publish 前）；Router 不再次调用同一 stateful deduper**（避免第一条消息自查变 duplicate）
 - 目的：NapCat reconnect / duplicate delivery 时同一消息短时间不被执行两次（Echo / future handler）
 - **transport-level idempotency，与 M2 Task semantic dedup 完全无关**
-- 要求：bounded memory（如容量上限 10k）、TTL（如 5 分钟）、testable clock
-- 实现极小
+- 要求：bounded memory（capacity 可配，默认 10000）、TTL（默认 300s）、testable clock
+- 实现极小（OrderedDict + 过期淘汰）
 
 ## EventBus Backpressure（F，M1）
 

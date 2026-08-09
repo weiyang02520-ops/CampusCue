@@ -1,34 +1,45 @@
 # REVIEW_REQUEST.md
 
-> M0.2 复核请求（提交给外部 ChatGPT）。请基于 GitHub 仓库 `weiyang02520-ops/CampusCue` 审核本轮修复。
+> M1 审核请求（提交给外部 ChatGPT）。请基于 GitHub 仓库 `weiyang02520-ops/CampusCue` 审核本轮 M1 实现。
 
 ## 请求审核内容
 
-**4 项残留修复**（对照 M0.2 prompt finding 1-4）：
+**重点文件**：
 
-1. `docs/v2/07_RUNTIME_LIFECYCLE.md` —— 失败隔离改 OneBot Reverse WS server 语义（无 outbound 指数退避；SSE 等 client 模块例外说明）
-2. `docs/v2/05_V2_ARCHITECTURE.md` —— 任务流改 progressive activation（L0-L7 M2 / L8 M3 / L9 M5），与 10/17/07 一致
-3. `docs/context/CHATGPT_MEMORY.md` + `AGENT_MEMORY.md` —— 动态 HEAD 反模式修复（recovery 时从 Git 获取；里程碑 commit 保留 HISTORY）
-4. `docs/v2/08_PROVIDER_AND_AGENT.md` —— M2 Provider Foundation 与 M4 Tool System 解耦（LLMRequest 无 ToolSet 依赖；tool_calls/tools 标 M4 EXTENSION）
+- `v2/src/campuscue/`（全部 15 个模块）
+- `v2/tests/`（unit 49 + integration 16）
+- `v2/scripts/check_no_astrbot.py`
+- `docs/v2/adr/ADR-011_V2_CODE_ISOLATION.md`
 
-**MEMORY DELTA 写入**：4 条（见 HANDOFF.md）是否正确写入双 Memory、provenance 是否正确。
+## 需要确认的结论（对照 M1 prompt §73 的 15 项）
 
-## 需要确认的结论
-
-1. 4 项修复语义是否准确（非表面替换）
-2. Memory health：CURRENT TRUTH 无过时 HEAD；HISTORY 保留里程碑 commit；Current vs History 无冲突
-3. 跨文档语义一致性：8 概念 × 8 文件（04/05/07/08/10/17/两个 Memory）
-4. 无 V2 源码创建
+1. **V2 是否真的与 Legacy/V1 隔离**：独立 `v2/` root；fresh venv 安装验证（证据：`/tmp/ccv2-fresh` site-packages import）
+2. **是否存在任何 astrbot import / runtime dependency**：Anti-AstrBot Gate 报告 PASS（AST 扫描 + pyproject 依赖 + 隔离 smoke）
+3. **CampusEvent 是否 OneBot-independent**：字段全部平台中立；OneBot raw JSON 只在 adapter 边界
+4. **Reverse WS server ownership**：CampusCue 是 SERVER；NapCat 是 client；无 outbound reconnect
+5. **stale connection replacement race**：generation 机制 + 单测覆盖（stale cleanup 不清新 active）
+6. **Event vs Action Response frame 区分**：classify_frame 纯函数 + 单测 + 集成（action response 绝无 CampusEvent）
+7. **echo correlation 是否 leak Future**：register-before-send；成功/超时/断连/替换全部 cleanup（pending 有界）
+8. **disconnect 是否 fail pending**：立即 fail（不等 timeout）+ 集成测试
+9. **queue / in-flight / pending actions 是否全部 bounded**：queue maxsize、semaphore max_in_flight、pending max + 超限拒绝
+10. **transport dedup 只执行一次**：canonical point = adapter ingress；Router 无 stateful dedup；集成测重复消息单 action
+11. **self-message 阻断 echo loop**：canonical suppression + Router stateless 防御；集成测 self 消息无回复
+12. **normal logs 是否泄漏隐私**：NORMAL 模式不记录 ID/群号/正文；diagnostic 模式默认 OFF 且不进 Git
+13. **fake integration 是否真的走完整链路**：真实 WS server + fake NapCat client，action/echo/响应全验证
+14. **REAL ENV 是否真的执行**：**未执行**（本机无 NapCat）——诚实声明 IMPLEMENTED_AWAITING_REAL_ENV
+15. **是否偷偷实现了 M2**：无（无 DB/无 Provider/无 Task/无 API/无 WebUI）
 
 ## 风险与未验证项（诚实声明）
 
-- M0.2 零代码、零测试运行
-- 修复均为文档层；M1 仍 READY_NOT_STARTED
+- REAL ENV VERIFIED = NO（无 NapCat 环境）
+- 真实 NapCat token handshake 行为未确认（按 OneBot 标准实现）
+- NapCat `message.post-format` 是否默认 array 未确认（converter 拒绝 string 格式）
+- 本机 Python 3.14.4 + websockets 16.0 环境已验证；其他环境未测
 
 ## Real Verified vs Not
 
-- **CONFIRMED**：文件内容级修改（git diff 可查）
-- **NOT VERIFIED**：无 REAL ENV（无代码）
+- **CONFIRMED**：65 tests 全绿（unit+integration）、fresh venv 隔离安装、Anti-AstrBot Gate、git diff（Legacy 零改动）
+- **NOT VERIFIED**：真实 QQ hello → received: hello
 
 ## 视觉审核
 

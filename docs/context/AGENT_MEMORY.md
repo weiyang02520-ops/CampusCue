@@ -23,10 +23,10 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = AWAITING FINAL EXTERNAL CONFIRMATION（M0.2 修复已提交）；M1 = READY_NOT_STARTED** |
+| 当前门 | **M0 = PASS（最终）；M1 = IMPLEMENTED_AWAITING_REAL_ENV（代码/测试完成，真实 NapCat 联调待做）；M2 = NOT_READY** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
-| 代码 | **V2 无任何正式源码**（M0/M0.1/M0.2 全文档） |
+| 代码 | **v2/ 独立 root 已有 M1 实现**（src/campuscue + 65 tests）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结 |
 
 ## 3. CURRENT MILESTONE / GATE
 
@@ -148,7 +148,8 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **M1（等外部审核确认 M0 最终 PASS 后开始）**：CampusRuntime / CampusEvent / 有界 EventBus / Router(Guard) / OneBotAdapter（Reverse WS SERVER + echo correlation + transport dedup）/ Echo Handler；真实 QQ `hello` → 控制台打印 `platform=onebot ...` → QQ 收到 `received: hello`；Anti-AstrBot Gate 通过。
+- **当前状态**：M1 实现完成（65 tests 全绿 + package isolation PASS），但**真实 QQ/NapCat 未联调**（本机无 NapCat）。状态 = IMPLEMENTED_AWAITING_REAL_ENV。
+- **待真实环境**：装/用 NapCat → 配置反向 WS 指向 CampusCue（127.0.0.1:6199/ws）→ diagnostic 模式起 runtime → 真实 QQ 群发 `hello` → 验证 `received: hello` → 关闭 diagnostic → 更新状态为 M1 PASS → 等外部审核。
 - **M2 提醒**：Provider Foundation（BaseProvider/LLMRequest 最小集/LLMResponse/taxonomy/OpenAICompatible/最小 Manager/structured output）**独立于 Tool System**；Source/Extraction/Task 仓储；L0-L7 管道。
 - **M4 提醒**：只在 Provider Foundation 上加 Tool/AgentRuntime，**不重新造 Provider**。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。

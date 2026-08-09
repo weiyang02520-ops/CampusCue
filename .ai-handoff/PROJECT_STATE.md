@@ -14,50 +14,57 @@
 
 ## current_milestone
 
-- M0 = **AWAITING FINAL EXTERNAL CONFIRMATION**（M0.2 最终一致性修复已提交，等待外部复核确认）
-- M1 = **READY_NOT_STARTED**（等待外部审核确认后开始）
-- status：**M0.2 FINAL CONSISTENCY FIX COMPLETE**
+- M0 = **PASS**（最终外部审核通过）
+- M1 = **IMPLEMENTED_AWAITING_REAL_ENV**（实现 + 65 tests + package isolation 完成；真实 NapCat 联调待做，本机无 NapCat）
+- M2 = **NOT_READY**
+- status：**AWAITING_REAL_ENV + AWAITING_EXTERNAL_M1_REVIEW**
 
 ## completed
 
-- M0 全部文档：docs/v2/00-19 + adr/（ADR-001 ~ ADR-010）
-- AstrBot 固定基准 commit `30e20318c` 研究（9 条链路，CONFIRMED）
-- CampusCue V1 完整审计
-- **M0.1 外部审核修复**（14 项 finding 全部应用，已通过复核）
-- **M0.2 外部复核修复**（4 项残留：07 断线 server 语义、05 任务流渐进激活、Memory 动态 HEAD 反模式、Provider Foundation/Tool System 解耦）
-- **双 Memory**：docs/context/CHATGPT_MEMORY.md + AGENT_MEMORY.md（含 M0.2 MEMORY DELTA 4 条）
+- M0/M0.1/M0.2：研究 + 审计 + 20 份设计文档 + 10 ADR + 双 Memory + 4 项一致性修复（全部 PASS）
+- **M1：独立 QQ Runtime 完整实现**
+  - v2/ 独立 implementation root（ADR-011），与 Legacy V1 物理隔离
+  - CampusEvent / EventBus（有界队列 + 有界并发）/ Router / EchoHandler / OutgoingMessage
+  - OneBotAdapter：Reverse WS SERVER + token 校验 + 帧分类 + echo correlation + generation 竞态保护 + transport dedup
+  - Anti-AstrBot Gate（AST 扫描 + 依赖扫描 + 隔离 smoke）PASS
+  - 65 tests 全绿（unit 49 + integration 16）
+  - Package isolation PASS（fresh venv 安装 v2/ + import + smoke）
+  - 日志脱敏 + CAMPUSCUE_DIAGNOSTIC 显式诊断模式
 
 ## in_progress
 
-- 无（M0.1 完成，等待外部审核 M1 GO）
+- 真实 QQ/NapCat 联调（阻塞：本机无 NapCat；需用户提供环境或指导）
 
 ## blocked
 
-- 无（M1 启动依赖外部审核确认）
+- M1 最终 PASS 阻塞于真实环境验证；M2 阻塞于外部审核
 
 ## verified
 
-- 外部审核 verdict：M0 架构方向 PASS；文档精度 CHANGES_REQUESTED → 已全部修复（见 HANDOFF finding 清单）
-- AstrBot 基准 commit 锁定；V1 仓库克隆
-- 文档一致性检查（AD 检查项）：见 M0.1 轮验证记录
+- STATIC/UNIT/INTEGRATION/PACKAGE ISOLATION VERIFIED（65 tests + fresh venv）
+- REAL ENV VERIFIED：**NOT VERIFIED**（诚实声明）
 
 ## unverified / known unknowns
 
-- V1 `extract()` LLM 抽取从未在测试跑过（B13）——M2 修
-- V1 profile.timezone 字段存在但解析/前端均硬编码 Asia/Shanghai（B12）——M2 修
-- NapCat 真实联调未做（M1 验收 REAL ENV）
-- V2 无任何代码，无 REAL ENV 验证
+- 真实 QQ hello → received: hello 链路（待 NapCat）
+- 真实 NapCat token handshake 行为（实现按 OneBot 协议标准；需真实环境确认）
+- V1 `extract()` LLM 测试缺口（B13）、时区硬编码（B12）——M2 修
 
 ## architecture_decisions
 
-- 见 docs/v2/18_DECISIONS.md + adr/（ADR-001~010）+ M0.1 修正（Reverse WS server 所有权、Provider 前移 M2、有界队列、transport dedup、Outbound 直连等，详见 CHATGPT_MEMORY §9 REJECTED/SUPERSEDED）
+- ADR-001~011（docs/v2/18_DECISIONS.md + adr/）；M1 新增 ADR-011（V2 代码隔离）
 
 ## next_gate
 
-- 外部 ChatGPT 读取 GitHub（M0.2 提交）→ 确认 M0 最终 PASS → 发布 M1 prompt
+- 真实 NapCat 联调（用户提供环境）→ M1 REAL ENV VERIFIED → 外部 ChatGPT M1 审核 → M2
 
-## external_review_focus（M0.2 复核点）
+## external_review_focus（M1 审核点）
 
-- 4 项残留修复是否正确（07 断线语义 / 05 任务流激活 / Memory HEAD / Provider-Tool 解耦）
-- 双 Memory health（无动态 HEAD、Current vs History 无冲突）
-- 跨文档语义一致性（8 概念 × 8 文件）
+1. V2 是否真的与 Legacy/V1 隔离（fresh venv 证据）
+2. 无任何 astrbot import / runtime dependency（Gate 证据）
+3. CampusEvent 是否 OneBot-independent
+4. Reverse WS server ownership / stale connection race / 帧分类 / echo correlation / disconnect fail-pending
+5. queue / in-flight / pending actions 三处 bounded
+6. transport dedup 只执行一次；self-message 阻断 echo loop
+7. normal logs 脱敏；diagnostic 模式默认 OFF
+8. 是否偷偷实现了 M2

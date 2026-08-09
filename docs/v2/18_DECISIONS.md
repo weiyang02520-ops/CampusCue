@@ -15,3 +15,4 @@
 | [ADR-008](adr/ADR-008.md) | Provider 请求实体承载工具链路 | Accepted | Provider 不感知 agent 循环，可单独测试/替换 |
 | [ADR-009](adr/ADR-009.md) | 本地优先，LAN 需重新设计安全模型 | Accepted | 默认 loopback，YAGNI |
 | [ADR-010](adr/ADR-010.md) | 时区显式注入，前端不硬编码偏移 | Accepted | V1 B12 教训：可测试性 + 多时区正确 |
+| [ADR-011](adr/ADR-011_V2_CODE_ISOLATION.md) | V2 源码与 Legacy V1 物理隔离 | Accepted（M1） | 独立 v2/ root，可独立安装/测试；Legacy 冻结 |

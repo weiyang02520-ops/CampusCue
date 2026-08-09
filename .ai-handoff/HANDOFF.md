@@ -1,71 +1,93 @@
 # HANDOFF.md
 
-> M0.2 FINAL CONSISTENCY FIX 交接记录。由工作区 AI 在 checkpoint 前更新。
+> M1 Independent QQ Runtime 交接记录。由工作区 AI 在 checkpoint 前更新。
 
 ## 本轮目标
 
-执行 M0.2：修复外部复核发现的 4 个残留一致性问题、写入 MEMORY DELTA、语义一致性检查、checkpoint 后 STOP。**未创建任何 V2 正式代码。**
+实现 M1：完全不依赖 AstrBot 的 CampusCue V2 QQ 最小运行闭环（QQ → NapCat → OneBot v11 Reverse WS → OneBotAdapter → CampusEvent → EventBus → Router → EchoHandler → 回复）。**M1 范围只做这个，未实现任何 M2 内容。**
 
 ## 本轮完成
 
-### 外部复核修复（4 项）
+### V2 独立实现根（ADR-011）
 
-| # | 问题 | 修改 |
-|---|---|---|
-| 1 | 07_RUNTIME_LIFECYCLE 失败隔离残留"指数退避重连"（client 思维） | 改为 server 语义：detect disconnect → 清理 stale 连接 → fail/清理 pending action futures → server 保持监听 → 等 NapCat 重连 → 接受新连接 → 替换 stale → resume；日志限频。注明 SSE 等未来 client 模块不在此列 |
-| 2 | 05_V2_ARCHITECTURE "任务流（M2 范围）"含 L8/L9，与 10/17 矛盾 | 改为 "任务流 — progressive activation"：L0-L7 [ACTIVE FROM M2]、L8 [M3]、L9 [M5]；明确 M2 不实现 Reminder/Realtime、TaskService 钩子惰性接线 |
-| 3 | CHATGPT_MEMORY CURRENT TRUTH 维护动态 HEAD `6480ad2`（已过期为 `3d70da1`） | 删除动态 HEAD 字段，改为 "RESOLVE FROM GIT/GITHUB AT RECOVERY TIME"；历史 checkpoint commit（6480ad2/3d70da1）保留在 HISTORY；AGENT_MEMORY 未新增动态 HEAD 字段 |
-| 4 | 08_PROVIDER_AND_AGENT M2 LLMRequest 含 tool_schema（ToolSet 转换后）→ 阶段依赖混乱 | LLMRequest 改 M2 最小集合（messages/model/temperature/max_tokens/timeout/structured output/disable_thinking），**无 ToolSet/ToolRegistry/ToolDefinition/AgentRuntime 依赖**；LLMResponse.tool_calls 标注 M4 EXTENSION / inactive until M4；OpenAICompatibleProvider tools 传入标注 M4 EXTENSION |
+- `v2/` 独立 implementation root：`v2/src/campuscue/` + `v2/tests/` + `v2/scripts/`
+- Legacy `campuscue/` / `astrbot/` / `dashboard/` 冻结（git diff 验证零改动）
+- pyproject：runtime 依赖仅 `websockets`；测试依赖 pytest + pytest-asyncio
 
-### MEMORY DELTA 写入（4 条）
+### 实现模块（v2/src/campuscue/）
 
-- **[EXTERNAL_REVIEW][CORRECTION]**：consistency scan 必须比较同一概念在多个 canonical docs 的语义，不能只搜关键词（M0.1 漏跨文件语义冲突教训）
-- **[EXTERNAL_REVIEW][DESIGN_DECISION]**：Long-term Memory 不维护动态 Git HEAD；recovery 时从 Git/GitHub 获取；Memory 只记里程碑 commit/历史基线
-- **[EXTERNAL_REVIEW][CORRECTION]**：OneBot Reverse WS——CampusCue server 等 NapCat client 重连，不 outbound exponential reconnect
-- **[EXTERNAL_REVIEW][CORRECTION]**：M2 Provider Foundation 不依赖 M4 Tool System
+| 模块 | 职责 |
+|---|---|
+| core/events.py | CampusEvent（ID 全 str、时间 UTC-aware、MessageSegment 保序） |
+| core/bus.py | EventBus：有界队列（await put 背压）+ 有界 in-flight（semaphore）+ handler 异常隔离 + shutdown drain |
+| core/router.py | 最小路由（event type 校验 + stateless self-message 防御 + EchoHandler 选择） |
+| core/outbound.py | OutgoingMessage（平台中立，业务层不构造 OneBot action） |
+| handlers/echo.py | EchoHandler：仅响应 trimmed text == `hello` → `received: hello`（非复读机） |
+| adapters/base.py | PlatformAdapter 边界（start/stop/send/status，刻意小而直） |
+| adapters/onebot/adapter.py | Reverse WS SERVER：token 校验、帧分类、converter 入站、canonical dedup（self→dedup→publish）、echo correlation（register-before-send、timeout/pending cleanup/断连 fail-all）、generation 竞态保护 |
+| adapters/onebot/converter.py | 纯函数转换 + 帧分类（EVENT/ACTION_RESPONSE/IGNORED_META/UNKNOWN） |
+| adapters/onebot/protocol.py | action 构建 + 响应校验（typed ActionError，仅安全字段） |
+| adapters/onebot/dedup.py | transport dedup（bounded + TTL + testable clock） |
+| app/runtime.py | CampusRuntime 状态机（CREATED→STARTING→RUNNING→STOPPING→STOPPED/FAILED），M1 只 wiring Config/Router/EventBus/Adapter/Echo |
+| config.py | 最小配置（host/port/path/token env/queue/in-flight/action timeout/pending bound/dedup） |
+| __main__.py | `python -m campuscue` 入口（Ctrl+C 优雅 shutdown） |
 
-两 Memory 均已写入（CHATGPT_MEMORY §9A + HISTORY/时间线；AGENT_MEMORY rules 11-13 + §7 新增失败模式 + §18 M2/M4 提醒）。
+### 安全
+
+- 默认仅监听 127.0.0.1；非 loopback host 启动即 FAIL（M1 不做 LAN 安全）
+- access token：env（CAMPUSCUE_ONEBOT_TOKEN）读取，handshake 校验，永不打印/进日志
+- 日志 NORMAL MODE 脱敏（不记录 QQ ID/群号/消息正文）；`CAMPUSCUE_DIAGNOSTIC=1` 显式诊断模式（默认 OFF，仅验收用）
+
+### 测试
+
+- **UNIT 49 passed**：converter（group/private/多 text/at/reply/image/保序/ID 字符串/时区/缺字段/非 array/unsupported/无效载荷）、帧分类、dedup（首条/重复/TTL/容量/不同 self_id/clock）、bus（有界队列/背压阻塞/并发上限/异常隔离/shutdown 各态/无孤儿任务）、action correlation（成功/retcode 错误/超时/断连/未知 echo/重复 echo/pending cleanup/max bound）、connection generation（stale cleanup 不清新连接、旧 pending 失败、新连接正常）
+- **INTEGRATION 16 passed**（fake NapCat 全链路，ephemeral port）：group hello 完整链路（action/params/message/echo/响应解析）、private hello、duplicate 单 action、self-message 无回复、非 hello 真实流量无回复、第二连接替换第一、token 拒绝/接受、无效数据韧性（坏帧后 hello 仍工作）、断连 pending 立即失败+重连恢复
+- **PACKAGE ISOLATION PASS**：fresh venv 安装 v2/ → import campuscue → 模块全部可导入（不依赖 Legacy root / AstrBot）
+- **Anti-AstrBot Gate PASS**：AST 扫描 0 个 astrbot import、依赖 0、隔离 smoke OK
+
+### REAL ENV
+
+- **NOT VERIFIED**：本机无 NapCat（仅 QQ 客户端）。未伪造 PASS。
 
 ## 实际修改文件
 
-- docs/v2/07_RUNTIME_LIFECYCLE.md（Fix 1）
-- docs/v2/05_V2_ARCHITECTURE.md（Fix 2）
-- docs/context/CHATGPT_MEMORY.md（Fix 3 + §9A + 时间线）
-- docs/context/AGENT_MEMORY.md（rules 11-13 + §7 + §18）
-- docs/v2/08_PROVIDER_AND_AGENT.md（Fix 4）
-- .ai-handoff/：PROJECT_STATE / STATUS / HANDOFF / REVIEW_REQUEST / CHANGELOG_AI（本轮全部更新）
+- 新增：v2/（pyproject + src/campuscue/* + tests/* + scripts/check_no_astrbot.py）
+- 新增：docs/v2/adr/ADR-011_V2_CODE_ISOLATION.md
+- 修改：docs/v2/18_DECISIONS.md（ADR-011 索引）、04_ONEBOT_PIPELINE.md（canonical dedup 点 + 帧分类表 + Guard）、17_MILESTONES.md（M1 验收语义 + diagnostic mode + 状态定义）
+- 修改：docs/context/CHATGPT_MEMORY.md（§9B M1 MEMORY DELTA + 时间线）、AGENT_MEMORY.md（§2 状态 + §18）
+- 修改：.ai-handoff/ 6 文件
 
 ## 真实测试
 
-- 无代码变更，无测试运行（M0.2 纯文档）
-- 执行验证：跨文档语义一致性检查（8 概念：Reverse WS ownership / OneBot reconnect / M2 scope / M3 Reminder / M5 Realtime / Provider Foundation / Tool activation / Git HEAD source of truth × 8 文件：04/05/07/08/10/17/CHATGPT_MEMORY/AGENT_MEMORY）、Memory health check、Anti-AstrBot 表述一致性、secret scan、git diff inspection
-- **确认：未创建任何正式 V2 source code**
+- 65 tests 全绿（pytest）；fresh venv 隔离安装验证通过；Anti-AstrBot Gate 通过
+- REAL ENV：未执行（无 NapCat）
 
 ## Mock Tests / 未验证
 
-- 未运行任何测试（无被测代码）
-- 未做真实 QQ / NapCat 联调（M1 验收）
+- 真实 QQ hello → received: hello 链路未验证（阻塞：无 NapCat）
+- 真实 NapCat token handshake 行为未确认（按 OneBot 协议标准实现）
 
-## AGENT_DISCOVERED_DELTA（W 协议）
+## AGENT_DISCOVERED_DELTA
 
-None beyond externally requested M0.2 corrections.
-
-（本轮全部变更来自外部复核 finding；无新增仓库事实/设计冲突/运行时发现。）
+- [REPO_FACT]：本机无 NapCat（AppData/Desktop 搜索 + tasklist 确认），仅 QQ 客户端在运行 → REAL ENV 验证被阻塞。
+- [REPO_FACT]：websockets 16.0（Python 3.14.4 环境）API 为 `serve(handler, host, port)` + `ServerConnection.recv/send`；实现已按此版本适配。
+- [DESIGN_CONFLICT]：M0 设计"converter 作为 WS server 连接处理"与 websockets 16 的 `process_request` token 校验点：token 校验在 handshake 阶段（process_request），帧处理在 connection handler——实现已分层处理。
+- [UNVERIFIED_HYPOTHESIS]：NapCat 默认 `message.post-format` 为 array（converter 拒绝 string 格式）；真实环境需确认。
 
 ## Known Bugs
 
-- V1 审计发现 B12（时区硬编码）、B13（LLM 测试缺口）已入 13_BUG_LESSONS.md，M2 修
+- 无已知新 Bug（M1 范围内）。V1 遗留 B12/B13 待 M2 修。
 
 ## Architecture Changes / Decisions
 
-- M0.2 修复 4 项（见上表）；Memory 语义规则（动态 HEAD 不维护）已入双 Memory
+- ADR-011（V2 代码隔离）；MEMORY DELTA 7 条入双 Memory（§9B）
 
 ## Branch / Remote / Base
 
 - 仓库：weiyang02520-ops/CampusCue（public）
-- 本次提交：docs: finalize M0 consistency and memory semantics
-- Base：3d70da1（M0.1 commit）
+- 本次提交：feat: implement independent M1 QQ runtime
+- Base：2014a78（M0.2 commit）
 
 ## External Review Focus
 
-- 见 REVIEW_REQUEST.md（4 项残留修复对照 + Memory health + 语义一致性）
+- 见 REVIEW_REQUEST.md（15 项审核点）
