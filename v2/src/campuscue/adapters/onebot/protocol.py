@@ -30,16 +30,12 @@ class ActionError(Exception):
 
 
 def is_success(payload: dict[str, Any]) -> bool:
-    """OneBot v11 success: status == 'ok' (or absent) AND retcode == 0 (or absent)."""
-    status = payload.get("status")
-    retcode = payload.get("retcode")
-    if retcode is not None and not isinstance(retcode, int):
-        return False
-    if retcode not in (None, 0):
-        return False
-    if status not in (None, "ok"):
-        return False
-    return True
+    """STRICT OneBot v11 success (M1.1 finding F):
+
+    success requires BOTH status == 'ok' AND retcode == 0.
+    Missing either field is malformed -> failure, never success.
+    """
+    return payload.get("status") == "ok" and payload.get("retcode") == 0
 
 
 def validate_response(payload: dict[str, Any]) -> None:

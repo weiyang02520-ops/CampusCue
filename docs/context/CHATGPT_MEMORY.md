@@ -116,6 +116,17 @@ User
 - **[EXTERNAL_REVIEW][SECURITY_CORRECTION]**：**Normal runtime logs 不记录完整 QQ ID/群号/消息正文**；M1 真实验收需观察这些字段时必须使用 explicit diagnostic mode（`CAMPUSCUE_DIAGNOSTIC=1`，默认 OFF，真实 ID 不得 commit，token 永不打印）。
 - **[EXTERNAL_REVIEW][CURRENT]**：**M1 PASS 仍需要真实 QQ/NapCat 验证**；Fake WebSocket integration ≠ REAL ENV VERIFIED。本机无 NapCat → M1 = IMPLEMENTED_AWAITING_REAL_ENV。
 
+## 9C. MEMORY DELTA（M1.1 新增）
+
+- **[EXTERNAL_REVIEW][CORRECTION]**：M1 首轮外部源码审核发现：connection generation 测试只模拟了部分 cleanup，遗漏真实 finally 中 global pending cleanup。**长期教训：测试不得复制/模拟生产实现的一小段然后据此宣称真实路径 VERIFIED；对于 lifecycle/race 问题应尽量覆盖真实执行路径**（新回归测试走真实 `_handle_connection` 生命周期）。
+- **[EXTERNAL_REVIEW][CORRECTION]**：**Bounded EventBus ≠ 完整 pipeline bounded**。若 EventBus handler 内 detach create_task 并立即返回，handler semaphore 可被绕过。完整链路必须检查：queue bound / handler bound / outbound bound / pending action bound。M1.1：outbound send 移入 handler 内 `await`（KISS，不造 OutboundBus）。
+- **[EXTERNAL_REVIEW][CORRECTION]**：**M1 pending action capacity 使用 backpressure（semaphore 等待），不是达到上限后立即失败**。
+- **[EXTERNAL_REVIEW][CORRECTION]**：**所有 bounded 配置必须 fail-fast 拒绝 0/负值**；`asyncio.Queue(maxsize=0)` = unbounded，会静默破坏 bounded 设计。
+- **[EXTERNAL_REVIEW][CORRECTION]**：**OneBot configured WebSocket path 是实际 handshake contract**（process_request 校验），不是日志装饰。
+- **[EXTERNAL_REVIEW][CORRECTION]**：**OneBot action response success 必须严格验证**：`status == "ok" AND retcode == 0`，缺字段视为 malformed/failed。
+- **[EXTERNAL_REVIEW][SECURITY]**：不为验收无必要扩大 QQ/message 明文 diagnostic logging；真实 QQ 收到 expected response 本身就是 M1 E2E 证据（diagnostic mode 仅 verbose debug，不 dump 明文）。
+- **[EXTERNAL_REVIEW][CORRECTION]**：CampusEvent 移除 OneBot-specific `raw_message` metadata（无用途、扩大隐私面、dialect 泄漏进 Domain；YAGNI）。
+
 ## 9. REJECTED / SUPERSEDED APPROACHES
 
 | 旧方案 | 何时 | 为何改 | 替代 |

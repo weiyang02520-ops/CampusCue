@@ -108,7 +108,6 @@ def convert_message(payload: dict[str, Any], *, adapter_id: str, id_factory: IdF
         text=text,
         segments=tuple(segments),
         group_id=str(payload["group_id"]) if conversation_type == ConversationType.GROUP and payload.get("group_id") is not None else None,
-        metadata={"raw_message": str(payload.get("raw_message", ""))},
     )
 
 

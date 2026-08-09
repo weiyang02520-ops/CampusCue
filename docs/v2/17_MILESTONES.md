@@ -22,8 +22,8 @@
 **M1 明确不做**：DB、Task Pipeline、SourceRepository/SourcePolicy（M2 起）、Agent、Reminder、API、WebUI、at/reply/image 发送（仅解析到段）。
 
 **验收（REAL ENV VERIFIED 才 PASS）**：
-- 真实 QQ 群发送 `hello`，控制台（diagnostic 模式）输出 `platform=onebot conversation_type=group ... text=hello`
-- QQ 收到 `received: hello`
+- **核心证据：真实 QQ 群发送 `hello`，真实收到 `received: hello`**（E2E 完整闭环，不依赖日志 dump）
+- 辅助证据（可选，diagnostic 模式，默认关闭且不持久化）：控制台可见 `platform=onebot conversation_type=group ...`（ID 脱敏处理，不记录完整 QQ ID/群号/消息正文）
 - **AstrBot 完全不运行**；代码无 `import astrbot`（Anti-AstrBot Gate 通过）
 - 独立安装验证：fresh venv 安装 v2/ 后 import + 运行成功（不依赖 Legacy root / AstrBot）
 - 真实 ID 在 HANDOFF 中脱敏（hash/last4）；token 永不出现

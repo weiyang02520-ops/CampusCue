@@ -6,22 +6,26 @@ Responsibilities:
 - frame classification: Event Frame / Action Response Frame / ignored meta / unknown
 - converter: Event Frame -> CampusEvent (pure)
 - canonical ingress pipeline: self-suppression -> transport dedup -> bus.publish
-- outbound actions with echo correlation (pending futures belong to the connection
-  generation; disconnect fails all pending actions immediately)
-- access token validation when configured (never logged)
+- outbound actions with echo correlation; pending futures belong to the connection
+  (disconnect/replacement fails that connection's pending actions immediately)
+- access token + path validation at handshake (never logs secrets)
+- bounded outbound concurrency via semaphore (backpressure, not error)
 
-Key races handled:
-- new connection replaces old while old cleanup runs later (generation guard)
+Key races handled (M1.1 review):
+- stale connection's delayed finally never fails the new connection's pending
+  actions: pending map is replaced per-connection, and the finally only acts on
+  the connection that still owns the active slot
 - action response arriving before pending registration (register before send)
 - unknown / duplicate echoes (safe ignore)
+- cancellation safety: semaphore slots always released
 """
 
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import logging
-from datetime import datetime, timezone
 from typing import Any
 
 from websockets.asyncio.server import ServerConnection, serve
@@ -34,7 +38,6 @@ from campuscue.adapters.onebot.converter import (
     EVENT,
     IGNORED_META,
     UNKNOWN,
-    ConversionResult,
     ValidationError,
     classify_frame,
     convert_message,
@@ -58,15 +61,17 @@ class ActionFailure(Exception):
 
 
 class OneBotAdapter(PlatformAdapter):
-    def __init__(self, config: OneBotConfig, *, on_event, send_function=None) -> None:
+    def __init__(self, config: OneBotConfig, *, on_event) -> None:
         self._config = config
         self._on_event = on_event  # awaitable(CampusEvent) -> None (bus.publish)
-        self._send_function = send_function  # test hook: awaitable(str) -> None
         self._server = None
         self._server_task: asyncio.Task[None] | None = None
-        self._generation = 0
         self._conn: ServerConnection | None = None
+        # pending futures belong to the CURRENT connection generation; replaced
+        # on connect/disconnect/replacement so a stale cleanup can never fail a
+        # new connection's actions (M1.1 finding A)
         self._pending: dict[str, asyncio.Future[dict[str, Any]]] = {}
+        self._pending_sem = asyncio.Semaphore(config.max_pending_actions)
         self._send_lock = asyncio.Lock()
         self._dedup = TransportDedup(ttl_s=config.dedup_ttl_s, capacity=config.dedup_capacity)
         self._started = False
@@ -81,7 +86,9 @@ class OneBotAdapter(PlatformAdapter):
                 f"OneBot host {cfg.host!r} is not loopback; LAN exposure requires explicit "
                 "opt-in plus an access token (not implemented in M1). Refusing to start."
             )
-        self._server = await serve(self._handle_connection, cfg.host, cfg.port, process_request=self._check_token)
+        self._server = await serve(
+            self._handle_connection, cfg.host, cfg.port, process_request=self._check_handshake
+        )
         self._server_task = asyncio.create_task(self._server.serve_forever(), name="onebot.server")
         self._started = True
         logger.info("onebot reverse ws server listening on ws://%s:%s%s", cfg.host, cfg.port, cfg.path)
@@ -108,53 +115,55 @@ class OneBotAdapter(PlatformAdapter):
 
     # ------------------------------------------------------------------ inbound
 
-    async def _check_token(self, connection: ServerConnection, request: Request):
-        """Reject reverse WS handshake when a token is configured but not matched."""
-        cfg = self._config
-        if not cfg.access_token:
-            return None  # allow handshake
-        header = request.headers.get("Authorization", "")
-        expected = f"Bearer {cfg.access_token}"
-        # hmac comparison to avoid leaking token length timing
-        import hmac
-
-        if hmac.compare_digest(header, expected):
-            return None
-        logger.warning("onebot ws handshake rejected: missing/invalid access token")
-        return connection.respond(401, "Unauthorized")
+    async def _check_handshake(self, connection: ServerConnection, request: Request):
+        """Validate path first, then access token (if configured). Never logs secrets."""
+        if request.path != self._config.path:
+            logger.warning("onebot ws handshake rejected: wrong path")
+            return connection.respond(404, "Not Found")
+        if self._config.access_token:
+            header = request.headers.get("Authorization", "")
+            expected = f"Bearer {self._config.access_token}"
+            if not hmac.compare_digest(header, expected):
+                logger.warning("onebot ws handshake rejected: missing/invalid access token")
+                return connection.respond(401, "Unauthorized")
+        return None  # allow handshake
 
     async def _handle_connection(self, conn: ServerConnection) -> None:
         if self._stopping:
             await conn.close()
             return
-        gen = self._generation
-        self._generation += 1
-        # replace stale active connection (new connection wins)
+        # new connection wins: replace the active slot, own a fresh pending map
         old = self._conn
         self._conn = conn
         if old is not None and old is not conn:
-            self._fail_all_pending("connection replaced by new connection")
+            old_pending = self._pending
+            self._pending = {}
+            # fail the OLD connection's pending actions; the new connection gets
+            # a fresh map so a delayed old cleanup can never touch its futures
+            self._fail_pending(old_pending, "connection replaced by new connection")
             try:
                 await old.close()
             except Exception:
                 pass
-        logger.info("onebot client connected (generation=%d)", gen)
+        logger.info("onebot client connected")
         try:
             async for raw in conn:
                 if self._conn is not conn:
                     break  # superseded; do not process frames for a stale connection
-                await self._on_frame(gen, raw)
+                await self._on_frame(raw)
         except ConnectionClosed:
             pass
         except Exception:
-            logger.exception("onebot connection loop error (generation=%d)", gen)
+            logger.exception("onebot connection loop error")
         finally:
             if self._conn is conn:
+                # we still own the active slot: this is a genuine disconnect
                 self._conn = None
-            self._fail_all_pending("connection lost")
-            logger.info("onebot client disconnected (generation=%d)", gen)
+                self._fail_all_pending("connection lost")
+            # else: superseded — pending map already belongs to the new connection
+            logger.info("onebot client disconnected")
 
-    async def _on_frame(self, generation: int, raw: Any) -> None:
+    async def _on_frame(self, raw: Any) -> None:
         if isinstance(raw, bytes):
             raw = raw.decode("utf-8", errors="replace")
         try:
@@ -169,7 +178,7 @@ class OneBotAdapter(PlatformAdapter):
         if kind == IGNORED_META:
             return  # lifecycle / heartbeat / notice / request: safe ignore
         if kind == UNKNOWN:
-            logger.debug("onebot unknown frame type (generation=%d)", generation)
+            logger.debug("onebot unknown frame type")
             return
         # EVENT frame
         try:
@@ -201,38 +210,42 @@ class OneBotAdapter(PlatformAdapter):
         await self._send_action(action, params)
 
     async def _send_action(self, action: str, params: dict[str, Any]) -> None:
-        conn = self._conn
-        if conn is None:
-            raise ActionFailure("no active connection")
-        echo = new_echo()
-        loop = asyncio.get_running_loop()
-        fut: asyncio.Future[dict[str, Any]] = loop.create_future()
-        # register BEFORE send to avoid response-before-registration race
-        self._pending[echo] = fut
-        if len(self._pending) > self._config.max_pending_actions:
-            self._pending.pop(echo, None)
-            raise ActionFailure("pending action limit reached")
-        frame = json.dumps(build_action(action, params, echo))
+        """Send one action with echo correlation.
+
+        Bounded by a semaphore: when max_pending_actions is reached, callers
+        WAIT for a free slot (backpressure), they never get an immediate error
+        (M1.1 finding C). The semaphore is released in a finally block so a
+        cancelled task can never leak a slot.
+        """
+        await self._pending_sem.acquire()
         try:
-            if self._send_function is not None:
-                await self._send_function(frame)
-            else:
+            conn = self._conn
+            if conn is None:
+                raise ActionFailure("no active connection")
+            echo = new_echo()
+            fut: asyncio.Future[dict[str, Any]] = asyncio.get_running_loop().create_future()
+            # register BEFORE send to avoid response-before-registration race
+            self._pending[echo] = fut
+            frame = json.dumps(build_action(action, params, echo))
+            try:
                 async with self._send_lock:
                     await conn.send(frame)
-            try:
-                response = await asyncio.wait_for(fut, self._config.action_timeout_s)
-            except asyncio.TimeoutError:
+                try:
+                    response = await asyncio.wait_for(fut, self._config.action_timeout_s)
+                except asyncio.TimeoutError:
+                    self._pending.pop(echo, None)
+                    raise ActionFailure(f"action {action} timed out")
+            except ConnectionClosed:
                 self._pending.pop(echo, None)
-                raise ActionFailure(f"action {action} timed out")
-        except ConnectionClosed:
-            self._pending.pop(echo, None)
-            raise ActionFailure("connection closed while sending action")
+                raise ActionFailure("connection closed while sending action")
+            finally:
+                self._pending.pop(echo, None)
+            try:
+                validate_response(response)
+            except ActionError as e:
+                raise ActionFailure(f"{e.message} (retcode={e.retcode})") from e
         finally:
-            self._pending.pop(echo, None)
-        try:
-            validate_response(response)
-        except ActionError as e:
-            raise ActionFailure(f"{e.message} (retcode={e.retcode})") from e
+            self._pending_sem.release()
 
     def _resolve_action_response(self, payload: dict[str, Any]) -> None:
         echo = payload.get("echo")
@@ -245,7 +258,10 @@ class OneBotAdapter(PlatformAdapter):
         fut.set_result(payload)
 
     def _fail_all_pending(self, reason: str) -> None:
-        pending, self._pending = self._pending, {}
+        self._fail_pending(self._pending, reason)
+        self._pending = {}
+
+    def _fail_pending(self, pending: dict[str, asyncio.Future[dict[str, Any]]], reason: str) -> None:
         for fut in pending.values():
             if not fut.done():
                 fut.set_exception(ActionFailure(reason))
@@ -257,8 +273,6 @@ class OneBotAdapter(PlatformAdapter):
             "adapter_id": self._config_id,
             "listening": self._started,
             "connected": self._conn is not None,
-            "generation": self._generation,
             "pending_actions": len(self._pending),
             "dedup_entries": len(self._dedup),
-            "last_event_at": getattr(self, "_last_event_at", None),
         }

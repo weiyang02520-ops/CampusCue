@@ -49,6 +49,11 @@
 11. **OneBot Reverse WS：CampusCue 是 SERVER**，等 NapCat client 重连；**CampusCue 不 outbound 指数退避重连**（M0.2）。
 12. **Memory 不维护动态 Git HEAD**：current HEAD 在 recovery 时从 Git/GitHub 获取；Memory 只记里程碑 commit 与历史基线（M0.2）。
 13. **M2 Provider Foundation 不依赖 M4 Tool System**：无 ToolSet/ToolRegistry/ToolDefinition/AgentRuntime 依赖；tool-calling 字段标 M4 EXTENSION / inactive until M4（M0.2）。
+14. **Pending action 上限 = backpressure（semaphore 等待），不是报错**；slot 获取→校验连接→注册→发送→清理→释放，finally 保证取消不泄漏 slot（M1.1）。
+15. **bounded 配置 fail-fast**：queue_maxsize/in-flight/pending/dedup/action_timeout 均 >0（`asyncio.Queue(maxsize=0)` = unbounded）；port/path 合法（M1.1）。
+16. **WS path 是 handshake contract**：process_request 校验 path + token，404/401 拒绝（M1.1）。
+17. **Action response 严格校验**：`status=="ok" AND retcode==0` 才算成功（M1.1）。
+18. **CampusEvent 无 OneBot 方言字段**（raw_message 已移除）；diagnostic mode 不 dump 明文（M1.1）。
 
 ## 5. DEPENDENCY DIRECTION
 
@@ -79,6 +84,8 @@ external/platform → adapters → core(events/bus/router) → services → repo
 | 时区错 | 硬编码偏移 | 显式 timezone 注入（ADR-010） |
 | LLM 路径无测试 | extract() 从未被测 | Provider transport 可注入 mock（B13） |
 | **文档一致性假绿** | keyword-based 检查漏跨文件语义冲突（M0.1 漏掉 05 任务流 L8/L9 与 10/17 矛盾） | **一致性检查必须比较同一概念在多个 canonical docs 中的语义，不能只搜关键词**（M0.2 教训） |
+| **测试复制生产代码片段** | connection generation 测试手工模拟 half-finally，漏真实 finally 的 global pending cleanup（M1.1 finding A） | **lifecycle/race 测试必须走真实执行路径**（如真实 `_handle_connection`），禁止测试复制品（M1.1 教训） |
+| **handler 内 detach 绕过并发限制** | EventBus handler create_task 后立即返回 → semaphore 被绕过 | **完整链路 bounded**：queue + in-flight handler + outbound send 都在 handler 内 await（M1.1 finding B） |
 
 ## 8. EVIDENCE FIRST（置信度纪律）
 

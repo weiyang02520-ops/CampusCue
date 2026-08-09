@@ -46,3 +46,12 @@
 - **测试**：UNIT 49 + INTEGRATION 16 = **65 passed**；PACKAGE ISOLATION PASS（fresh venv）；Anti-AstrBot Gate PASS
 - **REAL ENV**：**NOT VERIFIED**（本机无 NapCat）→ M1 = IMPLEMENTED_AWAITING_REAL_ENV
 - **审核状态**：等待外部 M1 审核 + 真实 NapCat 联调
+
+## 2026-08-09 · M1.1 RUNTIME CORRECTNESS FIX
+
+- **任务**：修复外部源码审核 8 项 correctness/boundedness/protocol 问题
+- **Commit**：fix: harden M1 runtime lifecycle and backpressure（本轮）
+- **主要修改**：adapter（stale finally 竞态 + semaphore backpressure + path 校验）、runtime（outbound 进 handler）、config（fail-fast）、protocol（严格响应校验）、converter（移除 raw_message）、__main__（诊断模式去假 claim）
+- **测试**：87 passed（新增 22）；package isolation PASS；Anti-AstrBot Gate PASS
+- **REAL ENV**：NOT VERIFIED（本机无 NapCat）
+- **审核状态**：等待外部 M1.1 复核 → M1.2 Real Env Gate

@@ -3,6 +3,10 @@
 State machine: CREATED -> STARTING -> RUNNING -> STOPPING -> STOPPED | FAILED.
 M1 wires only: Config, EchoHandler, Router, EventBus, OneBotAdapter.
 No DB / Provider / Reminder / Agent / API (M2+).
+
+Outbound (M1.1 finding B): routing + send happen INSIDE the EventBus handler
+so max_in_flight bounds the complete event->route->outbound pipeline, and
+send failures are caught here (never "Task exception was never retrieved").
 """
 
 from __future__ import annotations
@@ -11,7 +15,7 @@ import asyncio
 import logging
 from enum import Enum
 
-from campuscue.adapters.onebot.adapter import OneBotAdapter
+from campuscue.adapters.onebot.adapter import ActionFailure, OneBotAdapter
 from campuscue.config import RuntimeConfig
 from campuscue.core.bus import EventBus
 from campuscue.core.router import Router
@@ -36,8 +40,6 @@ class CampusRuntime:
         self.bus: EventBus | None = None
         self.router: Router | None = None
         self.adapter: OneBotAdapter | None = None
-        self._owned_tasks: set[asyncio.Task[None]] = set()
-        self._outbound_task: asyncio.Task[None] | None = None
 
     async def start(self) -> None:
         self.state = RuntimeState.STARTING
@@ -66,14 +68,21 @@ class CampusRuntime:
             raise
 
     async def _route_event(self, event) -> None:
-        """Bus handler: route event, then send the outbound result directly (no outbound bus)."""
+        """Bus handler: route, then send inside the handler so the EventBus
+        concurrency bound covers the full pipeline. Send failures are caught
+        and logged redacted (they never escape as unretrieved task exceptions)."""
         if self.router is None:
             return
-        result = await self.router.route(event)
-        if result is not None and self.adapter is not None:
-            task = asyncio.create_task(self.adapter.send(result), name=f"outbound.{event.event_id[:8]}")
-            self._owned_tasks.add(task)
-            task.add_done_callback(self._owned_tasks.discard)
+        try:
+            result = await self.router.route(event)
+            if result is not None and self.adapter is not None:
+                await self.adapter.send(result)
+        except ActionFailure as e:
+            logger.warning(
+                "outbound send failed; trace=%s error=%s", event.trace_id[:8], e
+            )
+        except Exception:
+            logger.exception("event pipeline failed; trace=%s", event.trace_id[:8])
 
     async def _cleanup_after_failure(self) -> None:
         if self.adapter is not None:
@@ -97,11 +106,5 @@ class CampusRuntime:
         # 2) bounded drain of in-flight handlers
         if self.bus is not None:
             await self.bus.shutdown(timeout_s=3.0)
-        # 3) cancel owned outbound tasks
-        if self._outbound_task is not None and not self._outbound_task.done():
-            self._outbound_task.cancel()
-        if self._owned_tasks:
-            for t in list(self._owned_tasks):
-                t.cancel()
         self.state = RuntimeState.STOPPED
         logger.info("campus runtime STOPPED")

@@ -30,6 +30,26 @@ class RuntimeConfig:
     event_bus: EventBusConfig = field(default_factory=EventBusConfig)
     diagnostic: bool = False  # CAMPUSCUE_DIAGNOSTIC=1; default OFF (privacy)
 
+    def __post_init__(self) -> None:
+        # Fail-fast validation (M1.1 finding D): every "bounded" knob must be a
+        # positive number. asyncio.Queue(maxsize=0) means UNBOUNDED, which would
+        # silently break the M1 bounded design.
+        self._require_positive("queue_maxsize", self.event_bus.queue_maxsize)
+        self._require_positive("max_in_flight", self.event_bus.max_in_flight)
+        self._require_positive("max_pending_actions", self.onebot.max_pending_actions)
+        self._require_positive("dedup_capacity", self.onebot.dedup_capacity)
+        self._require_positive("dedup_ttl_s", self.onebot.dedup_ttl_s)
+        self._require_positive("action_timeout_s", self.onebot.action_timeout_s)
+        if not (1 <= self.onebot.port <= 65535):
+            raise ValueError(f"invalid port: {self.onebot.port!r} (must be 1-65535)")
+        if not self.onebot.path.startswith("/"):
+            raise ValueError(f"invalid path: {self.onebot.path!r} (must start with '/')")
+
+    @staticmethod
+    def _require_positive(name: str, value: float) -> None:
+        if value is None or value <= 0:
+            raise ValueError(f"{name} must be > 0, got {value!r}")
+
 
 _TOKEN_ENV = "CAMPUSCUE_ONEBOT_TOKEN"
 

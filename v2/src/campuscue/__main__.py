@@ -31,10 +31,10 @@ async def _amain() -> int:
     try:
         await runtime.start()
         if config.diagnostic:
-            print(
-                "DIAGNOSTIC MODE ON: will print conversation/group/sender/message for "
-                "acceptance only. Turn off for production."
-            )
+            # Diagnostic mode: verbose debug logging ONLY. It still never dumps
+            # full QQ IDs / full message text / tokens. Acceptance evidence is
+            # the real QQ receiving the expected reply, not log dumps.
+            print("CAMPUSCUE_DIAGNOSTIC=1: verbose debug diagnostics enabled")
         else:
             print("CampusCue V2 runtime RUNNING (normal logs are privacy-redacted).")
             print("Listening for NapCat reverse WS; send 'hello' from QQ to verify.")

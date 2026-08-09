@@ -8,6 +8,7 @@
 - [x] CampusRuntime / CampusEvent / 有界 EventBus / Router / EchoHandler
 - [x] OneBotAdapter（Reverse WS SERVER + token + 帧分类 + echo correlation + generation + dedup）
 - [x] unit 49 + integration 16 全绿；package isolation PASS
+- [x] **M1.1** 外部源码审核 8 项修复（stale finally/semaphore backpressure/config fail-fast/path 校验/严格响应/诊断模式/raw_message）+ 87 tests 全绿
 - [ ] **REAL ENV**：真实 NapCat 联调（阻塞：本机无 NapCat）——需用户提供环境：
   1. 安装/启动 NapCat（QQ 登录）
   2. 配置反向 WS 客户端指向 `ws://127.0.0.1:6199/ws`（可设 token）

@@ -15,7 +15,7 @@
 ## current_milestone
 
 - M0 = **PASS**（最终外部审核通过）
-- M1 = **IMPLEMENTED_AWAITING_REAL_ENV**（实现 + 65 tests + package isolation 完成；真实 NapCat 联调待做，本机无 NapCat）
+- M1 = **IMPLEMENTED_AWAITING_REAL_ENV**（实现 + M1.1 correctness fixes + 87 tests + package isolation 完成；真实 NapCat 联调待做，本机无 NapCat）
 - M2 = **NOT_READY**
 - status：**AWAITING_REAL_ENV + AWAITING_EXTERNAL_M1_REVIEW**
 
@@ -30,6 +30,7 @@
   - 65 tests 全绿（unit 49 + integration 16）
   - Package isolation PASS（fresh venv 安装 v2/ + import + smoke）
   - 日志脱敏 + CAMPUSCUE_DIAGNOSTIC 显式诊断模式
+  - **M1.1 修复**（外部源码审核 8 项）：stale finally 竞态、outbound 进 handler 边界、pending semaphore backpressure、config fail-fast、WS path 校验、严格响应校验、诊断模式去假 claim、移除 raw_message
 
 ## in_progress
 

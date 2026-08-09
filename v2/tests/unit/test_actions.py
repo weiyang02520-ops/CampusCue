@@ -168,15 +168,26 @@ async def test_pending_cleaned_after_disconnect():
 
 
 @pytest.mark.asyncio
-async def test_max_pending_bound():
+async def test_stale_pending_entry_does_not_block_new_send():
+    """M1.1 finding C: concurrency is bounded by the semaphore; a leftover
+    (already-done) entry in the pending map must not block new sends.
+    Real backpressure (second send waits for first) is covered in
+    test_m11_regressions.py::test_pending_backpressure_waits_not_errors."""
     a = await _make_adapter(max_pending_actions=1)
-    # fill the pending map with an unresolved future
+    # leftover DONE future in the map (simulates a resolved-then-forgotten echo)
     fut = asyncio.get_running_loop().create_future()
-    a._pending["stale-echo"] = fut
+    fut.set_result({"status": "ok", "retcode": 0})
+    a._pending["stale-done-echo"] = fut
     msg = OutgoingMessage(conversation_id="123", conversation_type=ConversationType.GROUP, text="x")
-    with pytest.raises(ActionFailure, match="limit"):
-        await asyncio.wait_for(a.send(msg), 1.0)
-    assert len(a._pending) == 1  # not leaked
+    send_task = asyncio.create_task(a.send(msg))
+    await asyncio.sleep(0.05)
+    assert len(a._conn.sent) == 1  # proceeded immediately
+    frame = json.loads(a._conn.sent[0])
+    a._resolve_action_response({"status": "ok", "retcode": 0, "echo": frame["echo"]})
+    await asyncio.wait_for(send_task, 1.0)
+    # the send's own echo was cleaned up; the injected stale entry remains
+    assert "stale-done-echo" in a._pending
+    assert len(a._pending) == 1
 
 
 @pytest.mark.asyncio
