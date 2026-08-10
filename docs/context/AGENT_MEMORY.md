@@ -18,12 +18,12 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M2b.1.1）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M2b.1.2）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b.1 = AI-first 方向 PASS + M2b.1.1 Hardening 完成 AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 NOT_AUTHORIZED；M2 FINAL = NOT PASS** |
+| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b.1 = FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 NOT_AUTHORIZED；M2 FINAL = NOT PASS** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 root 已有 M1 实现**（src/campuscue + 87 tests）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结 |
@@ -33,8 +33,8 @@
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M0/M1/M2a 全部 PASS。**M2b.1 = AI_FIRST_PIPELINE_HARDENED AWAITING_EXTERNAL_FINAL_REVIEW**；**M2b.2 NOT_AUTHORIZED**（等 M2b.1.1 外部最终确认）。
-- 下一个待执行：**M2b.2（真实 Provider + 真实 NapCat/QQ 验收）**——等 M2b.1.1 外部最终审核确认后才开始。
+- **当前状态**：M0/M1/M2a 全部 PASS。**M2b.1 = FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW**；**M2b.2 NOT_AUTHORIZED**（等 M2b.1 外部最终确认）。
+- 下一个待执行：**M2b.2（真实 Provider + 真实 NapCat/QQ 验收）**——等 M2b.1 外部最终审核确认后才开始。
 
 ## 4. ARCHITECTURE RULES（违反 = FAIL）
 
@@ -96,6 +96,7 @@ external/platform → adapters → core(events/bus/router) → services → repo
 | **PROJECT_STATE 内部腐烂** | 顶部 current_milestone 正确但 blocked/next_gate/verified 残留旧状态 | **每次 checkpoint 语义扫描 current_milestone/in_progress/blocked/verified/next_gate/review_focus** 的 stale 矛盾（M2a.2 教训） |
 | **校验规则重复** | 创建规范 helper 后运行时仍保留等价 regex（M2a.2 finding A） | **每个消费方必须实际 import/调用 canonical helper**；重复等价代码 = 重复策略（M2a.2 教训） |
 | **ORM 隐藏墙钟** | models 保留 datetime.now 默认（M2a.2 finding D） | **只有 SystemClock 可读真实墙钟**；storage models 时间戳 required（无默认） |
+| **Fallback semantic drift** | primary Provider 路径用完整产品/安全契约，兼容 fallback 用简化 prompt 行为不同（M2b.1.2 finding B） | **primary 与 fallback 共享一个 canonical 语义 prompt 契约**；只有 transport/输出强制不同（`build_system_prompt(json_only)`）；真实 endpoint 可能大部分时间走 fallback，使 primary 测试失效 |
 
 ## 8. EVIDENCE FIRST（置信度纪律）
 
@@ -165,8 +166,8 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：M2b.1.1（Real-Gate Hardening）完成（302 tests 全绿 + fresh venv 隔离 `.venv-m2iso` + Anti-AstrBot），AWAITING_EXTERNAL_FINAL_REVIEW；**M2b.2 NOT_AUTHORIZED**。
-- **M2 预备（M2b.1.1 外部确认后启动）**：M2b.2 = 真实 Provider（如 Ark）+ 真实 NapCat/QQ + SQLite 验收；真实 Provider 凭据走环境变量（不向用户索要、不抓取）。
+- **当前状态**：M2b.1.2（Fallback Contract Fix）完成（316 tests 全绿 + fresh venv 隔离 `.venv-m2iso` + Anti-AstrBot），FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW；**M2b.2 NOT_AUTHORIZED**。
+- **M2 预备（M2b.1 外部最终确认后启动）**：M2b.2 = 真实 Provider（如 Ark）+ 真实 NapCat/QQ + SQLite 验收；真实 Provider 凭据走环境变量（不向用户索要、不抓取）；若真实行为需要，M2b.2 可加极小 endpoint 能力映射。
 - **运行 V2 必须用独立 venv**（repo 根有 Legacy campuscue/，import 会遮蔽）——真实环境已用 `v2/.venv-m1-real` 验证；本轮隔离验证用 `v2/.venv-m2iso`。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。
 
@@ -175,3 +176,5 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **AI-first 规则（ADR-013）**：本地规则不是语义 gate——MessageHygieneFilter 只 hard drop 高确定性垃圾；LocalSignalAnalyzer score 是 hints 绝不否决 LLM 调用（score=0 的正常消息仍进 LLM）；LLM 单次 triage+extraction（正常 1 call，schema fallback ≤2 calls）。
 
 - **M2b.1.1 Hardening 事实（外部 PASS_WITH_FIXES 修复轮）**：secret env 缺失 → CONFIG_ERROR 0 transport；Extraction 审计带 provider_type+model（BaseProvider.model 公共属性）；model_said_none 保留 confidence/reason 不存输入 context；fallback 仅 STRUCTURED_OUTPUT_UNSUPPORTED（新错误码）；ContextCollector resize；显式年份不 auto-roll；CAMPUSCUE_ENV=test + pipeline + 无 DB_PATH → ConfigError；TaskService 无 threshold/死函数；dedup_key 唯一 helper build_dedup_key()；prompt-injection 防御纵深（消息永在 user role）。
+
+- **M2b.1.2 Fallback 契约事实（外部最终复核修复轮）**：400 分类——STRUCTURED_OUTPUT_UNSUPPORTED 仅结构化特定证据（json_schema/response_format/structured_output 显式引用），generic "unsupported" 单独出现 → INVALID_REQUEST 不 fallback；主/回退共享单一 canonical `build_system_prompt(json_only)`（语义+安全契约相同，仅输出强制不同）；fallback user 消息 == primary（上下文/信号/时间戳/当前消息保留）；whitespace-only secret → CONFIG_ERROR 0 transport（strip 只用于判空，合法 secret 不 strip）；no-deadline 双方课程已知不同 → 不 dedup（`build_dedup_key` course 已知才入键）。

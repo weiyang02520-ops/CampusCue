@@ -147,6 +147,24 @@ class TestAuth:
         assert called == []  # no transport
 
     @pytest.mark.asyncio
+    async def test_secret_env_whitespace_only_fails_before_transport(self, monkeypatch):
+        """M2b.1.2 (Finding 11): whitespace-only secret behaves as missing/empty
+        -> CONFIG_ERROR, ZERO transport calls."""
+        monkeypatch.setenv("TEST_FAKE_PROVIDER_KEY", "   ")
+        called = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            called.append(1)
+            return _ok_response()
+
+        p = _make_provider(secret_ref="TEST_FAKE_PROVIDER_KEY",
+                           client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.CONFIG_ERROR
+        assert called == []  # no transport
+
+    @pytest.mark.asyncio
     async def test_secret_env_valid_bearer(self, monkeypatch):
         """M2b.1.1 (A): configured ref + valid secret -> Bearer auth sent."""
         monkeypatch.setenv("TEST_FAKE_PROVIDER_KEY", "fake-secret-value")
@@ -305,6 +323,50 @@ class TestErrorClassification:
         with pytest.raises(ProviderError) as ei:
             await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
         assert ei.value.code == ProviderErrorCode.INVALID_MODEL
+
+    # ---------------- M2b.1.2 Finding A: generic "unsupported" is NOT enough
+
+    @pytest.mark.asyncio
+    async def test_400_generic_unsupported_code_is_invalid_request(self):
+        """Case A: {"code": "unsupported_parameter", "message": "temperature is
+        unsupported"} -> INVALID_REQUEST (NOT structured fallback)."""
+        p = _make_provider(client=httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda r: httpx.Response(400, json={
+                "error": {"code": "unsupported_parameter", "message": "temperature is unsupported"}}))))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.INVALID_REQUEST
+
+    @pytest.mark.asyncio
+    async def test_400_unsupported_response_format_is_structured(self):
+        """Case B: {"code": "unsupported_response_format", "message":
+        "json_schema is unsupported"} -> STRUCTURED_OUTPUT_UNSUPPORTED."""
+        p = _make_provider(client=httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda r: httpx.Response(400, json={
+                "error": {"code": "unsupported_response_format", "message": "json_schema is unsupported"}}))))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED
+
+    @pytest.mark.asyncio
+    async def test_400_invalid_json_schema_type_is_structured(self):
+        """Case C: {"type": "invalid_json_schema"} -> STRUCTURED_OUTPUT_UNSUPPORTED."""
+        p = _make_provider(client=httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda r: httpx.Response(400, json={"error": {"type": "invalid_json_schema"}}))))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED
+
+    @pytest.mark.asyncio
+    async def test_400_message_json_schema_not_supported_is_structured(self):
+        """Case D: message "response_format json_schema is not supported by this
+        model" -> STRUCTURED_OUTPUT_UNSUPPORTED."""
+        p = _make_provider(client=httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda r: httpx.Response(400, json={
+                "error": {"message": "response_format json_schema is not supported by this model"}}))))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED
 
     @pytest.mark.asyncio
     async def test_500_server_error(self):

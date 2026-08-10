@@ -22,7 +22,7 @@ from campuscue.providers.base import BaseProvider
 from campuscue.providers.errors import ProviderError, ProviderErrorCode
 from campuscue.providers.models import LLMMessage, LLMRequest
 from campuscue.tasks.models import EXTRACTION_JSON_SCHEMA, ExtractedTask, ExtractionResult
-from campuscue.tasks.prompts import FALLBACK_PROMPT, build_system_prompt, build_user_message
+from campuscue.tasks.prompts import build_system_prompt, build_user_message
 
 logger = logging.getLogger("campuscue.tasks.extractor")
 
@@ -62,7 +62,7 @@ class TaskExtractor:
         # Attempt 1: JSON Schema structured output (also carries hints)
         base_request = LLMRequest(
             messages=[
-                LLMMessage(role="system", content=build_system_prompt()),
+                LLMMessage(role="system", content=build_system_prompt(json_only=False)),
                 LLMMessage(role="user", content=user_msg),
             ],
             model=self._provider.model,
@@ -76,11 +76,16 @@ class TaskExtractor:
             # incompatibility evidence; every other error is a real failure.
             if e.code != ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED:
                 raise
-        # Attempt 2 (ONCE, final): strict JSON-only fallback (schema unsupported)
+        # Attempt 2 (ONCE, final): strict JSON-only fallback (schema unsupported).
+        # M2b.1.2 (Finding B): SAME canonical AI-first semantic + input-as-data
+        # safety contract as primary; only output enforcement differs (no
+        # response_schema). The user message is IDENTICAL (context/signals/
+        # timestamp/current message preserved), and untrusted text never enters
+        # the system role.
         fallback_request = LLMRequest(
             messages=[
-                LLMMessage(role="system", content="你是校园事务提取器。只输出一个 JSON 对象。"),
-                LLMMessage(role="user", content=FALLBACK_PROMPT.format(message=user_msg)),
+                LLMMessage(role="system", content=build_system_prompt(json_only=True)),
+                LLMMessage(role="user", content=user_msg),
             ],
             model=self._provider.model,
         )

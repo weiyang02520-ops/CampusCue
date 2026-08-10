@@ -15,8 +15,9 @@
 ## current_milestone
 
 - M0 = **PASS**；M1 = **PASS**（含 M1.1 correctness + M1.2 REAL ENV + M1.3 隐私清理）
-- M2a = **PASS**（最终外部审核通过）；**M2b.1 = PASS_WITH_FIXES → M2b.1.1（Real-Gate Hardening）完成 — AWAITING_EXTERNAL_FINAL_REVIEW**
-- **M2b.2 = NOT_AUTHORIZED**（等 M2b.1.1 外部最终确认）
+- M2a = **PASS**（最终外部审核通过）
+- **M2b.1 = FINAL_IMPLEMENTATION_COMPLETE**（AI-first PASS + M2b.1.1 hardening PASS + M2b.1.2 fallback/dedup 契约修正完成）— **AWAITING_EXTERNAL_FINAL_REVIEW**
+- **M2b.2 = NOT_AUTHORIZED**（等 M2b.1 最终复核）
 - M2 最终 = NOT PASS（等 M2b.2）
 - status：**AWAITING_EXTERNAL_M2B1_FINAL_REVIEW**
 
@@ -25,25 +26,25 @@
 - M0 / M0.1 / M0.2（PASS）
 - M1 / M1.1 / M1.2 / M1.3（PASS）
 - M2a / M2a.1 / M2a.2（PASS）
-- **M2b.1（PASS_WITH_FIXES）+ M2b.1.1（Real-Gate Hardening，本轮）**：缺 secret env 在 transport 前 fail、Extraction 记录 provider/model、model_said_none 保留 confidence/reason、schema fallback 仅 STRUCTURED_OUTPUT_UNSUPPORTED、ContextCollector window resize、显式年份不 auto-roll、test DB 隔离 fail-fast、TaskService 所有权清理、dedup_key 单一 helper、prompt-injection 防御（defense-in-depth）
+- **M2b.1 系列（FINAL_IMPLEMENTATION_COMPLETE）**：AI-first pipeline（ADR-013）+ M2b.1.1 Real-Gate Hardening（缺 secret fail-before-transport / provider-model 审计 / model_said_none reason / fallback 分类 / context resize / 显式年份 / test DB 隔离 / 所有权清理 / dedup key / injection 防御）+ **M2b.1.2 Fallback Contract Fix（generic unsupported 不 fallback / 单 canonical system 契约 / fallback 上下文保留 / whitespace secret / no-deadline 跨课程不 dedup）**
 
 ## in_progress
 
-- 无（M2b.1.1 完成，checkpoint 后停止，等待外部最终复核）
+- 无（M2b.1.2 完成，checkpoint 后停止，等待外部最终复核）
 
 ## blocked
 
-- **M2b.2 仅阻塞于 M2b.1.1 外部最终确认**（无其他阻塞）
+- **M2b.2 仅阻塞于 M2b.1 外部最终复核**（无其他阻塞）
 
 ## verified（Workspace Agent 报告；外部审核待复核）
 
-- **302 tests passed**（M1 87 旧 + M2a 116 + M2b.1 61 + M2b.1.1 新增 38 相关断言）；package isolation PASS（fresh venv `.venv-m2iso` + tzdata）；Anti-AstrBot PASS
+- **316 tests passed**（M2b.1.2 新增 14）；package isolation PASS（fresh venv `.venv-m2iso` + tzdata）；Anti-AstrBot PASS
 - REAL ENV VERIFIED（M1.2，2026-08-10，NapCat v4.18.18 + 真实 QQ）——**保留自 M1.2，非本轮新验证**
-- 外部审核状态：**awaiting**（M2a 已 PASS；M2b.1 AI-first 方向已 PASS；本轮 M2b.1.1 待最终复核）
+- 外部审核状态：**awaiting**（M2a PASS；M2b.1 AI-first 方向 PASS；M2b.1.1 hardening PASS；M2b.1.2 待最终复核）
 
 ## unverified / known unknowns
 
-- 真实 Provider（如 Ark）json_schema 支持度与真实 token 成本（M2b.2 真实验收）
+- 真实 Provider（如 Ark）json_schema 支持度与真实 token 成本（M2b.2 真实验收；若 primary 行为证明需要，M2b.2 可加极小 endpoint 能力映射）
 - 无迁移框架；未来 schema 版本需人工迁移
 
 ## architecture_decisions
@@ -52,17 +53,17 @@
 
 ## next_gate
 
-- 外部 ChatGPT M2b.1.1 最终源码复核 → PASS 则 **M2b.2 授权**（真实 Provider + 真实 NapCat/QQ + SQLite 验收）
+- 外部 ChatGPT M2b.1 最终源码复核（10 项审核点）→ PASS 则 **M2b.2 授权**（真实 Provider + 真实 NapCat/QQ + SQLite 验收）
 
-## external_review_focus（M2b.1.1 复核点）
+## external_review_focus（M2b.1.2 复核点）
 
-1. Missing-secret fail-before-transport（配置了 secret_reference 但 env 缺失/空 → 本地 CONFIG_ERROR，0 transport calls）
-2. Extraction 审计记录 provider/model（BaseProvider.model 公共属性；业务不碰 `_model`）
-3. model_said_none 审计保留 confidence/reason（无虚构 Task；不持久化完整输入 context）
-4. schema fallback 仅 STRUCTURED_OUTPUT_UNSUPPORTED（generic INVALID_REQUEST / AUTH / TIMEOUT 不 fallback）
-5. ContextCollector context_window resize（窗口从 1 → 3 后缓冲区可增长）
-6. 显式年份的过去日期拒绝而非 auto-roll（"2026年8月5日" 不变成 2027）
-7. CAMPUSCUE_ENV=test + pipeline + 无 CAMPUSCUE_DB_PATH → 启动前 fail；confidence_threshold ∈ [0,1] 且 timezone 可解析
-8. TaskService 单一状态所有权（pipeline 决策，TaskService 应用）；无死 decide_pending_confirm / 无 pipeline 私有访问
-9. dedup_key 单一 canonical helper（normalized title + course + deadline minute）
-10. prompt-injection defense-in-depth（消息文本永不进 system role；固定 system prompt + schema）
+1. generic "unsupported" 不再触发 structured fallback（`unsupported_parameter`+temperature → INVALID_REQUEST 1 call）
+2. 结构化特定证据仍触发恰一次 fallback（`unsupported_response_format`/`invalid_json_schema`/message 证据 → 2 calls）
+3. fallback 保留 canonical AI-first 语义（校园事务定义/AI-first 判断/上下文补全/信号 hints）
+4. fallback 保留 prompt-injection defense-in-depth 边界（roles system+user；attack 永不进 system；含"输入即数据"语义）
+5. fallback 保留有界上下文/当前消息/信号/时间戳（user 消息与 primary 完全一致）
+6. whitespace-only secret → CONFIG_ERROR + 0 transport
+7. no-deadline 不同已知课程不 dedup；`build_dedup_key` 语义一致
+8. AI-first 行为未变（ADR-013 CURRENT；无 LocalPrefilter 回归）
+9. 无 M2b.2 实现（真实 Provider/QQ 未运行）
+10. state/handoff/memory 一致

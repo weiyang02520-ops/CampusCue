@@ -142,3 +142,16 @@
 - **测试**：新增 38 断言组（secret/fallback 分类/审计 provider-model/model_said_none/resize/年份/dedup key/config/ownership/injection/fake provider）→ **302 passed**；package isolation PASS（.venv-m2iso）；Anti-AstrBot PASS
 - **REAL ENV**：无新声明（M1.2 prior 保留；真实 Provider/QQ 留 M2b.2）
 - **审核状态**：M2b.1 = AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 NOT_AUTHORIZED
+
+## 2026-08-10 · M2b.1.2 FALLBACK CONTRACT FIX
+
+- **任务**：外部最终复核通过 M2b.1.1 后，tiny final correction（fallback/dedup 契约）
+- **Commit**：fix: align M2 fallback and dedup contracts（本轮）
+- **主要修改**：
+  - providers/openai_compatible：STRUCTURED_OUTPUT_UNSUPPORTED 仅结构化特定证据（json_schema/response_format/structured_output 显式引用）；generic unsupported 单独出现 → INVALID_REQUEST；whitespace-only secret → CONFIG_ERROR
+  - tasks/prompts：单一 canonical `build_system_prompt(json_only)`（主/回退共享语义+安全契约；仅输出强制不同）；删除 FALLBACK_PROMPT 双定义
+  - tasks/extractor：fallback 复用同一 user 消息（上下文/信号/时间戳/当前消息保留）；user role 永不拼接群文本
+  - tasks/dedup：no-deadline 时课程双方已知且不同 → 不 dedup；build_dedup_key course 已知才入键
+- **测试**：新增 14（400 分类 A-D 4、whitespace secret 1、fallback canonical 1、fallback 上下文 1、fallback injection 1、dedup A-E 5、dedup key 1）→ **316 passed**；package isolation PASS（.venv-m2iso）；Anti-AstrBot PASS
+- **REAL ENV**：无新声明（M1.2 prior 保留；真实 Provider/QQ 留 M2b.2）
+- **审核状态**：M2b.1 = FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 NOT_AUTHORIZED

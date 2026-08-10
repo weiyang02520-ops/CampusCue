@@ -35,15 +35,17 @@ def build_dedup_key(*, title: str, course: str | None, deadline: datetime | None
     """CANONICAL semantic dedup key (M2b.1.1 Finding 15).
 
     ONE helper defines the STORED Task.dedup_key semantics, consistent with
-    the Deduplicator's matching rules (same normalized title + deadline minute;
-    course participates when both are known):
+    the Deduplicator's matching rules:
     - normalized title
-    - course when present (both-known comparison)
+    - course when PRESENT (course participates in semantic identity when known;
+      M2b.1.2: both-known-different courses must not dedup)
     - deadline MINUTE precision (matches Deduplicator's same_minute check)
 
     Source scope stays separate via source_id. NO fuzzy matching.
     """
-    parts = [normalize_title(title), course or ""]
+    parts = [normalize_title(title)]
+    if course:
+        parts.append(course)  # course participates when known
     if deadline is not None:
         minute = deadline.astimezone(timezone.utc).replace(second=0, microsecond=0)
         parts.append(minute.isoformat())
@@ -89,12 +91,21 @@ class Deduplicator:
                 continue
             if t.deadline is None or deadline is None:
                 if t.deadline is None and deadline is None:
+                    # M2b.1.2 (Finding C): course participates in semantic
+                    # identity when BOTH courses are known. Different known
+                    # courses must NOT dedup merely because both deadlines are
+                    # missing (e.g. 高等数学期末考试 vs 大学英语期末考试).
+                    both_known = t.course is not None and course is not None
+                    if both_known and t.course != course:
+                        continue
                     return DedupResult(
                         is_duplicate=True, reason="same_title_no_deadline",
                         dedup_key=None, matched_task_id=t.id,
                     )
                 continue
             same_minute = t.deadline.replace(second=0, microsecond=0) == deadline.replace(second=0, microsecond=0)
+            # course participates when BOTH known (different -> NOT duplicate);
+            # one side missing course -> relaxed match allowed
             if same_minute and (t.course == course or course is None or t.course is None):
                 return DedupResult(
                     is_duplicate=True, reason="same_semantic_task",

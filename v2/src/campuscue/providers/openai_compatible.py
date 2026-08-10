@@ -87,7 +87,10 @@ class OpenAICompatibleProvider(BaseProvider):
         except ValueError as e:
             raise ProviderError(ProviderErrorCode.CONFIG_ERROR, str(e)) from None
         value = os.environ.get(self._secret_reference)
-        if value is None or value == "":
+        if value is None or value.strip() == "":
+            # M2b.1.2 (Finding 11): whitespace-only counts as missing/empty.
+            # strip is used ONLY to determine emptiness — the legitimate secret
+            # value is never stripped/altered for transmission.
             raise ProviderError(
                 ProviderErrorCode.CONFIG_ERROR,
                 f"secret_reference env {self._secret_reference} is missing/empty; "
@@ -187,11 +190,14 @@ class OpenAICompatibleProvider(BaseProvider):
     def _classify_400(self, resp: httpx.Response) -> ProviderError:
         """400: safe JSON parse only for finer classification; non-JSON -> INVALID_REQUEST.
 
-        M2b.1.1 (Finding D): generic evidence of structured-output incompatibility
-        is classified STRUCTURED_OUTPUT_UNSUPPORTED (the ONLY invalid-request
-        category that permits one schema fallback). HTTP structured error fields
-        (error.message / error.code / error.type) are used — no vendor-specific
-        string matching, no guessing at one real vendor's wire format.
+        M2b.1.1/1.2 (Findings D/A): STRUCTURED_OUTPUT_UNSUPPORTED requires
+        STRUCTURED-OUTPUT-SPECIFIC evidence — explicit references to
+        json_schema / response_format / structured_output in safe structured
+        fields (error.type / error.code / error.message). Generic "unsupported" /
+        "unsupported_parameter" / "unsupported_feature" alone is INSUFFICIENT
+        (e.g. {"code": "unsupported_parameter", "message": "temperature is
+        unsupported"} -> INVALID_REQUEST, no fallback). No vendor-specific
+        sentence matching; M2b.2 real testing may add a tiny capability mapping.
         """
         try:
             data = resp.json()
@@ -203,11 +209,12 @@ class OpenAICompatibleProvider(BaseProvider):
         message = str(err.get("message", "")).lower() if isinstance(err, dict) else str(err).lower()
         if any(k in message for k in ("context length", "context_length", "maximum context", "token limit", "too many tokens")):
             return ProviderError(ProviderErrorCode.CONTEXT_OVERFLOW, "context length exceeded", status_code=400)
-        # structured-output / json_schema evidence FIRST (explicit error fields OR
+        # structured-output / json_schema evidence FIRST (explicit fields OR
         # message), so "invalid json_schema for model X" is not misclassified as
-        # INVALID_MODEL and still gets its exactly-once schema fallback:
+        # INVALID_MODEL and still gets its exactly-once schema fallback.
+        # Generic "unsupported" alone does NOT qualify (M2b.1.2 Finding A):
         if any(k in err_type for k in ("invalid_json_schema", "json_schema", "response_format", "structured_output")) or \
-           any(k in err_code for k in ("invalid_json_schema", "json_schema", "response_format", "structured_output", "unsupported")) or \
+           any(k in err_code for k in ("invalid_json_schema", "json_schema", "response_format", "structured_output")) or \
            any(k in message for k in ("json_schema", "response_format", "structured_output", "structured output")):
             return ProviderError(
                 ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED,

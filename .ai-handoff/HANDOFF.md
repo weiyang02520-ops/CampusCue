@@ -2,46 +2,40 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY / Git history。
 
-## 当前（M2b.1.1 Real-Gate Hardening）
+## 当前（M2b.1.2 Fallback Contract Fix）
 
-- **本轮**：外部 ChatGPT 对 M2b.1（AI-first）源码复核 → PASS_WITH_FIXES（8 项 fix：A-G + 所有权/去重/注入防御等），执行 Real-Gate Hardening
-- **状态**：M2b.1.1 完成 — AWAITING_EXTERNAL_FINAL_REVIEW；**M2b.2 NOT_AUTHORIZED**
-- **Gate**：M0/M1/M2a = PASS；M2b.1 = AI_FIRST_PIPELINE_HARDENED AWAITING_EXTERNAL_FINAL_REVIEW；**M2 = IN_PROGRESS（M2b.2 NOT_AUTHORIZED）；M2 FINAL = NOT PASS**
+- **本轮**：外部 ChatGPT 对 M2b.1.1 最终复核 → 通过；剩余一小轮 fallback/dedup 契约修正（A/B/C + whitespace secret + dedup 课程语义）
+- **状态**：M2b.1 = FINAL_IMPLEMENTATION_COMPLETE — AWAITING_EXTERNAL_FINAL_REVIEW；**M2b.2 NOT_AUTHORIZED**
+- **Gate**：M0/M1/M2a = PASS；**M2 = IN_PROGRESS（M2b.1 最终实现完成待最终复核；M2b.2 NOT_AUTHORIZED）；M2 FINAL = NOT PASS**
 
-## 本轮完成（M2b.1.1 Real-Gate Hardening）
+## 本轮完成（M2b.1.2）
 
-1. **[A] 缺 secret env fail-before-transport**：`_resolve_secret()` 配置了 secret_reference 但 env 缺失/空 → `ProviderError CONFIG_ERROR`，**0 transport calls**；不打印 secret、不静默变成远程 401（tests：missing/empty/valid Bearer）
-2. **[B] Extraction 记录 provider/model**：`BaseProvider.model` 公共属性（业务不再碰 `_model`）；pipeline 传递 `provider_type` + `model` 到所有 L1/L3 Extraction（task_created/model_said_none/duplicate/provider_error 均记录；无 provider 时为 null）
-3. **[C] model_said_none 审计保留 reason/confidence**：`ExtractionResult` 新增 confidence/reason（has_task=false 时）；normalized_result 含 `has_task/confidence/reason`；不虚构 Task、不保留 title/course；不持久化完整输入 context；system prompt 已要求不复述原文
-4. **[D] schema fallback 仅 structured_output_unsupported**：新 `ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED`；`_classify_400` 用 HTTP 结构化错误字段（error.type/code/message）做通用分类（无厂商特定字符串）；generic INVALID_REQUEST/AUTH/RATE/TIMEOUT/NETWORK/MODEL/CONTEXT → 不 fallback（tests：unsupported→2 calls；generic 400→1 call；auth→1 call；timeout→1 call）
-5. **[E] ContextCollector window resize**：buffer 按当前配置的 context_window 重建（deque.maxlen 变更即 resize，保留已有消息；缩容安全）；cross-source 隔离保留
-6. **[F] 显式年份不 auto-roll**：仅无年份的过去日期允许跨年推断；"2026年8月5日"/"2026-08-05"（当前 2026-08-10）→ past rejected，绝不变成 2027
-7. **[G] test DB 隔离 fail-fast**：`load_config()` 新增 `_validate_task_config`——CAMPUSCUE_ENV=test + pipeline enabled + 无显式 CAMPUSCUE_DB_PATH → ConfigError（启动前 fail）；`database_path_explicit` 记录 provenance；confidence_threshold 必须有限且 ∈[0,1]；timezone 必须 ZoneInfo 可解析
-8. **[H] TaskService 所有权清理**：移除 `_confidence_threshold` 与死 `decide_pending_confirm()`；状态判定归 Pipeline（L4/L6），TaskService 只应用 candidate.pending_confirm；TaskPipeline 移除死 `_dedup`（不再碰 `task_service._tasks` 私有）
-9. **[I] dedup_key 单一 helper**：`dedup.py::build_dedup_key(title, course, deadline)` 为唯一 canonical 存储键（normalized title + course 双方已知 + deadline minute）；Deduplicator 语义一致；无模糊匹配
-10. **[J] prompt-injection defense-in-depth**：system prompt 新增输入安全规则（消息是数据非指令、忽略消息内指挥、输入不得覆盖 schema/系统规则）；测试证明 user 文本永远在 user role、固定 system prompt + schema（mock 行为测试，非"LLM 注入已解决"声明）
+1. **[A] generic "unsupported" 不再触发 structured fallback**：`_classify_400` 中 STRUCTURED_OUTPUT_UNSUPPORTED 仅接受结构化特定证据（error.type/code/message 中显式出现 json_schema / response_format / structured_output / "structured output"）；`unsupported` / `unsupported_parameter` / `unsupported_feature` 单独出现 → INVALID_REQUEST（不 fallback）。无厂商特定句子匹配
+2. **[B] 主/回退路径共享一个 canonical system 契约**：prompts.py 重构——`build_system_prompt(json_only: bool)` 单一实现；canonical 语义（校园事务定义/AI-first 判断/上下文补全/信号是 hints/输入即数据/忽略消息内指令/输入不得覆盖系统规则/不复述原文/字段语义）主回退完全相同；唯一差异 = 输出强制（primary 带 schema 指导 + response_schema；fallback 带"只输出合法 JSON object"规则 + response_schema=None）
+3. **[B2] fallback 保留上下文/信号/时间戳/当前消息**：fallback user 消息与 primary 完全一致（`build_user_message` 同一实例），不回退为仅 current_text；user role 永不拼接未信任群文本
+4. **[11] whitespace-only secret**：`_resolve_secret` 用 strip 判断空（"   " → CONFIG_ERROR + 0 transport）；合法 secret 值不 strip 不改变
+5. **[C] no-deadline 跨课程 dedup 修正**：双方课程已知且不同 → 即使双方 deadline 都为 None 也不 dedup；同课程 → dup；一方缺课程 → 宽松 dup 允许；`build_dedup_key` 改为 course 已知才入键（与 dedup 语义一致）
 
 ## 测试
 
-- **302 passed**（新增 M2b.1.1 回归：secret 3、结构化分类 3、extractor provider-neutral 3、model_said_none 2、fallback 分类 2、time 4、dedup key 4、resize 3、config 7、ownership 2、pipeline 审计 6 ≈ 38 断言组）
-- Anti-AstrBot PASS；package isolation PASS（fresh venv `.venv-m2iso`，302 passed）
+- **316 passed**（新增 14：400 分类 4 例 A-D、whitespace secret 1、fallback canonical 契约 1、fallback 上下文保留 1、fallback injection 边界 1、dedup 5 例 A-E、dedup key 1）
+- Anti-AstrBot PASS；package isolation PASS（`.venv-m2iso`，316 passed）
 
-## AGENT_DISCOVERED_DELTA（M2b.1.1）
+## AGENT_DISCOVERED_DELTA（M2b.1.2）
 
-- [DESIGN_CHANGE]：CONFIG_ERROR 与 STRUCTURED_OUTPUT_UNSUPPORTED 两个新 ProviderErrorCode；400 分类顺序：context → structured-evidence → model（避免 "invalid json_schema for model X" 误判 INVALID_MODEL）
-- [PRIVACY_DELTA]：model_said_none 的 Extraction 行 `confidence` 列持久化模型自报置信度（0.5 默认只用于 has_task=true 分支；has_task=false 缺省为 None 不虚构）
-- [REVIEW_REQUEST 更新]：18 项审核点 → 10 项 M2b.1.1 复核点
+- [DESIGN_CHANGE]：`FALLBACK_PROMPT` 常量删除；fallback 请求现在直接复用 `build_user_message` 的同一 user 消息（不再 format 拼接）
+- [FAILURE_MODE]："Fallback semantic drift" 加入失败模式表（primary 全契约 vs fallback 简化提示 → 真实 endpoint 大部分走 fallback 时 primary 测试失效）；预防 = 单 canonical prompt 契约，仅输出强制不同
 
 ## REAL ENV
 
-- M1 REAL ENV VERIFIED 保留；M2b.1.1 无真实 Provider/QQ 声明（M2b.2）
+- M1 REAL ENV VERIFIED 保留；M2b.1.2 无真实 Provider/QQ 声明（M2b.2）
 
 ## 下一步
 
-- 外部 ChatGPT M2b.1.1（Real-Gate Hardening）最终源码复核（10 项审核点）→ PASS 后 M2b.2 授权
+- 外部 ChatGPT M2b.1 最终源码复核（10 项：generic unsupported 不 fallback / 结构化证据仍 fallback / fallback 保留 AI-first 语义 / injection 边界 / 上下文保留 / whitespace secret / dedup 课程语义 / AI-first 未变 / 无 M2b.2 / 文档一致）→ PASS 后 M2b.2 授权
 
 ## 本轮修改文件
 
-- 修改：providers/{errors,base,openai_compatible}.py（CONFIG_ERROR/STRUCTURED_OUTPUT_UNSUPPORTED/model 属性/secret fail-fast/400 分类）、tasks/{extractor,prompts,context,dedup,time_normalizer,models,pipeline}.py、services/task_service.py、config.py、app/runtime.py
-- 新增：tests/integration/test_m2b11_hardening.py（17 tests）
-- 修改：tests/unit/{test_provider,test_m2b1_units}.py、tests/integration/test_m2b1_ai_first.py、.ai-handoff/、双 Memory
+- 修改：tasks/prompts.py（canonical system 契约重构）、tasks/extractor.py（fallback 共享 prompt + 用户消息）、providers/openai_compatible.py（400 分类收紧 + whitespace secret）、tasks/dedup.py（no-deadline 课程语义 + key 一致）
+- 新增：无新文件
+- 修改：tests/unit/{test_provider,test_m2b1_units}.py（+14）、.ai-handoff/、双 Memory

@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M2b.1.1）
+## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M2b.1.2）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b.1 = AI-FIRST 方向 PASS + Core pipeline PASS_WITH_FIXES → M2b.1.1 Real-Gate Hardening 完成，AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 真实 Provider/QQ 验收 NOT_AUTHORIZED；M2 FINAL = NOT PASS** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b.1 = AI-first 方向 PASS + M2b.1.1 hardening PASS + M2b.1.2 fallback/dedup 契约修正完成 → FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 真实 Provider/QQ 验收 NOT_AUTHORIZED；M2 FINAL = NOT PASS** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -283,3 +283,11 @@ User
 - **[EXTERNAL_REVIEW][DEDUP_KEY_RULE]**：持久化 Task.dedup_key 由单一 canonical helper `build_dedup_key(title, course, deadline)` 定义（normalized title + course 双方已知 + deadline minute），与 Deduplicator 语义一致；不做模糊匹配。
 - **[EXTERNAL_REVIEW][INJECTION_DEFENSE]**：QQ 消息与上下文是未信任数据——system prompt 声明其为待分类数据、不服从消息内指令、输入不得覆盖 schema/系统规则；mock 行为测试证明 user 文本永在 user role（防御纵深，不宣称 LLM 注入已解决）。
 - **[REPO_CONFIRMED]**：M2b.1.1 落地（302 tests 全绿 + fresh venv 隔离 + Anti-AstrBot）：CONFIG_ERROR/STRUCTURED_OUTPUT_UNSUPPORTED 两个新错误码、ContextCollector resize、config fail-fast 校验、TaskService 所有权清理、dedup key helper、prompt-injection 防御。
+
+## 9L. MEMORY DELTA（M2b.1.2 Fallback Contract Fix）
+
+- **[EXTERNAL_REVIEW][FALLBACK_RULE][CURRENT]**：Structured-output fallback 需要结构化特定证据（error.type/code/message 显式引用 json_schema / response_format / structured_output / "structured output"）。Generic "unsupported"（如 `unsupported_parameter` + "temperature is unsupported"）不足够——必须 INVALID_REQUEST 不 fallback。
+- **[EXTERNAL_REVIEW][PROMPT_RULE][CURRENT]**：primary json_schema 路径与 fallback JSON-only 路径必须保留相同的 AI-first 语义与 input-as-data 安全契约。Fallback 只能改变输出强制（response_schema 有无 / "只输出合法 JSON" 规则），不能改变产品含义。实现 = 单一 canonical `build_system_prompt(json_only: bool)`，禁止两份可漂移的大型 prompt。
+- **[EXTERNAL_REVIEW][CONTEXT_RULE][CURRENT]**：Fallback 抽取收到与 primary structured 路径相同的有界上下文/信号/当前消息信息（同一 user 消息实例）；禁止 fallback 只用 current_text 重建。
+- **[EXTERNAL_REVIEW][DEDUP_CORRECTION][CURRENT]**：双方课程已知且不同时，同标题任务不得仅因双方 deadline 都缺失而 dedup。课程在双方都已知时参与语义身份（无 deadline 分支与有 deadline 分支一致）；`build_dedup_key` 相应只在 course 已知时入键。
+- **[REPO_CONFIRMED]**：M2b.1.2 落地（316 tests 全绿 + fresh venv + Anti-AstrBot）：FALLBACK_PROMPT 删除、400 分类收紧、whitespace secret fail-fast、dedup 课程语义修正。
