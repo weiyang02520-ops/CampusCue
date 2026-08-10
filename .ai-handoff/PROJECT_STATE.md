@@ -15,16 +15,15 @@
 ## current_milestone
 
 - M0 = **PASS**；M1 = **PASS**（含 M1.1 correctness + M1.2 REAL ENV + M1.3 隐私清理）
-- M2 = **IN_PROGRESS**：M2a + M2a.1 + M2a.2（Data + Provider Foundation 全部完成）— **AWAITING_EXTERNAL_FINAL_REVIEW**
-- **M2b = NOT_STARTED / NOT_AUTHORIZED**（等 M2a 外部最终确认）
-- M2 最终 = NOT PASS（等 M2b）
-- status：**AWAITING_EXTERNAL_M2A_FINAL_REVIEW**
+- M2a = **PASS**（最终外部审核通过）
+- **M2b = IN_PROGRESS**：M2b.1（Task Pipeline + Mock Provider + SQLite）完成 — **AWAITING_EXTERNAL_REVIEW**；**M2b.2 NOT_AUTHORIZED**（等 M2b.1 外部确认）
+- M2 最终 = NOT PASS（等 M2b.2）
+- status：**AWAITING_EXTERNAL_M2B1_REVIEW**
 
 ## completed（M2a 系列全部）
 
-- M2a：ADR-012 契约锁定 + storage（SQLAlchemy/aiosqlite/schema 版本）+ Repository×4 + SourceService + providers 包 + bootstrap 脚本
-- M2a.1：provider.test 真实路径、timeout 契约、枚举 repository+CHECK 双层、schema 零变更拒绝、Clock 注入、secret_reference 早校验、get_by_id、严格解析、状态先分类
-- M2a.2：secret/numeric/request-override 共享校验、ORM 去墙钟默认、HANDOFF/PROJECT_STATE canonical 修复
+- M2a 系列（PASS）：契约锁定 + storage/repositories/providers + 修复轮
+- **M2b.1（本轮）**：tasks 包 L0-L7（SourcePolicy/Prefilter/Context/Extractor/TimeNormalizer/Dedup/Pipeline）+ TaskService 唯一边界 + Runtime 可选启用 + Mock Provider 全链路 + 并发去重安全
 
 ## in_progress
 
@@ -32,11 +31,11 @@
 
 ## blocked
 
-- **M2b 仅阻塞于 M2a 外部最终确认**（无其他阻塞）
+- **M2b.2 仅阻塞于 M2b.1 外部确认**（无其他阻塞）
 
 ## verified（Workspace Agent 报告；外部审核待复核）
 
-- **203 tests passed**（M1 87 旧全绿 + M2a 系列 116 新增）；package isolation PASS（fresh venv）；Anti-AstrBot PASS
+- **256 tests passed**（M1 87 旧 + M2a 116 + M2b.1 53）；package isolation PASS（fresh venv + tzdata）；Anti-AstrBot PASS
 - REAL ENV VERIFIED（M1.2，2026-08-10，NapCat v4.18.18 + 真实 QQ）——**保留自 M1.2，非本轮新验证**
 - 外部审核状态：**awaiting**（M2a.1 已 PASS；M2a.2 待复核）
 
@@ -51,7 +50,7 @@
 
 ## next_gate
 
-- 外部 ChatGPT M2a 最终复核 → PASS 则 **M2b 授权**（Task Extraction Pipeline + 真实 Provider + 真实 QQ 验收）
+- 外部 ChatGPT M2b.1 源码复核 → PASS 则 **M2b.2 授权**（真实 Provider + 真实 NapCat/QQ + SQLite 验收）
 
 ## external_review_focus（M2a.2 复核点）
 

@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0 = PASS；M1 = PASS；M1.3 = PASS；M2 = IN_PROGRESS（M2a Data+Provider Foundation 完成，AWAITING_EXTERNAL_REVIEW；M2b NOT_AUTHORIZED）** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b = IN_PROGRESS（M2b.1 Task Pipeline + Mock Provider + SQLite 完成，AWAITING_EXTERNAL_REVIEW；M2b.2 真实 Provider/QQ 验收 NOT_AUTHORIZED）；M2 FINAL = NOT PASS** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -249,3 +249,13 @@ User
 - **[EXTERNAL_REVIEW][WORKFLOW_FAILURE]**：HANDOFF append-only 复发（M2a.1 又一次）——HANDOFF 是 canonical 当前操作状态，必须 reconcile 不能无限追加。
 - **[EXTERNAL_REVIEW][WORKFLOW_FAILURE]**：PROJECT_STATE 顶部正确但内部可腐烂——每次 checkpoint 必须语义扫描 current_milestone/in_progress/blocked/verified/next_gate/review_focus 的 stale 矛盾。
 - **[REPO_CONFIRMED]**：M2a.2 落地（203 tests 全绿）：validation.py 单一规则（secret/numeric/request）、ORM 无墙钟、fresh venv 隔离 PASS。
+
+## 9I. MEMORY DELTA（M2b.1 新增）
+
+- **[EXTERNAL_REVIEW][CURRENT]**：M2a/M2a.1/M2a.2 最终外部审核 = PASS，M2a CLOSED；M2b AUTHORIZED，拆 M2b.1（Task Pipeline + Mock Provider + SQLite）/ M2b.2（真实 Provider + 真实 QQ 验收）。
+- **[EXTERNAL_REVIEW][PRIVACY_DECISION]**：L0/L1 拒绝的 QQ 闲聊不创建 Extraction 行——只有过 L1 的候选进入持久化抽取审计（避免 SQLite 变隐式聊天历史）。
+- **[EXTERNAL_REVIEW][CONTEXT_DECISION]**：ContextCollector 观察启用来源的 bounded 消息（即使 L1 拒绝），因为可能消歧后续候选；仅临时内存。
+- **[EXTERNAL_REVIEW][DEDUP_DECISION]**：语义去重 source-scoped + 36h；dismissed 近期任务仍算重复；exact source_message_id 最强。
+- **[EXTERNAL_REVIEW][TIME_DECISION]**：自然语言截止解析锚定 CampusEvent.timestamp；持久化/去重用注入 Clock；两钟不混淆。
+- **[EXTERNAL_REVIEW][DOMAIN_LIMITATION]**：Task 无专属 submission_method 列；M2b.1 存于 Extraction audit/normalized + Task.description，不做 schema 迁移。
+- **[REPO_CONFIRMED]**：M2b.1 实现（256 tests 全绿）：tasks 包（L0-L7）+ TaskService 唯一边界 + 并发去重安全；Windows 平台依赖 tzdata（zoneinfo）。

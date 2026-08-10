@@ -2,52 +2,49 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY / Git history。
 
-## 当前（M2a.2 Final Foundation Cleanup）
+## 当前（M2b.1 Task Extraction Pipeline）
 
-- **本轮**：修复外部审核最终 7 项 finding（A-G）
-- **状态**：M2a FOUNDATION_COMPLETE — AWAITING_EXTERNAL_FINAL_REVIEW
-- **Gate**：M0/M1/M1.3 = PASS；**M2 = IN_PROGRESS（M2a+M2a.1+M2a.2 完成待复核；M2b NOT_AUTHORIZED）**
+- **本轮**：实现 M2b.1（L0-L7 任务抽取管道 + Mock Provider + SQLite 全链路）
+- **状态**：M2b PIPELINE_IMPLEMENTATION_COMPLETE — AWAITING_EXTERNAL_REVIEW
+- **Gate**：M0/M1/M2a = PASS；**M2 = IN_PROGRESS（M2b.1 完成待复核；M2b.2 NOT_AUTHORIZED）；M2 FINAL = NOT PASS**
 
-## 本轮完成（finding 对照）
+## 本轮完成
 
-| # | Finding | 修复 |
-|---|---|---|
-| A | secret_reference 校验仍重复（openai_compatible 本地 _ENV_NAME_RE） | 删除本地正则；Provider 构造 + 运行时 `_resolve_secret` 均调 validation.py 的 validate_secret_reference（ValueError → ProviderError INVALID_REQUEST） |
-| B | ProviderConfigRepository 可持久化非法数值 | validation.py 新增 validate_provider_config_numeric（finite/>0/正 int 拒 bool/温度≥0）；repository 持久化前调用；NaN/±inf 拒 |
-| C | LLMRequest override 绕过校验 | chat() 边界 validate_request_override（timeout/max_tokens/temperature）→ 非法即 ProviderError，**无传输调用**（测试断言 called==[]） |
-| D | ORM 隐藏墙钟默认 | storage/models.py 删除 _utcnow/_aware_utc 与 default/onupdate；created_at/updated_at required（NOT NULL 无默认）；直接 ORM insert 无时间戳 → 失败 |
-| E | HANDOFF append-only 复发 | 本文件重写为单一 canonical（历史进 CHANGELOG/Git） |
-| F | PROJECT_STATE 内部腐烂 | 全语义修复（见下） |
-| G | Memory/失败模式 | 双 Memory §9H + AGENT_MEMORY 新失败模式（HANDOFF relapse / PROJECT_STATE rot） |
+1. **tasks 包**：models（TaskCandidate/ExtractionResult/JSON Schema）、prompts、source_policy（L0：仅 group + enabled + auto_extract）、prefilter（L1：V1 行为移植，threshold 3.0）、context（L2：bounded per-source ring buffer，L1 拒绝仍观察）、extractor（L3：Provider 抽象 + json_schema → fallback 一次 + 宽容解析 + 规范化）、time_normalizer（L4：V1 行为 + 事件时间锚 + zoneinfo）、dedup（L5：source-scoped + 36h + dismissed 仍重复 + 归一化标题）、pipeline（L0-L7 编排 + audit）
+2. **TaskService**（唯一创建/去重边界）：进程内 asyncio.Lock 串行化 dedup 重查 + insert；DB UNIQUE 最终防线
+3. **Runtime 接线**：CAMPUSCUE_TASK_PIPELINE=1 启用；禁用时 M1 无 DB/Provider 照常；Router 顺序 TaskPipeline → EchoHandler（hello 仍回复）
+4. **隐私**：L0/L1 拒绝无 Extraction 行；source_text_reference/raw_result 仅本地 DB 不落日志；submission_method 存 audit + Task.description（CURRENT M2 LIMITATION）
+5. **平台依赖**：Windows 需 tzdata（zoneinfo）——已加 pyproject 平台标记依赖
+6. **脚本**：scripts/m2_configure_source.py（conversation ID 走环境变量）
 
 ## 测试
 
-- **203 passed**（新增 17：test_m2a2_fixes.py——repository 数值拒绝 5 组（含 NaN/Inf/bool）+ 未持久化证明、request override 8 组无传输、models 无墙钟源码断言、ORM required 时间戳）
-- package isolation PASS（fresh venv + FixedClock smoke）；Anti-AstrBot PASS
+- **256 passed**（新增 53：单元 43 + 集成 10）；全链路 Mock Provider → 真实 SQLite Task 行验证（周五晚上12点→2026-08-14 15:59 UTC）；并发同义务双管道 → 恰 1 Task；L0/L1 拒绝 0 provider 0 extraction；审计 l1/l3/l4/l5/outcome 完整
+- package isolation PASS（fresh venv + tzdata + DB smoke）；Anti-AstrBot PASS
 
-## AGENT_DISCOVERED_DELTA（M2a.2）
+## AGENT_DISCOVERED_DELTA（M2b.1）
 
-- [PROVIDER_FACT]：构造函数即校验（secret/numeric）→ 非法配置 fail-fast 于构造，无需等 HTTP
-- [STORAGE_FACT]：models 无墙钟默认后，直接 ORM 建行必须显式传时间戳（repository 已全部显式）
-- [TEST_FACT]：httpx MockTransport 的 extensions.timeout 是 per-phase dict
-- [WORKFLOW_FACT]：HANDOFF/PROJECT_STATE 的"顶部正确但底部腐烂"模式已两次出现（M1.3/M2a.1）——已在 AGENT_MEMORY 固化预防
-- [UNVERIFIED_HYPOTHESIS]：真实 Provider 端点的 json_schema/数值契约兼容性（M2b 确认）
+- [PIPELINE_FACT]：Windows Python 无 IANA tzdata → ZoneInfo('Asia/Shanghai') 抛 ZoneInfoNotFoundError；需 tzdata 平台依赖（已加）
+- [CONTEXT_FACT]：snapshot 用 message_id 排除当前消息（LLM 输入中当前消息恰出现一次）
+- [TEST_FACT]：pipeline 测试注入用 _FakeManager（manager 边界 fake，provider→transport→parse 仍真实）
+- [PROVIDER_FACT]：json_schema INVALID_REQUEST → fallback 恰一次（有测试断言调用次数）
+- [DESIGN_CONFLICT]：submission_method 无专属列 → 存 audit + description（记录为 CURRENT M2 LIMITATION，M2b.1 不做迁移）
+- [UNVERIFIED_HYPOTHESIS]：真实 Provider（如 Ark）json_schema 支持度（M2b.2 确认）
 
 ## REAL ENV
 
-- M1 REAL ENV VERIFIED 保留（2026-08-10）；M2a.2 无新 REAL ENV 声明
+- M1 REAL ENV VERIFIED 保留（2026-08-10）；M2b.1 **无真实 Provider/QQ 声明**（M2b.2 验收）
 
 ## 当前已知未知
 
-- 真实 Provider（如 Ark）json_schema 支持度与 timeout 语义（M2b 真实验收）
-- 无迁移框架；未来 schema 版本需人工迁移（M2a.1 决定）
+- 真实 Provider json_schema/timeout 兼容性（M2b.2）
+- 真实 NapCat 消息的 deadline_phrase 多样性（M2b.2 抽样确认）
 
 ## 下一步
 
-- 外部 ChatGPT M2a 最终复核（12 项审核点见 REVIEW_REQUEST）→ PASS 后 M2b 授权
+- 外部 ChatGPT M2b.1 源码复核（17 项审核点见 REVIEW_REQUEST）→ PASS 后 M2b.2 授权
 
 ## 本轮修改文件
 
-- 修改：providers/validation.py（+validate_provider_config_numeric/validate_request_override）、providers/openai_compatible.py（共享校验 + 构造校验 + chat 前置校验 + 删死函数）、repositories/repositories.py（数值校验）、storage/models.py（去墙钟默认）
-- 新增：tests/unit/test_m2a2_fixes.py
-- 修改：双 Memory（§9H）、.ai-handoff/ 6 文件
+- 新增：v2/src/campuscue/tasks/{__init__,models,prompts,source_policy,prefilter,context,extractor,time_normalizer,dedup,pipeline}.py、services/task_service.py、tests/unit/test_m2b1_units.py、tests/integration/test_m2b1_pipeline.py、scripts/m2_configure_source.py
+- 修改：config.py（TaskPipelineConfig）、app/runtime.py（可选启用 + DB dispose）、repositories（find_recent_for_source）、pyproject（+tzdata/tasks 包）、10_TASK_PIPELINE、README、双 Memory、.ai-handoff/

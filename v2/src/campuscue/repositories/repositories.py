@@ -230,6 +230,20 @@ class TaskRepository(_BaseRepo[Task]):
                 ).all()
             )
 
+    async def find_recent_for_source(self, source_id: int, cutoff: datetime, limit: int = 100) -> list[Task]:
+        """Recent tasks for one source created after cutoff (M2b.1 dedup window query)."""
+        async with self._sf() as session:
+            return list(
+                (
+                    await session.scalars(
+                        select(Task)
+                        .where(Task.source_id == source_id, Task.created_at >= cutoff)
+                        .order_by(Task.created_at.desc())
+                        .limit(limit)
+                    )
+                ).all()
+            )
+
     async def list_all(self, limit: int = 100, offset: int = 0) -> list[Task]:
         async with self._sf() as session:
             return list(

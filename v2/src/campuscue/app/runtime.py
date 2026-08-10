@@ -40,12 +40,16 @@ class CampusRuntime:
         self.bus: EventBus | None = None
         self.router: Router | None = None
         self.adapter: OneBotAdapter | None = None
+        self._database = None  # owned DB (M2 opt-in); disposed on shutdown
 
     async def start(self) -> None:
         self.state = RuntimeState.STARTING
         try:
             # wiring order matters: handlers/router ready before events flow (no startup race)
             self.router = Router()
+            if self.config.tasks.enabled:
+                await self._init_task_pipeline()
+            # TaskPipeline handler first (returns None for hello), EchoHandler last
             self.router.add_handler(echo_handler)
             self.bus = EventBus(
                 queue_maxsize=self.config.event_bus.queue_maxsize,
@@ -66,6 +70,48 @@ class CampusRuntime:
             await self._cleanup_after_failure()
             self.state = RuntimeState.FAILED
             raise
+
+    async def _init_task_pipeline(self) -> None:
+        """M2 opt-in wiring: DB + repositories + services + pipeline handler.
+        Pipeline handler is added BEFORE EchoHandler so hello still reaches Echo."""
+        from zoneinfo import ZoneInfo
+
+        import os as _os
+
+        from campuscue.providers.manager import ProviderManager
+        from campuscue.repositories.repositories import (
+            ExtractionRepository,
+            ProviderConfigRepository,
+            SourceRepository,
+            TaskRepository,
+        )
+        from campuscue.services.task_service import TaskService
+        from campuscue.storage.database import Database, DatabaseConfig
+        from campuscue.tasks.pipeline import TaskPipeline
+
+        assert self.router is not None
+        database = Database(
+            DatabaseConfig(
+                path=self.config.tasks.database_path,
+                env=_os.environ.get("CAMPUSCUE_ENV", "production"),
+            )
+        )
+        await database.initialize()
+        self._database = database
+        sf = database.session
+        task_service = TaskService(
+            TaskRepository(sf), confidence_threshold=self.config.tasks.confidence_threshold
+        )
+        pipeline = TaskPipeline(
+            sources=SourceRepository(sf),
+            extractions=ExtractionRepository(sf),
+            task_service=task_service,
+            provider_manager=ProviderManager(ProviderConfigRepository(sf)),
+            timezone=ZoneInfo(self.config.tasks.timezone),
+            confidence_threshold=self.config.tasks.confidence_threshold,
+        )
+        self._pipeline = pipeline
+        self.router.add_handler(pipeline.handle)
 
     async def _route_event(self, event) -> None:
         """Bus handler: route, then send inside the handler so the EventBus
@@ -95,6 +141,15 @@ class CampusRuntime:
                 await self.bus.shutdown(timeout_s=1.0)
             except Exception:
                 pass
+        await self._dispose_database()
+
+    async def _dispose_database(self) -> None:
+        if self._database is not None:
+            try:
+                await self._database.dispose()
+            except Exception:
+                pass
+            self._database = None
 
     async def stop(self) -> None:
         if self.state in (RuntimeState.STOPPED, RuntimeState.FAILED, RuntimeState.CREATED):
@@ -106,5 +161,7 @@ class CampusRuntime:
         # 2) bounded drain of in-flight handlers
         if self.bus is not None:
             await self.bus.shutdown(timeout_s=3.0)
+        # 3) dispose owned DB (M2 opt-in)
+        await self._dispose_database()
         self.state = RuntimeState.STOPPED
         logger.info("campus runtime STOPPED")

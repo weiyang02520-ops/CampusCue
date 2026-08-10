@@ -110,3 +110,12 @@
 - **测试**：新增 17 → **203 passed**；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无新声明（M1.2 prior 保留）
 - **审核状态**：M2a AWAITING_EXTERNAL_FINAL_REVIEW；M2b NOT_AUTHORIZED
+
+## 2026-08-10 · M2b.1 TASK EXTRACTION PIPELINE
+
+- **任务**：实现 M2b.1（L0-L7 任务抽取 + Mock Provider + SQLite）
+- **Commit**：feat: implement M2 task extraction pipeline（本轮）
+- **主要修改**：tasks 包（source_policy/prefilter/context/extractor/time_normalizer/dedup/pipeline/models/prompts）+ TaskService + Runtime 可选启用 + tzdata 平台依赖 + m2_configure_source.py
+- **测试**：新增 53 → **256 passed**；全链路 Mock → SQLite Task 行验证；并发去重 1 Task；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无新声明（M1.2 prior 保留；真实 Provider/QQ 留 M2b.2）
+- **审核状态**：M2b.1 AWAITING_EXTERNAL_REVIEW；M2b.2 NOT_AUTHORIZED

@@ -5,7 +5,9 @@
 > 当前能力仅 M1（Echo）：真实 QQ 群/私聊发 `hello` → 回复 `received: hello`。
 > M2+ 功能（任务抽取/提醒/WebUI）尚未实现，不在此文档描述。
 >
-> **开发者注（M2a）**：数据层（SQLite/Repository/SourceService）与 Provider Foundation（OpenAICompatible/Manager）已存在并测试通过；QQ 消息自动转任务（M2b）尚未实现。
+> **开发者注（M2b.1）**：数据层 + Provider Foundation（M2a）+ Task Extraction Pipeline（M2b.1：L0-L7，Mock Provider 集成 + SQLite 全链路测试通过）已存在。
+>
+> **启用方式**：`CAMPUSCUE_TASK_PIPELINE=1` + `CAMPUSCUE_DB_PATH=data/campuscue.db` + `CAMPUSCUE_TIMEZONE=Asia/Shanghai`。真实 Provider 配置见 `scripts/m2_configure_provider.py`；真实来源配置见 `scripts/m2_configure_source.py`（conversation ID 走环境变量）。**真实 QQ 自动转任务（M2b.2）尚未验收。**
 
 ## 架构
 

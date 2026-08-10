@@ -25,9 +25,19 @@ class EventBusConfig:
 
 
 @dataclass(frozen=True)
+class TaskPipelineConfig:
+    enabled: bool = False  # CAMPUSCUE_TASK_PIPELINE=1 (M2 opt-in; M1 works without)
+    database_path: str = "data/campuscue.db"
+    timezone: str = "Asia/Shanghai"
+    prefilter_threshold: float = 3.0
+    confidence_threshold: float = 0.6
+
+
+@dataclass(frozen=True)
 class RuntimeConfig:
     onebot: OneBotConfig = field(default_factory=OneBotConfig)
     event_bus: EventBusConfig = field(default_factory=EventBusConfig)
+    tasks: TaskPipelineConfig = field(default_factory=TaskPipelineConfig)
     diagnostic: bool = False  # CAMPUSCUE_DIAGNOSTIC=1; default OFF (privacy)
 
     def __post_init__(self) -> None:
@@ -80,6 +90,13 @@ def load_config() -> RuntimeConfig:
         event_bus=EventBusConfig(
             queue_maxsize=int(os.environ.get("CAMPUSCUE_QUEUE_MAXSIZE", "256")),
             max_in_flight=int(os.environ.get("CAMPUSCUE_MAX_IN_FLIGHT", "32")),
+        ),
+        tasks=TaskPipelineConfig(
+            enabled=_env_bool("CAMPUSCUE_TASK_PIPELINE"),
+            database_path=os.environ.get("CAMPUSCUE_DB_PATH", "data/campuscue.db"),
+            timezone=os.environ.get("CAMPUSCUE_TIMEZONE", "Asia/Shanghai"),
+            prefilter_threshold=float(os.environ.get("CAMPUSCUE_PREFILTER_THRESHOLD", "3.0")),
+            confidence_threshold=float(os.environ.get("CAMPUSCUE_CONFIDENCE_THRESHOLD", "0.6")),
         ),
         diagnostic=_env_bool("CAMPUSCUE_DIAGNOSTIC"),
     )
