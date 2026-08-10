@@ -16,14 +16,14 @@
 
 - M0 = **PASS**；M1 = **PASS**（含 M1.1 correctness + M1.2 REAL ENV + M1.3 隐私清理）
 - M2a = **PASS**（最终外部审核通过）
-- **M2b = IN_PROGRESS**：M2b.1（Task Pipeline + Mock Provider + SQLite）完成 — **AWAITING_EXTERNAL_REVIEW**；**M2b.2 NOT_AUTHORIZED**（等 M2b.1 外部确认）
+- **M2b = IN_PROGRESS**：M2b.1（AI-first Task Pipeline + Mock Provider + SQLite）完成 — **AWAITING_EXTERNAL_REVIEW**；**M2b.2 NOT_AUTHORIZED**（等 M2b.1 外部确认）
 - M2 最终 = NOT PASS（等 M2b.2）
 - status：**AWAITING_EXTERNAL_M2B1_REVIEW**
 
 ## completed（M2a 系列全部）
 
 - M2a 系列（PASS）：契约锁定 + storage/repositories/providers + 修复轮
-- **M2b.1（本轮）**：tasks 包 L0-L7（SourcePolicy/Prefilter/Context/Extractor/TimeNormalizer/Dedup/Pipeline）+ TaskService 唯一边界 + Runtime 可选启用 + Mock Provider 全链路 + 并发去重安全
+- **M2b.1（本轮，AI-first / ADR-013）**：MessageHygieneFilter + LocalSignalAnalyzer（hints 不 gate）+ LLM 单次 triage+extraction + TaskService 唯一边界 + Mock Provider 全链路 + 模糊上下文测试
 
 ## in_progress
 
@@ -35,7 +35,7 @@
 
 ## verified（Workspace Agent 报告；外部审核待复核）
 
-- **256 tests passed**（M1 87 旧 + M2a 116 + M2b.1 53）；package isolation PASS（fresh venv + tzdata）；Anti-AstrBot PASS
+- **264 tests passed**（M1 87 旧 + M2a 116 + M2b.1 61）；package isolation PASS（fresh venv + tzdata）；Anti-AstrBot PASS
 - REAL ENV VERIFIED（M1.2，2026-08-10，NapCat v4.18.18 + 真实 QQ）——**保留自 M1.2，非本轮新验证**
 - 外部审核状态：**awaiting**（M2a.1 已 PASS；M2a.2 待复核）
 

@@ -1,28 +1,35 @@
-"""Task Extraction Pipeline (M2b.1) — L0..L7 orchestration.
+"""Task Extraction Pipeline (M2b.1 AI-first) — L0..L7 orchestration.
 
-CampusEvent -> L0 SourcePolicy -> L1 Prefilter -> L2 ContextCollector ->
-L3 TaskExtractor -> L4 TimeNormalizer -> L5 Deduplicator -> L6 Confidence ->
-L7 TaskService -> SQLite.
+AI-FIRST (ADR-013): the LLM is the primary semantic judge. Local code handles
+hygiene (hard drop only for certain garbage), signals (hints only, no veto),
+deterministic validation, time, dedup, safety.
 
-Privacy: L0/L1 rejections create NO Extraction rows (avoid implicit chat
-history). L1-passing candidates always terminate in exactly one Extraction row.
+CampusEvent
+→ L0 SourcePolicy
+→ L1 MessageHygieneFilter (hard drop: empty/oversized/no-text only)
+→ L1.5 LocalSignalAnalyzer (hints, never a gate)
+→ L2 ContextCollector
+→ L3 LLM Triage + Extraction (single call; schema fallback ≤2 calls)
+→ L4 Deterministic Validation + TimeNormalizer
+→ L5 Deduplicator
+→ L6 Confidence / Confirmation
+→ L7 TaskService → SQLite
+
+Privacy: hygiene drops persist nothing. model_said_none persists ONE audit
+Extraction (provider consumed) WITHOUT full input context. Only created Tasks
+persist source_text_reference.
 """
 
 from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from campuscue.core.events import CampusEvent
-from campuscue.providers.errors import (
-    NoProviderConfiguredError,
-    ProviderError,
-    ProviderErrorCode,
-)
+from campuscue.providers.errors import NoProviderConfiguredError, ProviderError
 from campuscue.repositories.repositories import ExtractionRepository, SourceRepository
 from campuscue.services.task_service import (
     TaskCreationResult,
@@ -35,15 +42,8 @@ from campuscue.storage.models import Extraction, Task
 from campuscue.tasks.context import ContextCollector
 from campuscue.tasks.dedup import Deduplicator, normalize_title
 from campuscue.tasks.extractor import ExtractionError, TaskExtractor
-from campuscue.tasks.models import (
-    DedupResult,
-    ExtractedTask,
-    ExtractionResult,
-    PrefilterResult,
-    SourcePolicyResult,
-    TaskCandidate,
-)
-from campuscue.tasks.prefilter import prefilter
+from campuscue.tasks.models import TaskCandidate
+from campuscue.tasks.prefilter import analyze_signals, hygiene_check
 from campuscue.tasks.source_policy import SourcePolicy
 from campuscue.tasks.time_normalizer import resolve_deadline
 
@@ -54,12 +54,9 @@ CONFIDENCE_THRESHOLD = 0.6
 
 @dataclass
 class PipelineOutcome:
-    """Terminal outcome of one pipeline run (audit-safe)."""
-
-    kind: str  # model_said_none | task_created | pending_confirm | duplicate | provider_error | parse_error | normalization_error | l0_drop | l1_drop
+    kind: str  # hygiene_drop | model_said_none | task_created | pending_confirm | duplicate | provider_error | parse_error | normalization_error
     task_id: int | None = None
     dedup_reason: str = ""
-    structured_mode: str = ""
 
 
 class TaskPipeline:
@@ -86,7 +83,6 @@ class TaskPipeline:
         self._dedup = Deduplicator(task_service._tasks, clock=self._clock)
 
     async def handle(self, event: CampusEvent) -> None:
-        """M2 pipeline entry. Returns None (no QQ reply on task creation)."""
         outcome = await self._run(event)
         logger.debug("pipeline outcome kind=%s", outcome.kind)
 
@@ -99,26 +95,32 @@ class TaskPipeline:
         if source is None:
             return PipelineOutcome(kind="l0_drop")
 
-        # observe context BEFORE L1 (L1-rejected messages remain future context)
+        # ---------------- L1 MessageHygieneFilter (hard drop only for certain garbage) ----
+        hygiene = hygiene_check(event.text)
+        if not hygiene.passed:
+            return PipelineOutcome(kind="hygiene_drop")
+
+        # ---------------- L1.5 LocalSignalAnalyzer (hints, never a gate) ----
+        signals = analyze_signals(event.text)
+        audit: dict[str, Any] = {
+            "local_signals": {
+                "score": signals.score,
+                "tags": signals.tags,
+                "reasons": signals.reasons,
+            }
+        }
+
+        # ---------------- L2 ContextCollector (observe BEFORE LLM) ----
         self._context.observe(event, source_id=source.id, context_window=source.context_window)
-
-        # ---------------- L1 Prefilter ----------------
-        l1 = prefilter(event.text)
-        audit: dict[str, Any] = {"l1": {"score": l1.score, "reasons": l1.reasons}}
-        if not l1.passed:
-            # NO Extraction row for L1-rejected chatter (privacy decision)
-            return PipelineOutcome(kind="l1_drop")
-
-        # ---------------- L2 Context ----------------
         context_lines = self._context.snapshot(event, context_window=source.context_window)
 
-        # ---------------- L3 TaskExtractor ----------------
+        # ---------------- L3 LLM Triage + Extraction (single call) ----
         try:
             provider = await self._provider_manager.get_default()
         except NoProviderConfiguredError:
             await self._record_extraction(
                 source_id=source.id, event=event, status=ExtractionStatus.ERROR.value,
-                audit=audit, error="no provider configured",
+                audit=audit, error="no_provider_configured",
             )
             return PipelineOutcome(kind="provider_error")
         extractor = TaskExtractor(provider)
@@ -127,6 +129,7 @@ class TaskPipeline:
                 current_text=event.text,
                 context_lines=context_lines,
                 message_time_iso=event.timestamp.isoformat(),
+                signal_hints=signals.tags,
             )
         except ProviderError as e:
             await self._record_extraction(
@@ -148,6 +151,8 @@ class TaskPipeline:
             "reason": result.task.reason if result.task else None,
         }
         if not result.has_task:
+            # model said none: one audit Extraction WITHOUT full input context
+            # (only the model output + reason; input text is NOT persisted here)
             await self._record_extraction(
                 source_id=source.id, event=event, status=ExtractionStatus.SKIPPED.value,
                 audit=audit, raw_result=result.raw, normalized_result=result.to_json(),
@@ -158,7 +163,7 @@ class TaskPipeline:
         task = result.task
         assert task is not None
 
-        # ---------------- L4 TimeNormalizer ----------------
+        # ---------------- L4 Deterministic Validation + TimeNormalizer ----
         deadline = None
         deadline_resolved = False
         if task.deadline_phrase:

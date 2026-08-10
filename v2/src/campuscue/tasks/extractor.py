@@ -38,10 +38,18 @@ class TaskExtractor:
         current_text: str,
         context_lines: list[str],
         message_time_iso: str,
+        signal_hints: list[str] | None = None,
     ) -> ExtractionResult:
+        """Single-call triage + extraction (AI-first). Per-message hard cap:
+        MAX 2 provider calls total (schema fallback counts as the second).
+        Raises ProviderError / ExtractionError on failure."""
         user_msg = build_user_message(
-            current_text=current_text, context_lines=context_lines, message_time=message_time_iso
+            current_text=current_text,
+            context_lines=context_lines,
+            message_time=message_time_iso,
+            signal_hints=signal_hints,
         )
+        # Attempt 1: JSON Schema structured output (also carries hints)
         base_request = LLMRequest(
             messages=[
                 LLMMessage(role="system", content=build_system_prompt()),
@@ -50,14 +58,13 @@ class TaskExtractor:
             model=self._provider._model,
             response_schema=EXTRACTION_JSON_SCHEMA,
         )
-        # Attempt 1: JSON Schema structured output
         try:
             resp = await self._provider.chat(base_request)
             return self._parse_and_normalize(resp.content, structured_mode="json_schema")
         except ProviderError as e:
             if e.code != ProviderErrorCode.INVALID_REQUEST:
                 raise  # real failure: no fallback
-        # Attempt 2 (ONCE): fallback strict JSON-only prompt (endpoint rejected schema)
+        # Attempt 2 (ONCE, final): strict JSON-only fallback (schema unsupported)
         fallback_request = LLMRequest(
             messages=[
                 LLMMessage(role="system", content="你是校园事务提取器。只输出一个 JSON 对象。"),

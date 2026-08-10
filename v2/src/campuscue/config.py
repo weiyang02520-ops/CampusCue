@@ -29,8 +29,9 @@ class TaskPipelineConfig:
     enabled: bool = False  # CAMPUSCUE_TASK_PIPELINE=1 (M2 opt-in; M1 works without)
     database_path: str = "data/campuscue.db"
     timezone: str = "Asia/Shanghai"
-    prefilter_threshold: float = 3.0
     confidence_threshold: float = 0.6
+    # NOTE: no prefilter threshold — LocalSignalAnalyzer score is NOT a gate
+    # (ADR-013 AI-first: local signals are hints, never a semantic veto)
 
 
 @dataclass(frozen=True)
@@ -95,7 +96,6 @@ def load_config() -> RuntimeConfig:
             enabled=_env_bool("CAMPUSCUE_TASK_PIPELINE"),
             database_path=os.environ.get("CAMPUSCUE_DB_PATH", "data/campuscue.db"),
             timezone=os.environ.get("CAMPUSCUE_TIMEZONE", "Asia/Shanghai"),
-            prefilter_threshold=float(os.environ.get("CAMPUSCUE_PREFILTER_THRESHOLD", "3.0")),
             confidence_threshold=float(os.environ.get("CAMPUSCUE_CONFIDENCE_THRESHOLD", "0.6")),
         ),
         diagnostic=_env_bool("CAMPUSCUE_DIAGNOSTIC"),

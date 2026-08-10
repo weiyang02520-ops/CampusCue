@@ -119,3 +119,12 @@
 - **测试**：新增 53 → **256 passed**；全链路 Mock → SQLite Task 行验证；并发去重 1 Task；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无新声明（M1.2 prior 保留；真实 Provider/QQ 留 M2b.2）
 - **审核状态**：M2b.1 AWAITING_EXTERNAL_REVIEW；M2b.2 NOT_AUTHORIZED
+
+## 2026-08-10 · M2b.1 AI-FIRST REWRITE
+
+- **任务**：按用户产品决策将 M2b.1 重写为 AI-first（ADR-013）
+- **Commit**：feat: implement AI-first M2 task pipeline（本轮）
+- **主要修改**：prefilter → HygieneFilter + SignalAnalyzer（hints 不 gate）、pipeline AI-first 流程、extractor 单次调用 + ≤2 calls、prompts AI-first、config 去 prefilter_threshold、ADR-013
+- **测试**：新增 7（低分进 Provider/模糊上下文/单次调用/fallback 上限）→ **264 passed**；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无新声明（M2b.2）
+- **审核状态**：M2b.1 AWAITING_EXTERNAL_REVIEW；M2b.2 NOT_AUTHORIZED

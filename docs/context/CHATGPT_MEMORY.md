@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b = IN_PROGRESS（M2b.1 Task Pipeline + Mock Provider + SQLite 完成，AWAITING_EXTERNAL_REVIEW；M2b.2 真实 Provider/QQ 验收 NOT_AUTHORIZED）；M2 FINAL = NOT PASS** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b = IN_PROGRESS（M2b.1 AI-First Task Pipeline 完成，AWAITING_EXTERNAL_REVIEW；M2b.2 真实 Provider/QQ 验收 NOT_AUTHORIZED）；M2 FINAL = NOT PASS** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -259,3 +259,13 @@ User
 - **[EXTERNAL_REVIEW][TIME_DECISION]**：自然语言截止解析锚定 CampusEvent.timestamp；持久化/去重用注入 Clock；两钟不混淆。
 - **[EXTERNAL_REVIEW][DOMAIN_LIMITATION]**：Task 无专属 submission_method 列；M2b.1 存于 Extraction audit/normalized + Task.description，不做 schema 迁移。
 - **[REPO_CONFIRMED]**：M2b.1 实现（256 tests 全绿）：tasks 包（L0-L7）+ TaskService 唯一边界 + 并发去重安全；Windows 平台依赖 tzdata（zoneinfo）。
+
+## 9J. MEMORY DELTA（M2b.1 AI-first 重写）
+
+- **[USER_STATED][PRODUCT_DECISION][CURRENT]**：CampusCue 第一版优先减少漏掉真实校园事务，而不是极限节省 LLM Token。enabled + auto_extract Source 的大部分正常自然语言消息原则上交给大模型理解。
+- **[USER_STATED][ARCHITECTURE_DECISION][CURRENT]**：本地规则不负责主要语义裁决；职责 = 明确垃圾过滤 / 辅助信号 / 确定性验证 / 时间解析 / 去重 / 安全兜底。
+- **[SUPERSEDED]**：旧 M2 设计"LocalPrefilter score below threshold → skip LLM"已被推翻，不能作为 CURRENT 行为（ADR-013）。
+- **[DESIGN_DECISION][CURRENT]**：LLM 单次调用同时完成 task triage + structured extraction；禁止正常路径先分类再抽取两次。
+- **[PRIVACY_DECISION][CURRENT]**：AI-first 使更多群消息进 Provider → 不持久化完整群历史；model_said_none 审计不保存完整输入 context；只有创建 Task 才持久化 source_text_reference。
+- **[DESIGN_DECISION][CURRENT]**：LocalSignalAnalyzer 产生 hints，signal score 不能拥有 semantic veto。
+- **[REPO_CONFIRMED]**：M2b.1 AI-first 落地（264 tests 全绿）：MessageHygieneFilter + LocalSignalAnalyzer + 单次调用 extractor + ≤2 calls 硬上限 + 模糊上下文测试。

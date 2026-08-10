@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 import httpx
 import pytest
 
-from campuscue.tasks.prefilter import prefilter
+from campuscue.tasks.prefilter import analyze_signals, hygiene_check
 from campuscue.tasks.time_normalizer import resolve_deadline
 
 TZ = ZoneInfo("Asia/Shanghai")
@@ -27,41 +27,56 @@ async def db_raw(tmp_path):
     await database.dispose()
 
 
-# ------------------------------------------------------------------ Prefilter
+# ------------------------------------------------------------------ Hygiene + Signals (AI-first)
 
-class TestPrefilter:
-    def test_clear_homework_passes(self):
-        r = prefilter("高数第三章作业周五晚上12点前交学习通")
-        assert r.passed is True
+class TestHygieneFilter:
+    def test_empty_rejected(self):
+        assert hygiene_check("").passed is False
+        assert hygiene_check("   ").passed is False
+        assert hygiene_check(None).passed is False
+
+    def test_oversized_rejected(self):
+        assert hygiene_check("水" * 2001).passed is False
+
+    def test_no_text_content_rejected(self):
+        assert hygiene_check("😀✨🎉").passed is False
+
+    def test_normal_text_passes_even_short(self):
+        # AI-first: normal text must reach the LLM; local rules do NOT hard-drop
+        # short or keyword-less messages
+        assert hygiene_check("这个周五前交一下").passed is True
+        assert hygiene_check("hi").passed is True
+        assert hygiene_check("好的收到").passed is True
+        assert hygiene_check("哈哈哈哈").passed is True
+
+    def test_high_certainty_homework_passes(self):
+        assert hygiene_check("高数第三章作业周五晚上12点前交学习通").passed is True
+
+
+class TestSignalAnalyzer:
+    def test_homework_signals(self):
+        r = analyze_signals("高数第三章作业周五晚上12点前交学习通")
         assert r.score >= 3.0
-        assert any("deadline" in x for x in r.reasons)
+        assert "deadline" in r.tags
+        assert "coursework" in r.tags
 
-    def test_clear_exam_passes(self):
-        assert prefilter("周三下午高数考试，记得带学生证").passed is True
+    def test_exam_signals(self):
+        r = analyze_signals("周三下午高数考试，记得带学生证")
+        assert "time" in r.tags and "affair" in r.tags
 
-    def test_deadline_only_signal(self):
-        assert prefilter("截止到周五").passed is True
+    def test_zero_score_still_analyzes(self):
+        # score can be 0 — that is FINE: signals are hints, never a gate
+        r = analyze_signals("这个周五前交一下")
+        assert r.score >= 3.0  # time expression present
+        r2 = analyze_signals("老师说还是按之前那个时间")
+        assert r2.score > 0  # authority signal
 
-    def test_ordinary_chatter_rejected(self):
-        r = prefilter("我觉得这门课挺有意思的，老师讲得不错")
-        assert r.passed is False
+    def test_signal_never_gates(self):
+        # AI-first invariant: no threshold exists to block LLM access
+        from campuscue.tasks.prefilter import hygiene_check
 
-    def test_very_short_rejected(self):
-        assert prefilter("hi").passed is False
-
-    def test_pure_chatter_rejected(self):
-        assert prefilter("好的收到").passed is False
-        assert prefilter("哈哈哈哈").passed is False
-
-    def test_long_invalid_rejected(self):
-        assert prefilter("水" * 2001).passed is False
-
-    def test_threshold_behavior(self):
-        # lone affair word below threshold
-        r = prefilter("这个作业")
-        assert r.passed is False
-        # action + affair combination passes
-        assert prefilter("把作业交了").passed is True
+        for text in ["这个周五前交一下", "下周一上课的时候带过来", "报名表今晚就关了"]:
+            assert hygiene_check(text).passed is True  # reaches LLM
 
 
 # ------------------------------------------------------------------ Source Policy

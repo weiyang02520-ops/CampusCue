@@ -30,7 +30,7 @@
 
 ## M2：Task Pipeline（含 Provider Foundation）
 
-> **M2a（本轮，完成）**：Data + Provider Foundation（SQLite/Schema/Repository/SourceService/Provider 包）。**M2b（未开始）**：Task Extraction Pipeline + 真实 Provider + 真实 QQ 验收。M2 最终未 PASS（等 M2b）。
+> **M2a（完成）**：Data + Provider Foundation。**M2b.1（完成）**：AI-first Task Extraction Pipeline（ADR-013：本地规则不做语义 gate；LLM 单次 triage+extraction；Mock Provider + SQLite 全链路）。**M2b.2（未开始）**：真实 Provider + 真实 QQ 验收。M2 最终未 PASS。
 
 **范围**：
 - **M2a Provider Foundation**（原 M4 部分，**I 修正：Provider 前移至 M2**，M4 不重新造）：

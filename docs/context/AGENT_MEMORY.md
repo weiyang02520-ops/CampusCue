@@ -23,7 +23,7 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b = IN_PROGRESS（M2b.1 完成待外部复核；M2b.2 NOT_AUTHORIZED）** |
+| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b = IN_PROGRESS（M2b.1 AI-first 完成待外部复核；M2b.2 NOT_AUTHORIZED）** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 root 已有 M1 实现**（src/campuscue + 87 tests）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结 |
@@ -33,7 +33,7 @@
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M0/M1/M2a 全部 PASS。**M2 = IN_PROGRESS**：M2b.1（Task Extraction Pipeline + Mock Provider + SQLite）已完成，AWAITING_EXTERNAL_REVIEW；**M2b.2 NOT_AUTHORIZED**（等 M2b.1 外部确认）。
+- **当前状态**：M0/M1/M2a 全部 PASS。**M2 = IN_PROGRESS**：M2b.1（AI-first Task Extraction Pipeline）已完成，AWAITING_EXTERNAL_REVIEW；**M2b.2 NOT_AUTHORIZED**（等 M2b.1 外部确认）。
 - 下一个待执行：**M2b.2（真实 Provider + 真实 NapCat/QQ 验收）**——等 M2b.1 外部审核确认后才开始。
 
 ## 4. ARCHITECTURE RULES（违反 = FAIL）
@@ -171,3 +171,5 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。
 
 - **M2a.1 运行时事实**：LLMRequest.timeout_s=None 默认（回落 provider 配置）；secret_reference 共享校验 providers/validation.py；Clock 注入 repository 时间戳；DB CHECK 约束（tasks/extractions/provider_configs）；schema 预检零变更（SchemaRefusedError）；186 tests 全绿。
+
+- **AI-first 规则（ADR-013）**：本地规则不是语义 gate——MessageHygieneFilter 只 hard drop 高确定性垃圾；LocalSignalAnalyzer score 是 hints 绝不否决 LLM 调用（score=0 的正常消息仍进 LLM）；LLM 单次 triage+extraction（正常 1 call，schema fallback ≤2 calls）。

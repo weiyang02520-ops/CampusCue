@@ -121,7 +121,7 @@ class TestFullPipeline:
         assert len(extractions) == 1
         assert extractions[0].status == ExtractionStatus.SUCCESS.value
         audit = json.loads(extractions[0].audit)
-        assert {"l1", "l3", "l4", "l5", "outcome"} <= set(audit.keys())
+        assert {"local_signals", "l3", "l4", "l5", "outcome"} <= set(audit.keys())
         assert audit["l4"]["reason"] == "weekday+clock"
         assert "学习通" in (extractions[0].normalized_result or "")
 
@@ -143,13 +143,14 @@ class TestFullPipeline:
         assert await env["extractions"].list_for_message("m0") == []
 
     @pytest.mark.asyncio
-    async def test_l1_drop_no_extraction(self, pipeline_env):
-        """Chatter rejected by L1: no extraction row (privacy decision)."""
+    async def test_hygiene_drop_no_extraction(self, pipeline_env):
+        """Obvious garbage hard-dropped by hygiene: 0 extraction rows (AI-first:
+        local rules only hard-drop certain garbage, never semantic judgment)."""
         env = pipeline_env
         await env["sources"].create(platform="onebot", conversation_id="g1")
-        await env["pipeline"].handle(_group_event(conversation="g1", text="我觉得这门课挺有意思的", message_id="m-chat"))
+        await env["pipeline"].handle(_group_event(conversation="g1", text="   ", message_id="m-garbage"))
         assert await env["tasks"].list_all() == []
-        assert await env["extractions"].list_for_message("m-chat") == []
+        assert await env["extractions"].list_for_message("m-garbage") == []
 
     @pytest.mark.asyncio
     async def test_duplicate_no_second_task(self, pipeline_env):
