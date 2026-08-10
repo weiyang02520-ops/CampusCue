@@ -4,6 +4,8 @@
 
 > 当前能力仅 M1（Echo）：真实 QQ 群/私聊发 `hello` → 回复 `received: hello`。
 > M2+ 功能（任务抽取/提醒/WebUI）尚未实现，不在此文档描述。
+>
+> **开发者注（M2a）**：数据层（SQLite/Repository/SourceService）与 Provider Foundation（OpenAICompatible/Manager）已存在并测试通过；QQ 消息自动转任务（M2b）尚未实现。
 
 ## 架构
 

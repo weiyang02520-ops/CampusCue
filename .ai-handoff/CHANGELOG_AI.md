@@ -78,3 +78,17 @@
 - **测试**：87 passed 保持（无源码改动）；Anti-AstrBot PASS；package isolation PASS
 - **PRIVACY_NOTE**：真实 QQ 标识符曾进 M1.2 历史提交；当前 HEAD 已脱敏；历史未重写（需显式授权）
 - **审核状态**：M1 = PASS；M1.3 AWAITING_EXTERNAL_REVIEW；M2 NOT_AUTHORIZED
+
+## 2026-08-10 · M2a DATA & PROVIDER FOUNDATION
+
+- **任务**：实现 M2a（数据层 + Provider 基础），供 M2b Task Pipeline 使用
+- **Commit**：feat: add M2 data and provider foundation（本轮）
+- **主要修改**：
+  - ADR-012 契约锁定 7 项（TaskStatus/Source 身份/L2 上下文/Provider 默认/secret_reference/UTC）
+  - storage/（SQLAlchemy 2.x + aiosqlite；Database pragma+schema 版本；UTCDateTime；models 4 表+版本表）
+  - repositories/（Source/Task/Extraction/ProviderConfig 单表 CRUD；唯一约束防重复）
+  - services/source_service.py；providers/（base/models/errors/openai_compatible/manager）+ scripts/m2_configure_provider.py
+  - pyproject +3 运行时依赖（sqlalchemy/aiosqlite/httpx）
+- **测试**：新增 52（storage 29 + provider 23）；全量 **139 passed**；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无新声明（M1.2 prior verification 保留）；真实 Provider 验收留 M2b
+- **审核状态**：M2a AWAITING_EXTERNAL_REVIEW；M2b NOT_AUTHORIZED

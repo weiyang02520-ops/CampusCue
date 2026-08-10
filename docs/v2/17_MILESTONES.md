@@ -30,6 +30,8 @@
 
 ## M2：Task Pipeline（含 Provider Foundation）
 
+> **M2a（本轮，完成）**：Data + Provider Foundation（SQLite/Schema/Repository/SourceService/Provider 包）。**M2b（未开始）**：Task Extraction Pipeline + 真实 Provider + 真实 QQ 验收。M2 最终未 PASS（等 M2b）。
+
 **范围**：
 - **M2a Provider Foundation**（原 M4 部分，**I 修正：Provider 前移至 M2**，M4 不重新造）：
   - `BaseProvider` / `LLMRequest` / `LLMResponse` / `ProviderError` taxonomy（timeout/auth/rate_limit/network/model/malformed）

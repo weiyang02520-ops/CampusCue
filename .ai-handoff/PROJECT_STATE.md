@@ -15,10 +15,9 @@
 ## current_milestone
 
 - M0 = **PASS**（最终外部审核通过）
-- M1 = **PASS**（REAL ENV VERIFIED 2026-08-10 + 外部技术最终审核）
-- M1.3 = **CONTINUITY_PRIVACY_FIX_COMPLETE**（本轮：PII 脱敏 + Memory Current Truth 修复 + README runbook + canonical HANDOFF）— AWAITING_EXTERNAL_REVIEW
-- M2 = **READY_NOT_STARTED / NOT_AUTHORIZED**（等 M1.3 外部确认）
-- status：**AWAITING_EXTERNAL_M1_3_REVIEW**
+- M1 = **PASS**（含 M1.1 correctness + M1.2 REAL ENV + M1.3 隐私清理）
+- M2 = **IN_PROGRESS**：M2a（Data+Provider Foundation）完成 — AWAITING_EXTERNAL_REVIEW；**M2b NOT_AUTHORIZED**
+- status：**AWAITING_EXTERNAL_M2A_REVIEW**
 
 ## completed
 

@@ -42,7 +42,7 @@
 |---|---|
 | id | UUID |
 | platform | onebot |
-| conversation_id | 群号 / QQ 号 |
+| conversation_id | 群号 / QQ 号（canonical identity = (platform, conversation_id) + DB 唯一约束，ADR-012-C） |
 | name | 显示名 |
 | enabled | 是否允许自动处理 |
 | auto_extract | 是否自动抽取（默认 true） |
@@ -60,7 +60,7 @@
 | category | `homework` / `exam` / `competition` / `activity` / `notice` / `other` |
 | course | 课程 / 归属（可空） |
 | deadline | 截止时间（timezone-aware，可空） |
-| status | `pending` / `done` / `dismissed` |
+| status | `pending_confirm` / `pending` / `done` / `dismissed`（ADR-012-A 唯一枚举；pending_confirm=低置信度待确认，dismissed 仍参与 dedup 历史） |
 | priority | `high` / `normal` / `low`（默认 normal） |
 | source_id | 来源（Source.id） |
 | source_message_id | 平台消息 ID |
@@ -79,7 +79,8 @@
 | normalized_result | 规范化后结果（JSON） |
 | confidence | 置信度 |
 | provider / model | 使用的 Provider 与模型 |
-| status | `success` / `skipped` / `error` |
+| status | `success` / `skipped` / `error` / `duplicate`（闭集枚举） |
+| audit | 结构化 JSON：{"l1":{},"l3":{},"l4":{},"l5":{},"outcome":{}}（ADR-012-B） |
 | error | 错误信息（脱敏） |
 | created_at | 时间戳 |
 

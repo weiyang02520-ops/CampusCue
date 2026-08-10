@@ -17,8 +17,8 @@
 | tasks | id, title, description, category, course, deadline(aware UTC), status, priority, confidence, dedup_key(idx), source_id, source_message_id, source_text_reference, created_at, updated_at | 任务 |
 | extractions | id, source_message_id, raw_result, normalized_result, confidence, provider, model, status, error, created_at | 抽取审计 |
 | reminders | id, task_id(fk), trigger_at, type, status, last_run, error, job_id(派生) | 提醒事实 |
-| provider_configs | id, name, provider_type, base_url, model, temperature, max_tokens, max_context_tokens, timeout, secret_reference, enabled | Provider（不存真实 key） |
-| settings | key(uniq), value(JSON) | 全局设置 |
+| provider_configs | id, name, provider_type, base_url, model, temperature, max_tokens, max_context_tokens, timeout_s, secret_reference, enabled | Provider（只存 secret_reference 环境变量名，ADR-012-F） |
+| settings | key(uniq), value(JSON) | 全局设置（M2a 未实现，YAGNI 延后） |
 
 ## 并发模型（AstrBot/V1 教训）
 

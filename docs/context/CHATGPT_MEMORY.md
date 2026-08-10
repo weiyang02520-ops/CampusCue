@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M1.3）
+## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M2a）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0 = PASS；M1 = PASS（技术最终审核通过 + REAL ENV VERIFIED 2026-08-10）；M1.3 连续性/隐私清理 = 本轮，AWAITING_EXTERNAL_REVIEW；M2 = READY_NOT_STARTED / NOT_AUTHORIZED**（等 M1.3 外部确认后才可执行） | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0 = PASS；M1 = PASS；M1.3 = PASS；M2 = IN_PROGRESS（M2a Data+Provider Foundation 完成，AWAITING_EXTERNAL_REVIEW；M2b NOT_AUTHORIZED）** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -219,3 +219,13 @@ User
 | 2026-08-09 | V2 M0.2：最终一致性修复（4 项）+ Memory 语义规则 | `2014a78` |
 | 2026-08-09 | V2 M1：独立 QQ Runtime（v2/ 实现 + 65 tests + fake NapCat 全链路；真实 NapCat 待联调） | 本轮 |
 | 2026-08-09 | V2 M0.1：外部审核修复 + 双 Memory | 本轮 |
+
+## 9F. MEMORY DELTA（M2a 新增）
+
+- **[EXTERNAL_REVIEW][CURRENT]**：M1.3 外部审核 = PASS。M0/M1 全部关闭。**M2 AUTHORIZED**，拆分为 M2a（Data+Provider Foundation）/ M2b（Task Pipeline + 真实 Provider + 真实 QQ 验收）；M2b 不得在 M2a 外部审核前开始。
+- **[EXTERNAL_REVIEW][DOMAIN_DECISION]**：TaskStatus 规范值：`pending_confirm` / `pending` / `done` / `dismissed`（解决 06 与 10 的矛盾；单一枚举）。
+- **[EXTERNAL_REVIEW][ARCHITECTURE_DECISION]**：L2 上下文 = 有界临时内存 ring buffer（message_id/timestamp/text），不建 messages 表；DB 仍是事实源；重启丢失可接受。
+- **[EXTERNAL_REVIEW][PROVIDER_DECISION]**：M2 Provider 默认语义 = 恰好一个 enabled（0→NoProviderConfiguredError；>1→AmbiguousDefaultProviderError；不静默选第一行）。
+- **[EXTERNAL_REVIEW][SECURITY_DECISION]**：ProviderConfig 只存 secret_reference（环境变量名）；secret 值永不进 DB/Git/日志/Memory/Handoff。
+- **[EXTERNAL_REVIEW][CORRECTION]**：milestone commit 进入 HISTORY 后记录实际 commit 或指向 Git，不留 stale "pending" 措辞。
+- **[REPO_CONFIRMED]**：M2a 实现（SQLAlchemy 2.x + aiosqlite + httpx）：sources/tasks/extractions/provider_configs/schema_meta 表；Source/Task/Extraction/ProviderConfig Repository；SourceService；providers/（base/models/errors/openai_compatible/manager）+ scripts/m2_configure_provider.py（临时 bootstrap，M5 替换）。

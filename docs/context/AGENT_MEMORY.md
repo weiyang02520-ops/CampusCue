@@ -18,12 +18,12 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M1.3）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M2a）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = PASS；M1 = PASS（技术最终审核 + REAL ENV VERIFIED 2026-08-10）；M1.3 = 清理完成待外部复核；M2 = READY_NOT_STARTED / NOT_AUTHORIZED** |
+| 当前门 | **M0 = PASS；M1 = PASS；M1.3 = PASS；M2 = IN_PROGRESS（M2a 完成待外部复核；M2b NOT_AUTHORIZED）** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 root 已有 M1 实现**（src/campuscue + 87 tests）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结 |
@@ -33,8 +33,8 @@
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M1 = **PASS**（技术最终审核 + REAL ENV VERIFIED 2026-08-10）。M1.3 连续性/隐私清理 = 当前 checkpoint 任务，AWAITING_EXTERNAL_REVIEW。**M2 = READY_NOT_STARTED / NOT_AUTHORIZED**（等 M1.3 外部确认后才可执行）。
-- 下一个待执行：**M2（Task Pipeline + Provider Foundation）**——等 M1.3 外部审核确认后才开始。**不要再执行 M1**（已 PASS）。
+- **当前状态**：M0/M1/M1.3 全部 PASS。**M2 = IN_PROGRESS**：M2a（Data+Provider Foundation）已完成，AWAITING_EXTERNAL_REVIEW；**M2b NOT_AUTHORIZED**（等 M2a 外部确认）。
+- 下一个待执行：**M2b（Task Extraction Pipeline + 真实 Provider + 真实 QQ 验收）**——等 M2a 外部审核确认后才开始。
 
 ## 4. ARCHITECTURE RULES（违反 = FAIL）
 
@@ -158,7 +158,9 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：M1 = PASS（REAL ENV VERIFIED 2026-08-10）；M1.3 清理完成待外部复核；**M2 NOT_AUTHORIZED**。
+- **当前状态**：M2a 完成（139 tests 全绿 + package isolation PASS），AWAITING_EXTERNAL_REVIEW；**M2b NOT_AUTHORIZED**。
 - **M2 预备（M1.3 外部确认后启动）**：Provider Foundation（BaseProvider/LLMRequest 最小集/LLMResponse/taxonomy/OpenAICompatible/最小 Manager/structured output）**独立于 Tool System**；SQLite（sources/tasks/extractions）+ Source/Extraction/Task 仓储 + SourceService/TaskService；Task Pipeline（L0-L7）；修 V1 遗留 B12（时区注入）/B13（LLM 测试缺口）。
 - **运行 V2 必须用独立 venv**（repo 根有 Legacy campuscue/，import 会遮蔽）——真实环境已用 `v2/.venv-m1-real` 验证。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。
+
+- **M2a 运行时事实**：数据层用 SQLAlchemy 2.x + aiosqlite（UTC TypeDecorator 处理 tz）；Provider 用 httpx（MockTransport 注入测试）；fresh venv 已验证可独立安装。

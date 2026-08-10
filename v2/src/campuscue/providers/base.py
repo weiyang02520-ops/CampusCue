@@ -1,0 +1,19 @@
+"""BaseProvider (M2). No streaming, no tool system, no fallback chain."""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+from campuscue.providers.models import LLMRequest, LLMResponse
+
+
+class BaseProvider(ABC):
+    provider_type: str = "base"
+
+    @abstractmethod
+    async def chat(self, request: LLMRequest) -> LLMResponse:
+        """One chat completion call. Raises ProviderError on failure."""
+
+    @abstractmethod
+    async def test(self) -> dict:
+        """Minimal connectivity test. Returns safe status info."""
