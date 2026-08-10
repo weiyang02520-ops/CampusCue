@@ -11,7 +11,7 @@
 - [x] **M1.1** 外部源码审核 8 项修复（stale finally/semaphore backpressure/config fail-fast/path 校验/严格响应/诊断模式/raw_message）+ 87 tests 全绿
 - [x] **REAL ENV**（2026-08-10）：NapCat v4.18.18 + 真实 QQ 验证完成（私聊/群聊 hello→received:hello、非 hello 无回复、重启自动重连、token 握手）→ **M1 = PASS**
 
-## M2 预备（M1 外部最终审核通过后启动）
+## M2 预备（M1.3 外部确认后启动；当前 NOT_AUTHORIZED）
 
 - [ ] Provider Foundation（BaseProvider / LLMRequest 最小集 / LLMResponse / ProviderError taxonomy / OpenAICompatibleProvider / 最小 ProviderManager / structured output / secret_reference；**独立于 Tool System**）
 - [ ] SQLite（sources/tasks/extractions 表）+ SourceRepository / ExtractionRepository / TaskRepository / SourceService / TaskService

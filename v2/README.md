@@ -30,15 +30,32 @@ python -m venv .venv-m1-real
 
 ### 2. 启动 CampusCue
 
+**推荐 PowerShell**（Windows 真实环境）：
+
+```powershell
+cd v2
+$env:CAMPUSCUE_ONEBOT_HOST = "127.0.0.1"
+$env:CAMPUSCUE_ONEBOT_PORT = "6199"
+$env:CAMPUSCUE_ONEBOT_PATH = "/ws"
+$env:CAMPUSCUE_ONEBOT_TOKEN = "<临时随机 token>"   # 与 NapCat 配置一致
+$env:CAMPUSCUE_DIAGNOSTIC = "1"                    # 仅联调诊断；生产不要开
+.venv-m1-real\Scripts\python.exe -m campuscue
+```
+
+**Git Bash**（注意 MSYS 路径转换陷阱）：
+
 ```bash
 cd v2
+export MSYS_NO_PATHCONV=1                       # 必须！否则 /ws 会被转成 C:/Program Files/Git/ws
 export CAMPUSCUE_ONEBOT_HOST=127.0.0.1
 export CAMPUSCUE_ONEBOT_PORT=6199
 export CAMPUSCUE_ONEBOT_PATH=/ws
-export CAMPUSCUE_ONEBOT_TOKEN=<临时随机 token>   # 与 NapCat 配置一致
-export CAMPUSCUE_DIAGNOSTIC=1                     # 仅联调诊断；生产不要开
-.venv-m1-real/Scripts/python -m campuscue
+export CAMPUSCUE_ONEBOT_TOKEN=<临时随机 token>
+export CAMPUSCUE_DIAGNOSTIC=1
+.venv-m1-real/Scripts/python.exe -m campuscue
 ```
+
+> 已知真实环境陷阱（M1.2 实测）：Git Bash 会把 `/ws` 这类以 `/` 开头的参数做 MSYS 路径转换，变成 `C:/Program Files/Git/ws`，导致启动失败（`invalid path`）。**必须 `export MSYS_NO_PATHCONV=1`**，或改用 PowerShell/cmd。
 
 日志显示 `onebot reverse ws server listening on ws://127.0.0.1:6199/ws` 即就绪。
 

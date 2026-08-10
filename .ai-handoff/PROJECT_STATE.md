@@ -15,9 +15,10 @@
 ## current_milestone
 
 - M0 = **PASS**（最终外部审核通过）
-- M1 = **PASS**（REAL ENV VERIFIED 2026-08-10）
-- M2 = **READY_NOT_STARTED**（等外部 M1 最终审核）
-- status：**AWAITING_EXTERNAL_M1_FINAL_REVIEW**
+- M1 = **PASS**（REAL ENV VERIFIED 2026-08-10 + 外部技术最终审核）
+- M1.3 = **CONTINUITY_PRIVACY_FIX_COMPLETE**（本轮：PII 脱敏 + Memory Current Truth 修复 + README runbook + canonical HANDOFF）— AWAITING_EXTERNAL_REVIEW
+- M2 = **READY_NOT_STARTED / NOT_AUTHORIZED**（等 M1.3 外部确认）
+- status：**AWAITING_EXTERNAL_M1_3_REVIEW**
 
 ## completed
 
@@ -34,11 +35,11 @@
 
 ## in_progress
 
-- 无（M1 全部完成）
+- 无（M1.3 完成）
 
 ## blocked
 
-- M2 阻塞于外部 M1 最终审核
+- M2 阻塞于 M1.3 外部确认
 
 ## verified
 
@@ -57,7 +58,7 @@
 
 ## next_gate
 
-- 外部 ChatGPT M1 最终审核（读 GitHub HEAD）→ M2
+- 外部 ChatGPT M1.3 复核（读 GitHub HEAD）→ M2 授权
 
 ## external_review_focus（M1 审核点）
 

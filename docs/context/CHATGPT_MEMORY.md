@@ -22,18 +22,20 @@
 
 ---
 
-## 1. CURRENT TRUTH（截至 2026-08-09 M0.1）
+## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M1.3）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | M0.1 REVIEW FIX 完成；**M0 = PASS（条件），M1 = READY_NOT_STARTED** | [EXTERNAL_REVIEW] |
-| M0.1 结论 | 架构方向 PASS；文档精度 CHANGES_REQUESTED → 已全部修复 | [EXTERNAL_REVIEW] |
+| 当前 Milestone | **M0 = PASS；M1 = PASS（技术最终审核通过 + REAL ENV VERIFIED 2026-08-10）；M1.3 连续性/隐私清理 = 本轮，AWAITING_EXTERNAL_REVIEW；M2 = READY_NOT_STARTED / NOT_AUTHORIZED**（等 M1.3 外部确认后才可执行） | [EXTERNAL_REVIEW][CURRENT] |
+| M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
+| V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
+| Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
 | V2 立项原因 | V1 = AstrBot Runtime + CampusCue 业务层（main.py:44-47 InitialLoader；astrbot/ 完整目录；底座 4 处侵入）；V2 零 AstrBot 依赖 | [REPO_CONFIRMED] |
 | V1 仓库 | weiyang02520-ops/CampusCue @ `db35d77`（单 commit 发布，public） | [REPO_CONFIRMED] |
 | AstrBot 基准 | commit `30e20318c`（本地副本已 checkout） | [EXTERNAL_REVIEW 固定] |
-| V2 仓库 | 同 V1 仓库（docs/v2/ 与 .ai-handoff/ 已推入）；**current remote HEAD：RESOLVE FROM GIT/GITHUB AT RECOVERY TIME（不维护为长期 Memory 字段）** | [REPO_CONFIRMED] + [EXTERNAL_REVIEW] |
-| 双 Memory | docs/context/CHATGPT_MEMORY.md + AGENT_MEMORY.md（本轮建立） | [DESIGN_DECISION] |
+| V2 仓库 | 同 V1 仓库；**current remote HEAD：RESOLVE FROM GIT/GITHUB AT RECOVERY TIME（不维护为长期 Memory 字段）** | [REPO_CONFIRMED] + [EXTERNAL_REVIEW] |
+| 双 Memory | docs/context/CHATGPT_MEMORY.md + AGENT_MEMORY.md | [DESIGN_DECISION] |
 
 ## 2. GLOBAL WORKING MODE（长期 AI 协作模式）[USER_STATED][GLOBAL_WORKFLOW][CURRENT]
 
@@ -143,6 +145,14 @@ User
 - **[REPO_FACT]**：真实 NapCat 默认连接是 `WebSocket Client`（反向 WS 拨入），不是 WebSocket Server——与架构一致。
 - **[USER_CONFIRMED][REAL_ENV]**：用户实际看到 QQ 中收到 `received: hello`（含重启后再次确认）。
 
+## 9E. MEMORY DELTA（M1.3 新增）
+
+- **[EXTERNAL_REVIEW][CURRENT]**：**M1 技术最终审核 = PASS**。实现（M1）+ correctness（M1.1）+ REAL ENV Gate（M1.2）全部确认。M1.3 = 连续性/隐私清理，M2 待 M1.3 外部确认后才授权。
+- **[EXTERNAL_REVIEW][PRIVACY_CORRECTION]**：M1.2 HANDOFF 曾通过真实 NapCat 配置文件名意外提交完整 QQ 标识符。**当前树文档必须语义脱敏；secret scan 不足以覆盖 PII**——隐私检查必须包含真实环境标识符（QQ 号/群号/含标识符文件名/用户路径），而不只是凭据/高熵 secret。
+- **[EXTERNAL_REVIEW][WORKFLOW_CORRECTION]**：**Memory CURRENT TRUTH 必须在每个 milestone 转换时更新**。只追加 MEMORY DELTA 而顶部 CURRENT TRUTH 过时 = Memory Rot。
+- **[EXTERNAL_REVIEW][WORKFLOW_CORRECTION]**：**HANDOFF 是当前操作状态，不是 append-only 永久历史**。历史细节属于 Git / CHANGELOG / Memory HISTORY。
+- **[EXTERNAL_REVIEW][RUNBOOK_CORRECTION]**：**发现的真实环境 workaround 只有在实际写进 runbook 才算已记录**。M1.2 发现的 Git Bash MSYS `/ws` 路径转换 → v2/README 必须含真实 workaround（MSYS_NO_PATHCONV=1 或推荐 PowerShell/cmd）。
+
 ## 9. REJECTED / SUPERSEDED APPROACHES
 
 | 旧方案 | 何时 | 为何改 | 替代 |
@@ -184,17 +194,19 @@ User
 - **CURRENT TRUTH vs HISTORY**：旧结论被推翻时 Current 更新、History 记录（旧方案/何时/为何改/替代/状态），防 Memory 腐烂。
 - Source of truth 层级（不得混淆）：代码/Git/测试 = 客观事实；DECISIONS/ADR = 正式设计决定；PROJECT_STATE/HANDOFF = 短期工作状态；本文件/AGENT_MEMORY = 长期认知。
 
-## 14. CURRENT CAMPUSCUE STATE（M0.1 结束时）
+## 14. CURRENT CAMPUSCUE STATE（M1.3，Last Updated 2026-08-10）
 
-- M0 = PASS（外部审核条件性通过，finding 已修复）
-- M1 = READY_NOT_STARTED（严禁开始）
-- 仓库 HEAD：**RESOLVE FROM GIT/GITHUB AT RECOVERY TIME**（动态 HEAD 不维护为长期 Memory 字段；M0.2 起规则）。历史 checkpoint：M0 commit `6480ad2`；M0.1 commit `3d70da1`
-- 未验证项：无代码、无 REAL ENV、无视觉（M6 才有）
-- 已知缺口（V1 遗留）：B12 时区硬编码（M2 修）、B13 LLM 测试缺口（M2 修）
+- **M0 = PASS；M1 = PASS**（实现 + correctness + REAL ENV 全部技术审核通过）
+- **M1.3** = 本轮连续性/隐私清理，AWAITING_EXTERNAL_REVIEW
+- **M2 = READY_NOT_STARTED / NOT_AUTHORIZED**（等 M1.3 外部确认）
+- 仓库 HEAD：**RESOLVE FROM GIT/GITHUB AT RECOVERY TIME**（动态 HEAD 不维护为长期 Memory 字段）。历史 checkpoint：M0 `6480ad2`、M0.1 `3d70da1`、M0.2 `2014a78`、M1 `9bfb018`、M1.1 `71f7f99`、M1.2 `7ae0810`
+- 已验证：真实 QQ/NapCat（NapCat v4.18.18，hello→received:hello 私聊+群聊、非 hello 无回复、重启自动重连）
+- 未验证：无视觉（M6）；B12/B13（M2 修）
+- 隐私备注：M1.2 HANDOFF 曾含真实 QQ 标识符 → 当前 HEAD 已脱敏；历史提交未重写（需显式授权）
 
 ## 15. OPEN QUESTIONS
 
-- 无阻塞性问题。M1 启动前等待外部 ChatGPT 确认 M0 PASS + 发布 M1 prompt。
+- 无阻塞性问题。M2 等待 M1.3 外部确认。
 
 ## 16. HISTORY / TIMELINE
 

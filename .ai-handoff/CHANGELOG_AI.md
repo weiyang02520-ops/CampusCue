@@ -64,3 +64,17 @@
 - **REAL ENV**：**VERIFIED**（NapCat v4.18.18 + 真实 QQ：私聊/群聊 hello→received:hello、非 hello 无回复、重启自动重连、token 握手成功、messagePostFormat=array 兼容）
 - **测试**：87 passed 保持；package isolation PASS；Anti-AstrBot PASS
 - **审核状态**：M1 = PASS（REAL ENV VERIFIED）；等待外部 M1 最终审核
+
+## 2026-08-10 · M1.3 CONTINUITY & PRIVACY CLEANUP
+
+- **任务**：外部审核确认 M1 技术全部 PASS 后，执行连续性/隐私清理（8 项 finding）
+- **Commit**：docs: finalize M1 handoff and privacy cleanup（本轮）
+- **主要修改**：
+  - PII 脱敏：M1.2 HANDOFF 中的真实 Bot QQ 标识符（NapCat 配置文件名）→ onebot11_<BOT_QQ_REDACTED>.json；测试群名称脱敏
+  - CHATGPT_MEMORY：顶部 CURRENT TRUTH 修复为 M1 PASS 后状态 + §9E 5 条 MEMORY DELTA + §14 更新
+  - AGENT_MEMORY：Gate 矛盾修复（M2 NOT_AUTHORIZED）+ §7 新增 PII 泄漏失败模式
+  - v2/README.md：补 Git Bash MSYS_NO_PATHCONV=1 workaround + PowerShell/Git Bash 分块
+  - HANDOFF：重构为 canonical（不再 append-only）
+- **测试**：87 passed 保持（无源码改动）；Anti-AstrBot PASS；package isolation PASS
+- **PRIVACY_NOTE**：真实 QQ 标识符曾进 M1.2 历史提交；当前 HEAD 已脱敏；历史未重写（需显式授权）
+- **审核状态**：M1 = PASS；M1.3 AWAITING_EXTERNAL_REVIEW；M2 NOT_AUTHORIZED

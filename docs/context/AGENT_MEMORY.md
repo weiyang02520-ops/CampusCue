@@ -18,22 +18,23 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（2026-08-09 M0.1）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M1.3）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = PASS；M1 = PASS（REAL ENV VERIFIED 2026-08-10）；M2 = READY_NOT_STARTED** |
+| 当前门 | **M0 = PASS；M1 = PASS（技术最终审核 + REAL ENV VERIFIED 2026-08-10）；M1.3 = 清理完成待外部复核；M2 = READY_NOT_STARTED / NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 root 已有 M1 实现**（src/campuscue + 87 tests）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结 |
 | REAL ENV | 已验证：NapCat v4.18.18 + 真实 QQ hello→received:hello（私聊+群聊）+ 非 hello 不回复 + 重启自动重连 |
 
-## 3. CURRENT MILESTONE / GATE
+## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-10）
 
-- 门控：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
+- **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- 下一个待执行：M1（Independent QQ Runtime）——等外部审核确认后才开始。
+- **当前状态**：M1 = **PASS**（技术最终审核 + REAL ENV VERIFIED 2026-08-10）。M1.3 连续性/隐私清理 = 当前 checkpoint 任务，AWAITING_EXTERNAL_REVIEW。**M2 = READY_NOT_STARTED / NOT_AUTHORIZED**（等 M1.3 外部确认后才可执行）。
+- 下一个待执行：**M2（Task Pipeline + Provider Foundation）**——等 M1.3 外部审核确认后才开始。**不要再执行 M1**（已 PASS）。
 
 ## 4. ARCHITECTURE RULES（违反 = FAIL）
 
@@ -87,6 +88,7 @@ external/platform → adapters → core(events/bus/router) → services → repo
 | **文档一致性假绿** | keyword-based 检查漏跨文件语义冲突（M0.1 漏掉 05 任务流 L8/L9 与 10/17 矛盾） | **一致性检查必须比较同一概念在多个 canonical docs 中的语义，不能只搜关键词**（M0.2 教训） |
 | **测试复制生产代码片段** | connection generation 测试手工模拟 half-finally，漏真实 finally 的 global pending cleanup（M1.1 finding A） | **lifecycle/race 测试必须走真实执行路径**（如真实 `_handle_connection`），禁止测试复制品（M1.1 教训） |
 | **handler 内 detach 绕过并发限制** | EventBus handler create_task 后立即返回 → semaphore 被绕过 | **完整链路 bounded**：queue + in-flight handler + outbound send 都在 handler 内 await（M1.1 finding B） |
+| **PII 泄漏（secret scan 干净也中招）** | M1.2 HANDOFF 经真实 NapCat 配置文件名提交完整 QQ 号；secret scan 只查高熵凭据 | **checkpoint 隐私检查区分 SECRET / PII / PUBLIC FIXTURE**：真实环境标识符（QQ 号/群号/含标识符文件名/用户路径/真实聊天内容）也要查；文档用语义脱敏（如 onebot11_<BOT_QQ_REDACTED>.json）；历史泄漏不擅自重写 Git 历史（需显式授权）（M1.3 教训） |
 
 ## 8. EVIDENCE FIRST（置信度纪律）
 
@@ -151,12 +153,12 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 17. STOP RULE
 
-- 远程验证成功后 **STOP**；报告：PASS/FAIL、完成项、验证项、仓库、commit、remote verified、当前门（如 M0 = PASS, M1 = READY_NOT_STARTED）。
+- 远程验证成功后 **STOP**；报告：PASS/FAIL、完成项、验证项、仓库、commit、remote verified、当前门（按真实状态：如 M1 = PASS, M2 = READY_NOT_STARTED / NOT_AUTHORIZED）。
 - 等待外部 ChatGPT 读取 GitHub 后再继续；未经审核不自动进入下一 Milestone。
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：M1 = PASS（REAL ENV VERIFIED 2026-08-10）。等待外部 ChatGPT 最终 M1 审核。
-- **M2 预备（M1 PASS 确认后启动）**：Provider Foundation（BaseProvider/LLMRequest 最小集/LLMResponse/taxonomy/OpenAICompatible/最小 Manager/structured output）**独立于 Tool System**；SQLite（sources/tasks/extractions）+ Source/Extraction/Task 仓储 + SourceService/TaskService；Task Pipeline（L0-L7）；修 V1 遗留 B12（时区注入）/B13（LLM 测试缺口）。
+- **当前状态**：M1 = PASS（REAL ENV VERIFIED 2026-08-10）；M1.3 清理完成待外部复核；**M2 NOT_AUTHORIZED**。
+- **M2 预备（M1.3 外部确认后启动）**：Provider Foundation（BaseProvider/LLMRequest 最小集/LLMResponse/taxonomy/OpenAICompatible/最小 Manager/structured output）**独立于 Tool System**；SQLite（sources/tasks/extractions）+ Source/Extraction/Task 仓储 + SourceService/TaskService；Task Pipeline（L0-L7）；修 V1 遗留 B12（时区注入）/B13（LLM 测试缺口）。
 - **运行 V2 必须用独立 venv**（repo 根有 Legacy campuscue/，import 会遮蔽）——真实环境已用 `v2/.venv-m1-real` 验证。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。
