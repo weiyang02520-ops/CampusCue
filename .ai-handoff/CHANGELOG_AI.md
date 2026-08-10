@@ -155,3 +155,12 @@
 - **测试**：新增 14（400 分类 A-D 4、whitespace secret 1、fallback canonical 1、fallback 上下文 1、fallback injection 1、dedup A-E 5、dedup key 1）→ **316 passed**；package isolation PASS（.venv-m2iso）；Anti-AstrBot PASS
 - **REAL ENV**：无新声明（M1.2 prior 保留；真实 Provider/QQ 留 M2b.2）
 - **审核状态**：M2b.1 = FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 NOT_AUTHORIZED
+
+## 2026-08-10 · M2b.2 REAL ENV ACCEPTANCE
+
+- **任务**：M2b.2 真实环境验收（REAL QQ → NapCat → WS → pipeline → Provider → SQLite）+ NapCat Recovery（EPIPE/断开恢复 + 大号保护）
+- **Commit**：test: verify M2 with real provider and QQ environment（本轮）
+- **主要修改**：**v2/src 零修改**（纯验收）；v2/README.md runbook 事实（NapCat 重定向启动、M2 启用步骤）；Memory §9M；.ai-handoff/ 6 文件
+- **REAL ENV**：**VERIFIED**——真实群消息 → Task（deadline `2026-08-14 15:59 UTC` 精确）；structured_mode=json_fallback（DeepSeek）；普通聊天 skipped 无泄漏；语义重复不创建第二 Task；重启 DB 持久化 + NapCat 自动重连；M1 hello 共存（retcode 0）
+- **测试**：316 passed 保持；package isolation PASS；Anti-AstrBot PASS
+- **审核状态**：M2b.2 = REAL_ENV_ACCEPTANCE_COMPLETE AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 FINAL = NOT PASS；M3 NOT_AUTHORIZED

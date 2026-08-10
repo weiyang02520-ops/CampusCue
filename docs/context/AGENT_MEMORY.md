@@ -18,16 +18,16 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M2b.1.2）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M2b.2）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b.1 = FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 NOT_AUTHORIZED；M2 FINAL = NOT PASS** |
+| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS；M2b.1 = PASS（最终）；M2b.2 = REAL_ENV_ACCEPTANCE_COMPLETE AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 FINAL = NOT PASS（等外部）** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 root 已有 M1 实现**（src/campuscue + 87 tests）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结 |
-| REAL ENV | 已验证：NapCat v4.18.18 + 真实 QQ hello→received:hello（私聊+群聊）+ 非 hello 不回复 + 重启自动重连（M1.2 保留） |
+| REAL ENV | 已验证（M1.2 + M2b.2）：NapCat Framework + 真实 QQ；hello Echo + 真实任务抽取全链路 |
 
 ## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-10）
 
@@ -97,6 +97,8 @@ external/platform → adapters → core(events/bus/router) → services → repo
 | **校验规则重复** | 创建规范 helper 后运行时仍保留等价 regex（M2a.2 finding A） | **每个消费方必须实际 import/调用 canonical helper**；重复等价代码 = 重复策略（M2a.2 教训） |
 | **ORM 隐藏墙钟** | models 保留 datetime.now 默认（M2a.2 finding D） | **只有 SystemClock 可读真实墙钟**；storage models 时间戳 required（无默认） |
 | **Fallback semantic drift** | primary Provider 路径用完整产品/安全契约，兼容 fallback 用简化 prompt 行为不同（M2b.1.2 finding B） | **primary 与 fallback 共享一个 canonical 语义 prompt 契约**；只有 transport/输出强制不同（`build_system_prompt(json_only)`）；真实 endpoint 可能大部分时间走 fallback，使 primary 测试失效 |
+| **Broad process-name kill on multi-account desktop** | `taskkill /IM QQ.exe` 同时杀掉测试 bot 与用户活动个人 QQ（M2b.2 事故） | **桌面应用的用户会话 PROTECTED_BY_DEFAULT**；先建 PID/归属映射；只定向终止已证明的测试进程；永远不按进程名批量杀 |
+| **Account identity guessed from config filenames** | 假定新生成的 `onebot11_<id>.json` 属于测试 bot，未确认账号角色（M2b.2 事故：误把用户大号当 bot） | **账号角色必须显式/可证明地映射后才能迁移配置**；用户主号配置绝不可改 |
 
 ## 8. EVIDENCE FIRST（置信度纪律）
 
@@ -166,9 +168,10 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：M2b.1.2（Fallback Contract Fix）完成（316 tests 全绿 + fresh venv 隔离 `.venv-m2iso` + Anti-AstrBot），FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW；**M2b.2 NOT_AUTHORIZED**。
-- **M2 预备（M2b.1 外部最终确认后启动）**：M2b.2 = 真实 Provider（如 Ark）+ 真实 NapCat/QQ + SQLite 验收；真实 Provider 凭据走环境变量（不向用户索要、不抓取）；若真实行为需要，M2b.2 可加极小 endpoint 能力映射。
-- **运行 V2 必须用独立 venv**（repo 根有 Legacy campuscue/，import 会遮蔽）——真实环境已用 `v2/.venv-m1-real` 验证；本轮隔离验证用 `v2/.venv-m2iso`。
+- **当前状态**：**M2b.2 REAL ENV ACCEPTANCE COMPLETE**（真实 QQ → NapCat → WS → AI-first pipeline → DeepSeek → SQLite 全链路验证；测试 A-E 全 PASS；316 tests 全绿 + fresh venv + Anti-AstrBot）。**AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 FINAL = NOT PASS（等外部）**。
+- **M3（Reminder）**：等外部 M2 最终复核授权后才开始；**未授权禁止启动**。
+- **REAL ENV 关键事实**：NapCat Framework 启动需 **stdout/stderr 重定向**（否则 EPIPE）；`napimain.exe <QQ> <dll> <cjs>` 注入；WS client 配置在账号专用 `onebot11_<id>.json`；用户大号受保护不可动；测试 bot 独立小号。
+- **运行 V2 必须用独立 venv**（`v2/.venv-m1-real` 真实环境 / `.venv-m2iso` 隔离验证）。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。
 
 - **M2a.1 运行时事实**：LLMRequest.timeout_s=None 默认（回落 provider 配置）；secret_reference 共享校验 providers/validation.py；Clock 注入 repository 时间戳；DB CHECK 约束（tasks/extractions/provider_configs）；schema 预检零变更（SchemaRefusedError）；186 tests 全绿。

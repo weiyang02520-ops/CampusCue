@@ -14,37 +14,37 @@
 
 ## current_milestone
 
-- M0 = **PASS**；M1 = **PASS**（含 M1.1 correctness + M1.2 REAL ENV + M1.3 隐私清理）
-- M2a = **PASS**（最终外部审核通过）
-- **M2b.1 = FINAL_IMPLEMENTATION_COMPLETE**（AI-first PASS + M2b.1.1 hardening PASS + M2b.1.2 fallback/dedup 契约修正完成）— **AWAITING_EXTERNAL_FINAL_REVIEW**
-- **M2b.2 = NOT_AUTHORIZED**（等 M2b.1 最终复核）
-- M2 最终 = NOT PASS（等 M2b.2）
-- status：**AWAITING_EXTERNAL_M2B1_FINAL_REVIEW**
+- M0 = **PASS**；M1 = **PASS**（含 REAL ENV）；M2a = **PASS**；**M2b.1 = PASS（最终）**
+- **M2b.2 = REAL_ENV_ACCEPTANCE_COMPLETE — AWAITING_EXTERNAL_M2_FINAL_REVIEW**
+- **M2 = AWAITING_EXTERNAL_FINAL_REVIEW；M2 FINAL = NOT PASS（等外部复核）**
+- M3+ = NOT_AUTHORIZED
+- status：**AWAITING_EXTERNAL_M2_FINAL_REVIEW**
 
 ## completed
 
 - M0 / M0.1 / M0.2（PASS）
 - M1 / M1.1 / M1.2 / M1.3（PASS）
 - M2a / M2a.1 / M2a.2（PASS）
-- **M2b.1 系列（FINAL_IMPLEMENTATION_COMPLETE）**：AI-first pipeline（ADR-013）+ M2b.1.1 Real-Gate Hardening（缺 secret fail-before-transport / provider-model 审计 / model_said_none reason / fallback 分类 / context resize / 显式年份 / test DB 隔离 / 所有权清理 / dedup key / injection 防御）+ **M2b.1.2 Fallback Contract Fix（generic unsupported 不 fallback / 单 canonical system 契约 / fallback 上下文保留 / whitespace secret / no-deadline 跨课程不 dedup）**
+- M2b.1 / M2b.1.1 / M2b.1.2（PASS）
+- **M2b.2（REAL ENV ACCEPTANCE COMPLETE）**：真实 QQ 群消息 → NapCat（Framework）→ Reverse WS → AI-first pipeline → DeepSeek → SQLite 全链路；测试 A-E 全 PASS（hello 共存/明确任务 deadline 精确/普通聊天 skipped/语义重复/重启持久化 + 自动重连）
 
 ## in_progress
 
-- 无（M2b.1.2 完成，checkpoint 后停止，等待外部最终复核）
+- 无（M2b.2 验收完成，checkpoint 后停止，等待外部 M2 最终复核）
 
 ## blocked
 
-- **M2b.2 仅阻塞于 M2b.1 外部最终复核**（无其他阻塞）
+- **M3+ 仅阻塞于 M2 外部最终复核**（无其他阻塞）
 
 ## verified（Workspace Agent 报告；外部审核待复核）
 
-- **316 tests passed**（M2b.1.2 新增 14）；package isolation PASS（fresh venv `.venv-m2iso` + tzdata）；Anti-AstrBot PASS
-- REAL ENV VERIFIED（M1.2，2026-08-10，NapCat v4.18.18 + 真实 QQ）——**保留自 M1.2，非本轮新验证**
-- 外部审核状态：**awaiting**（M2a PASS；M2b.1 AI-first 方向 PASS；M2b.1.1 hardening PASS；M2b.1.2 待最终复核）
+- **316 tests passed**；package isolation PASS（fresh venv `.venv-m2iso` + tzdata）；Anti-AstrBot PASS
+- **REAL ENV VERIFIED（M2b.2，2026-08-10）**：真实 QQ 群消息全链路；structured_mode=json_fallback（DeepSeek）；deadline `2026-08-14 15:59 UTC` 精确；duplicate 不创建第二 Task；重启 DB 持久化 + NapCat 自动重连
+- 外部审核状态：**awaiting**（M2a/M2b.1 PASS；M2b.2 REAL ENV 待最终复核）
 
 ## unverified / known unknowns
 
-- 真实 Provider（如 Ark）json_schema 支持度与真实 token 成本（M2b.2 真实验收；若 primary 行为证明需要，M2b.2 可加极小 endpoint 能力映射）
+- 无阻塞性未知；真实模型 course 提取依赖消息原文是否含课程名（REAL_MODEL_VARIANCE，非 bug）
 - 无迁移框架；未来 schema 版本需人工迁移
 
 ## architecture_decisions
@@ -53,17 +53,17 @@
 
 ## next_gate
 
-- 外部 ChatGPT M2b.1 最终源码复核（10 项审核点）→ PASS 则 **M2b.2 授权**（真实 Provider + 真实 NapCat/QQ + SQLite 验收）
+- 外部 ChatGPT M2 最终复核（读取 GitHub HEAD + REAL ENV 证据）→ PASS 则 **M3（Reminder）授权**
 
-## external_review_focus（M2b.1.2 复核点）
+## external_review_focus（M2b.2 REAL ENV 复核点）
 
-1. generic "unsupported" 不再触发 structured fallback（`unsupported_parameter`+temperature → INVALID_REQUEST 1 call）
-2. 结构化特定证据仍触发恰一次 fallback（`unsupported_response_format`/`invalid_json_schema`/message 证据 → 2 calls）
-3. fallback 保留 canonical AI-first 语义（校园事务定义/AI-first 判断/上下文补全/信号 hints）
-4. fallback 保留 prompt-injection defense-in-depth 边界（roles system+user；attack 永不进 system；含"输入即数据"语义）
-5. fallback 保留有界上下文/当前消息/信号/时间戳（user 消息与 primary 完全一致）
-6. whitespace-only secret → CONFIG_ERROR + 0 transport
-7. no-deadline 不同已知课程不 dedup；`build_dedup_key` 语义一致
-8. AI-first 行为未变（ADR-013 CURRENT；无 LocalPrefilter 回归）
-9. 无 M2b.2 实现（真实 Provider/QQ 未运行）
-10. state/handoff/memory 一致
+1. REAL QQ 群消息完整链路（NapCat → WS → pipeline → DeepSeek → SQLite）
+2. structured_mode=json_fallback（DeepSeek 不支持 json_schema，回退共享 canonical 语义契约）
+3. deadline 精确 `2026-08-14 15:59 UTC`（TimeNormalizer）
+4. provider/model provenance（openai_compatible / deepseek-chat）
+5. 普通聊天 → skipped 无 Task 无输入泄漏（privacy）
+6. 语义重复 → 不创建第二 Task
+7. 重启 DB 持久化 + NapCat 自动重连
+8. M1 hello 共存
+9. 用户大号保护（未触碰；测试用独立小号 bot）
+10. 无 CampusCue source changes（纯验收轮）

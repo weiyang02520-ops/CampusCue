@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M2b.1.2）
+## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M2b.2 REAL ENV）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b.1 = AI-first 方向 PASS + M2b.1.1 hardening PASS + M2b.1.2 fallback/dedup 契约修正完成 → FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 真实 Provider/QQ 验收 NOT_AUTHORIZED；M2 FINAL = NOT PASS** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS；M2b.1 = PASS（最终）；M2b.2 = REAL_ENV_ACCEPTANCE_COMPLETE AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 = AWAITING_EXTERNAL_FINAL_REVIEW；M2 FINAL = NOT PASS（等外部复核）** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -291,3 +291,17 @@ User
 - **[EXTERNAL_REVIEW][CONTEXT_RULE][CURRENT]**：Fallback 抽取收到与 primary structured 路径相同的有界上下文/信号/当前消息信息（同一 user 消息实例）；禁止 fallback 只用 current_text 重建。
 - **[EXTERNAL_REVIEW][DEDUP_CORRECTION][CURRENT]**：双方课程已知且不同时，同标题任务不得仅因双方 deadline 都缺失而 dedup。课程在双方都已知时参与语义身份（无 deadline 分支与有 deadline 分支一致）；`build_dedup_key` 相应只在 course 已知时入键。
 - **[REPO_CONFIRMED]**：M2b.1.2 落地（316 tests 全绿 + fresh venv + Anti-AstrBot）：FALLBACK_PROMPT 删除、400 分类收紧、whitespace secret fail-fast、dedup 课程语义修正。
+
+## 9M. MEMORY DELTA（M2b.2 REAL ENV ACCEPTANCE + NapCat Recovery）
+
+- **[USER_STATED][SAFETY_CONSTRAINT][CURRENT]**：用户的主 QQ 账号（大号）**绝不**用作 CampusCue bot；自动化环境工作**禁止**终止/重启/修改大号（包括 taskkill /IM QQ.exe 批量杀进程）。测试 bot 是独立小号。
+- **[EXTERNAL_REVIEW][EXECUTION_SAFETY]**：同名桌面进程不能按进程名批量杀（`taskkill /IM QQ.exe` 会同时杀掉用户活动会话与测试 bot）。**必须 PID 归属证明后定向终止**；用户会话 PROTECTED_BY_DEFAULT。
+- **[EXTERNAL_REVIEW][ACCOUNT_IDENTITY]**：账号角色（bot vs 用户主号）必须**显式/可证明地映射**后才能迁移配置；不得仅凭 `onebot11_<id>.json` 文件新旧猜测（曾误把用户大号当 bot）。
+- **[REAL_ENV_OBSERVATION][NAPCAT]**：NapCat Framework/nativeLoader 前台启动曾产生 `EPIPE: broken pipe`——**stdout/stderr 重定向到文件后初始化成功**（EPIPE 可能是终端管道问题，不证明 Framework 不兼容；未迁移 Shell）。
+- **[REAL_ENV_CONFIRMED][NAPCAT]**：当前 M2 REAL 环境 NapCat Framework 可用（重定向启动）；曾出现 `TypeError: Object has been destroyed`（QQ 会话退出时的 unhandledRejection，WS 断开；重连后恢复）。
+- **[REAL_ENV_CONFIRMED][M2]**：**真实 QQ 群消息完整链路验证通过**：QQ → NapCat 小号 → OneBot Reverse WS → CampusCue AI-first Pipeline → 真实 DeepSeek Provider → TimeNormalizer/Dedup/TaskService → 真实 SQLite。测试 A-E 全 PASS（hello 共存/明确任务 deadline 精确 2026-08-14 15:59 UTC/普通聊天 skipped 无泄漏/语义重复不创建第二 Task/重启 DB 持久化 + NapCat 自动重连）。
+- **[REAL_ENV_CONFIRMED][PROVIDER]**：provider_type=openai_compatible，model=deepseek-chat，structured_mode=**json_fallback**（DeepSeek 拒绝 json_schema，CampusCue 正确回退，≤2 calls，共享 canonical 语义契约）。secret 永不记录。
+- **[REAL_ENV_CONFIRMED][AI_FIRST]**：真实普通聊天（hello/问候）到达真实 Provider，has_task=false → skipped Extraction，无 Task，无输入文本泄漏。
+- **[REAL_ENV_CONFIRMED][DEDUP]**：重复真实任务消息 → `same_semantic_task` duplicate，Task 数保持 1。
+- **[REAL_ENV_CONFIRMED][M1_COMPAT]**：M2 pipeline 启用时 M1 hello Echo 继续工作（send_group_msg retcode 0）。
+- **[REAL_MODEL_VARIANCE]**：真实 DeepSeek 对同一任务的 course 提取存在 variance（一次 null 一次 高等数学——取决于消息原文是否含课程名）；确定性代码正确，不加模糊匹配。
