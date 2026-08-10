@@ -1,6 +1,6 @@
 # PROJECT_STATE.md
 
-> 人工项目阶段事实源。由工作区 AI 在每个阶段更新；Git 可实时获得的字段（HEAD/visibility）由脚本实时获取，不在此维护。
+> 人工项目阶段事实源（canonical，非 append-only）。由工作区 AI 在每个阶段更新；Git 可实时获得的字段（HEAD/visibility）由脚本实时获取，不在此维护。
 
 ## project
 
@@ -14,58 +14,49 @@
 
 ## current_milestone
 
-- M0 = **PASS**（最终外部审核通过）
-- M1 = **PASS**（含 M1.1 correctness + M1.2 REAL ENV + M1.3 隐私清理）
-- M2 = **IN_PROGRESS**：M2a + M2a.1 修复完成 — AWAITING_EXTERNAL_REVIEW；**M2b NOT_AUTHORIZED**
-- status：**AWAITING_EXTERNAL_M2A1_REVIEW**
+- M0 = **PASS**；M1 = **PASS**（含 M1.1 correctness + M1.2 REAL ENV + M1.3 隐私清理）
+- M2 = **IN_PROGRESS**：M2a + M2a.1 + M2a.2（Data + Provider Foundation 全部完成）— **AWAITING_EXTERNAL_FINAL_REVIEW**
+- **M2b = NOT_STARTED / NOT_AUTHORIZED**（等 M2a 外部最终确认）
+- M2 最终 = NOT PASS（等 M2b）
+- status：**AWAITING_EXTERNAL_M2A_FINAL_REVIEW**
 
-## completed
+## completed（M2a 系列全部）
 
-- M0/M0.1/M0.2：研究 + 审计 + 20 份设计文档 + 10 ADR + 双 Memory + 4 项一致性修复（全部 PASS）
-- **M1：独立 QQ Runtime 完整实现**
-  - v2/ 独立 implementation root（ADR-011），与 Legacy V1 物理隔离
-  - CampusEvent / EventBus（有界队列 + 有界并发）/ Router / EchoHandler / OutgoingMessage
-  - OneBotAdapter：Reverse WS SERVER + token 校验 + 帧分类 + echo correlation + generation 竞态保护 + transport dedup
-  - Anti-AstrBot Gate（AST 扫描 + 依赖扫描 + 隔离 smoke）PASS
-  - 65 tests 全绿（unit 49 + integration 16）
-  - Package isolation PASS（fresh venv 安装 v2/ + import + smoke）
-  - 日志脱敏 + CAMPUSCUE_DIAGNOSTIC 显式诊断模式
-  - **M1.1 修复**（外部源码审核 8 项）：stale finally 竞态、outbound 进 handler 边界、pending semaphore backpressure、config fail-fast、WS path 校验、严格响应校验、诊断模式去假 claim、移除 raw_message
+- M2a：ADR-012 契约锁定 + storage（SQLAlchemy/aiosqlite/schema 版本）+ Repository×4 + SourceService + providers 包 + bootstrap 脚本
+- M2a.1：provider.test 真实路径、timeout 契约、枚举 repository+CHECK 双层、schema 零变更拒绝、Clock 注入、secret_reference 早校验、get_by_id、严格解析、状态先分类
+- M2a.2：secret/numeric/request-override 共享校验、ORM 去墙钟默认、HANDOFF/PROJECT_STATE canonical 修复
 
 ## in_progress
 
-- 无（M1.3 完成）
+- 无（M2a.2 完成，checkpoint 后停止）
 
 ## blocked
 
-- M2 阻塞于 M1.3 外部确认
+- **M2b 仅阻塞于 M2a 外部最终确认**（无其他阻塞）
 
-## verified
+## verified（Workspace Agent 报告；外部审核待复核）
 
-- STATIC/UNIT/INTEGRATION/PACKAGE ISOLATION VERIFIED（87 tests + fresh venv）
-- REAL ENV VERIFIED：**VERIFIED**（NapCat v4.18.18 + 真实 QQ：私聊/群聊 hello→received:hello、非 hello 不回复、重启自动重连、token 握手）
+- **203 tests passed**（M1 87 旧全绿 + M2a 系列 116 新增）；package isolation PASS（fresh venv）；Anti-AstrBot PASS
+- REAL ENV VERIFIED（M1.2，2026-08-10，NapCat v4.18.18 + 真实 QQ）——**保留自 M1.2，非本轮新验证**
+- 外部审核状态：**awaiting**（M2a.1 已 PASS；M2a.2 待复核）
 
 ## unverified / known unknowns
 
-- 真实 NapCat token handshake：**已真实验证**（NapCat 带 token 连接成功）
-- NapCat post-format：**array 已真实兼容**
-- V1 `extract()` LLM 测试缺口（B13）、时区硬编码（B12）——M2 修
+- 真实 Provider（如 Ark）json_schema 支持度与 timeout 语义（M2b 真实验收）
+- 无迁移框架；未来 schema 版本需人工迁移
 
 ## architecture_decisions
 
-- ADR-001~011（docs/v2/18_DECISIONS.md + adr/）；M1 新增 ADR-011（V2 代码隔离）
+- ADR-001~012（docs/v2/18_DECISIONS.md + adr/）
 
 ## next_gate
 
-- 外部 ChatGPT M1.3 复核（读 GitHub HEAD）→ M2 授权
+- 外部 ChatGPT M2a 最终复核 → PASS 则 **M2b 授权**（Task Extraction Pipeline + 真实 Provider + 真实 QQ 验收）
 
-## external_review_focus（M1 审核点）
+## external_review_focus（M2a.2 复核点）
 
-1. V2 是否真的与 Legacy/V1 隔离（fresh venv 证据）
-2. 无任何 astrbot import / runtime dependency（Gate 证据）
-3. CampusEvent 是否 OneBot-independent
-4. Reverse WS server ownership / stale connection race / 帧分类 / echo correlation / disconnect fail-pending
-5. queue / in-flight / pending actions 三处 bounded
-6. transport dedup 只执行一次；self-message 阻断 echo loop
-7. normal logs 脱敏；diagnostic 模式默认 OFF
-8. 是否偷偷实现了 M2
+1. secret_reference 单一规则（无重复 regex）
+2. 配置数值持久化前拒绝（NaN/Inf/bool 测试 + 未持久化证明）
+3. request override 校验先于传输（无 HTTP 调用测试）
+4. ORM 无墙钟默认（models 源码断言 + required 时间戳）
+5. HANDOFF/PROJECT_STATE canonical（无 append 残留/无 stale 字段）

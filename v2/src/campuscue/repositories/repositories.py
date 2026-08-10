@@ -19,7 +19,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
-from campuscue.providers.validation import validate_secret_reference
+from campuscue.providers.validation import (
+    validate_provider_config_numeric,
+    validate_secret_reference,
+)
 from campuscue.storage.clock import Clock, SystemClock
 from campuscue.storage.enums import ExtractionStatus, TaskCategory, TaskPriority, TaskStatus
 from campuscue.storage.models import Extraction, ProviderConfig, Source, Task
@@ -305,8 +308,14 @@ class ProviderConfigRepository(_BaseRepo[ProviderConfig]):
         secret_reference: str | None = None,
         enabled: bool = True,
     ) -> ProviderConfig:
-        # M2a.1-F: validate BEFORE persistence (shared rule with Provider runtime)
+        # M2a.1-F / M2a.2-B: validate BEFORE persistence (shared canonical rules)
         validate_secret_reference(secret_reference)
+        validate_provider_config_numeric(
+            timeout_s=timeout_s,
+            max_tokens=max_tokens,
+            max_context_tokens=max_context_tokens,
+            temperature=temperature,
+        )
         now = self._now()
         async with self._sf() as session:
             cfg = ProviderConfig(

@@ -239,3 +239,13 @@ User
 - **[EXTERNAL_REVIEW][CORRECTION]**：Clock 抽象只有在持久化/服务时间戳路径真正使用它才有用；不要造生产代码绕过的架构抽象。Repository 现在显式从 clock.utcnow() 取时间戳。
 - **[EXTERNAL_REVIEW][SECURITY]**：secret_reference 必须在持久化前校验（不只首次网络请求）；配置与 Provider 运行时共享同一校验规则（providers/validation.py）。
 - **[REPO_CONFIRMED]**：M2a.1 修复全部落地（186 tests 全绿）：timeout 契约生效、枚举 CHECK 约束、schema 零变更拒绝、Clock 注入、get_by_id、严格成功解析、状态码先于 body 分类。
+
+## 9H. MEMORY DELTA（M2a.2 新增）
+
+- **[EXTERNAL_REVIEW][CORRECTION]**：创建规范校验 helper ≠ 规则已共享；每个运行时/配置消费方必须实际使用它。重复的等价 regex/代码仍是重复策略。
+- **[EXTERNAL_REVIEW][CORRECTION]**：Provider 配置数值约束必须在持久化前强制；单独测试 helper 不证明真实配置路径拒绝非法值。
+- **[EXTERNAL_REVIEW][CORRECTION]**：per-request Provider override 必须在传输前满足相同契约；请求字段不能绕过 ProviderConfig 校验。
+- **[EXTERNAL_REVIEW][CLOCK_RULE]**：只有 SystemClock 可读真实墙钟（M2 业务时间戳）；ORM storage models 不得含 datetime.now 回退默认。
+- **[EXTERNAL_REVIEW][WORKFLOW_FAILURE]**：HANDOFF append-only 复发（M2a.1 又一次）——HANDOFF 是 canonical 当前操作状态，必须 reconcile 不能无限追加。
+- **[EXTERNAL_REVIEW][WORKFLOW_FAILURE]**：PROJECT_STATE 顶部正确但内部可腐烂——每次 checkpoint 必须语义扫描 current_milestone/in_progress/blocked/verified/next_gate/review_focus 的 stale 矛盾。
+- **[REPO_CONFIRMED]**：M2a.2 落地（203 tests 全绿）：validation.py 单一规则（secret/numeric/request）、ORM 无墙钟、fresh venv 隔离 PASS。

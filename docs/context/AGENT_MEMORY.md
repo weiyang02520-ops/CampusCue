@@ -92,6 +92,10 @@ external/platform → adapters → core(events/bus/router) → services → repo
 | **方法存在 ≠ 路径已验证** | Provider.test() 存在但缺 import（NameError）且从未被直接测试（M2a.1 finding A） | **public/acceptance 方法必须有直接路径回归测试**（真实调用链含 transport/parse），不能只靠相邻测试（M2a.1 教训） |
 | **枚举未强制** | 规范 Enum 定义后 repository 仍接受任意字符串（M2a.1 finding C） | **闭集校验在 repository/domain 边界显式拒绝非法值 + DB CHECK 约束双层防御**（M2a.1 教训） |
 | **schema 变更先于兼容检查** | initialize 先 create_all 再查版本，不兼容 DB 已被改写（M2a.1 finding D） | **先只读检测 → 拒绝 → 零变更**；无 schema_meta 但有用户表的 DB 拒绝认领（M2a.1 教训） |
+| **HANDOFF append-only 复发** | 新 checkpoint 追加在旧 canonical 之下（M1.3 后 M2a.1 又发生） | **HANDOFF 每次 checkpoint 重写/reconcile 为单一 canonical**；旧里程碑细节进 CHANGELOG/Memory HISTORY/Git（M2a.2 教训，已两次 → 持久） |
+| **PROJECT_STATE 内部腐烂** | 顶部 current_milestone 正确但 blocked/next_gate/verified 残留旧状态 | **每次 checkpoint 语义扫描 current_milestone/in_progress/blocked/verified/next_gate/review_focus** 的 stale 矛盾（M2a.2 教训） |
+| **校验规则重复** | 创建规范 helper 后运行时仍保留等价 regex（M2a.2 finding A） | **每个消费方必须实际 import/调用 canonical helper**；重复等价代码 = 重复策略（M2a.2 教训） |
+| **ORM 隐藏墙钟** | models 保留 datetime.now 默认（M2a.2 finding D） | **只有 SystemClock 可读真实墙钟**；storage models 时间戳 required（无默认） |
 
 ## 8. EVIDENCE FIRST（置信度纪律）
 

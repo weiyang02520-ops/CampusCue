@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 from typing import Any
 from urllib.parse import urljoin
 
@@ -25,10 +24,13 @@ import httpx
 from campuscue.providers.base import BaseProvider
 from campuscue.providers.errors import ProviderError, ProviderErrorCode
 from campuscue.providers.models import LLMMessage, LLMRequest, LLMResponse
+from campuscue.providers.validation import (
+    validate_provider_config_numeric,
+    validate_request_override,
+    validate_secret_reference,
+)
 
 logger = logging.getLogger("campuscue.providers.openai_compatible")
-
-_ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{2,63}$")
 
 
 class OpenAICompatibleProvider(BaseProvider):
@@ -46,7 +48,12 @@ class OpenAICompatibleProvider(BaseProvider):
         timeout_s: float = 30.0,
         client: httpx.AsyncClient | None = None,
     ) -> None:
-        validate_provider_numeric(timeout_s=timeout_s, max_tokens=max_tokens, max_context_tokens=max_context_tokens)
+        # M2a.2: constructor defense-in-depth uses the SAME canonical rules
+        validate_provider_config_numeric(
+            timeout_s=timeout_s, max_tokens=max_tokens,
+            max_context_tokens=max_context_tokens, temperature=temperature,
+        )
+        validate_secret_reference(secret_reference)
         self._base_url = base_url.rstrip("/") + "/"
         self._model = model
         self._secret_reference = secret_reference
@@ -61,13 +68,13 @@ class OpenAICompatibleProvider(BaseProvider):
         return urljoin(self._base_url, "chat/completions")
 
     def _resolve_secret(self) -> str | None:
+        """Runtime secret resolution; the canonical rule lives in validation.py."""
         if not self._secret_reference:
             return None
-        if not _ENV_NAME_RE.match(self._secret_reference):
-            raise ProviderError(
-                ProviderErrorCode.INVALID_REQUEST,
-                f"invalid secret_reference format: {self._secret_reference!r}",
-            )
+        try:
+            validate_secret_reference(self._secret_reference)
+        except ValueError as e:
+            raise ProviderError(ProviderErrorCode.INVALID_REQUEST, str(e)) from None
         return os.environ.get(self._secret_reference)
 
     def _build_payload(self, request: LLMRequest) -> dict[str, Any]:
@@ -98,13 +105,9 @@ class OpenAICompatibleProvider(BaseProvider):
         return headers
 
     def _effective_timeout(self, request: LLMRequest) -> float:
-        """M2a.1-B: request-level timeout overrides provider default when set."""
+        """M2a.1-B: request-level timeout overrides provider default when set.
+        (request.timeout_s already validated by chat() before transport.)"""
         if request.timeout_s is not None:
-            if request.timeout_s <= 0:
-                raise ProviderError(
-                    ProviderErrorCode.INVALID_REQUEST,
-                    f"request timeout must be > 0, got {request.timeout_s!r}",
-                )
             return request.timeout_s
         return self._timeout_s
 
@@ -115,6 +118,15 @@ class OpenAICompatibleProvider(BaseProvider):
             return await c.post(self.endpoint, json=payload, headers=headers)
 
     async def chat(self, request: LLMRequest) -> LLMResponse:
+        # M2a.2-C: validate request overrides BEFORE any transport call
+        try:
+            validate_request_override(
+                timeout_s=request.timeout_s,
+                max_tokens=request.max_tokens,
+                temperature=request.temperature,
+            )
+        except ValueError as e:
+            raise ProviderError(ProviderErrorCode.INVALID_REQUEST, str(e)) from None
         payload = self._build_payload(request)
         headers = self._headers()
         timeout_s = self._effective_timeout(request)
@@ -200,20 +212,3 @@ class OpenAICompatibleProvider(BaseProvider):
         )
         return {"ok": True, "model": self._model, "reply": resp.content[:20]}
 
-
-def validate_provider_numeric(
-    *, timeout_s: float | None = None, max_tokens: int | None = None, max_context_tokens: int | None = None,
-    temperature: float | None = None,
-) -> None:
-    """M2a.1-5: conservative numeric validation shared by config boundary and provider."""
-    if timeout_s is not None and timeout_s <= 0:
-        raise ValueError(f"timeout_s must be > 0, got {timeout_s!r}")
-    if max_tokens is not None and max_tokens <= 0:
-        raise ValueError(f"max_tokens must be > 0, got {max_tokens!r}")
-    if max_context_tokens is not None and max_context_tokens <= 0:
-        raise ValueError(f"max_context_tokens must be > 0, got {max_context_tokens!r}")
-    if temperature is not None:
-        if not isinstance(temperature, (int, float)) or isinstance(temperature, bool):
-            raise ValueError(f"temperature must be a finite number, got {temperature!r}")
-        if temperature < 0:
-            raise ValueError(f"temperature must be >= 0, got {temperature!r}")

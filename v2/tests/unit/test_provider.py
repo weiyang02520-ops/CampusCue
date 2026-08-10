@@ -106,10 +106,10 @@ class TestAuth:
 
     @pytest.mark.asyncio
     async def test_invalid_secret_reference_format_rejected(self, monkeypatch):
-        monkeypatch.delenv("BAD REF!", raising=False)
-        p = _make_provider(secret_ref="BAD REF WITH SPACES")
-        with pytest.raises(ProviderError, match="secret_reference"):
-            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        # M2a.2: canonical validation runs at CONSTRUCTION (defense-in-depth),
+        # failing fast with ValueError before any HTTP call
+        with pytest.raises(ValueError, match="secret_reference"):
+            _make_provider(secret_ref="BAD REF WITH SPACES")
 
     @pytest.mark.asyncio
     async def test_secret_not_in_error(self, monkeypatch, caplog):

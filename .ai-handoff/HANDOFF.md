@@ -1,66 +1,53 @@
 # HANDOFF.md
 
-> 当前操作状态（canonical）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY。
+> 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY / Git history。
 
-## 当前（M2a.1 Foundation Correctness Fix）
+## 当前（M2a.2 Final Foundation Cleanup）
 
-- **本轮**：修复外部源码审核 6 项 finding（M2a.1 A-F + 15/16/17）
-- **状态**：M2a FOUNDATION_FIX_COMPLETE — AWAITING_EXTERNAL_REVIEW
-- **Gate**：M0/M1/M1.3 = PASS；**M2 = IN_PROGRESS（M2a 修复完成待复核；M2b NOT_AUTHORIZED）**
+- **本轮**：修复外部审核最终 7 项 finding（A-G）
+- **状态**：M2a FOUNDATION_COMPLETE — AWAITING_EXTERNAL_FINAL_REVIEW
+- **Gate**：M0/M1/M1.3 = PASS；**M2 = IN_PROGRESS（M2a+M2a.1+M2a.2 完成待复核；M2b NOT_AUTHORIZED）**
 
 ## 本轮完成（finding 对照）
 
 | # | Finding | 修复 |
 |---|---|---|
-| A | Provider.test() 缺 LLMMessage import（NameError）+ 无真实路径测试 | 修 import；回归测试走真实链（manager.get_default → provider.test → chat → MockTransport → parse）；test_default 经 get_default 真实路径 |
-| B | LLMRequest.timeout_s 无效 | 契约生效：request override > provider 默认；LLMRequest.timeout_s=None 默认；httpx 请求 timeout 传入（contract 测试断言 extensions.timeout） |
-| 5 | 数值校验 | validate_provider_numeric：timeout_s/max_tokens/max_context_tokens >0；temperature ≥0 有限数 |
-| C | 闭集枚举未强制 | repository 边界 _require_enum 显式拒绝非法值（status/category/priority/extraction status）；**DB CHECK 约束**双层防御（tasks 3 条 + extractions 1 条 + provider timeout） |
-| D | schema 兼容检查先于变更（不兼容 DB 被改写） | **先只读预检（sqlite3 ro）→ 拒绝 → 零变更**；无 schema_meta 但有用户表 → SchemaRefusedError 拒绝认领；版本不匹配拒绝 |
-| E | Clock 抽象死代码 | repository 显式 clock.utcnow() 设置 created_at/updated_at（SystemClock/FixedClock 注入；naive 拒绝） |
-| F | secret_reference 校验太晚 | providers/validation.py 共享校验（配置 + Provider 运行时同一规则）；repository 持久化前拒绝；bootstrap 假 --replace claim 修正 |
-| 15 | ProviderManager 无 get_by_id | 新增 get_by_id + NotFound 测试 |
-| 16 | 成功响应过宽松 | 严格解析：choices 存在/非空、message 是 dict、content 存在且是 str，否则 MALFORMED_OUTPUT |
-| 17 | 状态分类依赖 JSON body | 状态码先分类（401/403→AUTH、429→RATE_LIMIT、5xx→SERVER_ERROR 不读 body）；400 安全解析细分；200 非 JSON→MALFORMED |
+| A | secret_reference 校验仍重复（openai_compatible 本地 _ENV_NAME_RE） | 删除本地正则；Provider 构造 + 运行时 `_resolve_secret` 均调 validation.py 的 validate_secret_reference（ValueError → ProviderError INVALID_REQUEST） |
+| B | ProviderConfigRepository 可持久化非法数值 | validation.py 新增 validate_provider_config_numeric（finite/>0/正 int 拒 bool/温度≥0）；repository 持久化前调用；NaN/±inf 拒 |
+| C | LLMRequest override 绕过校验 | chat() 边界 validate_request_override（timeout/max_tokens/temperature）→ 非法即 ProviderError，**无传输调用**（测试断言 called==[]） |
+| D | ORM 隐藏墙钟默认 | storage/models.py 删除 _utcnow/_aware_utc 与 default/onupdate；created_at/updated_at required（NOT NULL 无默认）；直接 ORM insert 无时间戳 → 失败 |
+| E | HANDOFF append-only 复发 | 本文件重写为单一 canonical（历史进 CHANGELOG/Git） |
+| F | PROJECT_STATE 内部腐烂 | 全语义修复（见下） |
+| G | Memory/失败模式 | 双 Memory §9H + AGENT_MEMORY 新失败模式（HANDOFF relapse / PROJECT_STATE rot） |
 
 ## 测试
 
-- **186 passed**（新增 47：test_m2a1_fixes.py；含 schema 零变更 6 项、时钟注入 3 项、枚举拒绝 6 项、timeout 契约 4 项、严格解析 6 项、状态先分类 6 项）
-- package isolation PASS（fresh venv 含 DB smoke）；Anti-AstrBot PASS
+- **203 passed**（新增 17：test_m2a2_fixes.py——repository 数值拒绝 5 组（含 NaN/Inf/bool）+ 未持久化证明、request override 8 组无传输、models 无墙钟源码断言、ORM required 时间戳）
+- package isolation PASS（fresh venv + FixedClock smoke）；Anti-AstrBot PASS
 
-## AGENT_DISCOVERED_DELTA（M2a.1）
+## AGENT_DISCOVERED_DELTA（M2a.2）
 
-- [STORAGE_FACT]：sqlite 系统表 sqlite_sequence/sqlite_stat* 需从"未知表"判断中排除（预检已处理）
-- [PROVIDER_FACT]：httpx 将 timeout 展开为 per-phase dict（extensions.timeout）；断言用 ["read"]
-- [PROVIDER_FACT]：LLMRequest.timeout_s 默认改为 None（避免遮蔽 provider 配置）
-- [TEST_FACT]：fixture 跨文件不共享（db_session_factory_raw 独立定义）
-- [DESIGN_CONFLICT]：DB CHECK 约束 + repository 双层校验已确认是 M2 默认防御（无迁移框架）
+- [PROVIDER_FACT]：构造函数即校验（secret/numeric）→ 非法配置 fail-fast 于构造，无需等 HTTP
+- [STORAGE_FACT]：models 无墙钟默认后，直接 ORM 建行必须显式传时间戳（repository 已全部显式）
+- [TEST_FACT]：httpx MockTransport 的 extensions.timeout 是 per-phase dict
+- [WORKFLOW_FACT]：HANDOFF/PROJECT_STATE 的"顶部正确但底部腐烂"模式已两次出现（M1.3/M2a.1）——已在 AGENT_MEMORY 固化预防
+- [UNVERIFIED_HYPOTHESIS]：真实 Provider 端点的 json_schema/数值契约兼容性（M2b 确认）
 
 ## REAL ENV
 
-- M1 REAL ENV VERIFIED 保留；M2a.1 无新 REAL ENV 声明
+- M1 REAL ENV VERIFIED 保留（2026-08-10）；M2a.2 无新 REAL ENV 声明
 
-## 本轮修改文件
+## 当前已知未知
 
-- 修改：providers/openai_compatible.py（A/B/5/16/17）、providers/models.py（timeout None 默认）、providers/manager.py（get_by_id）、providers/validation.py（新增）、repositories/repositories.py（枚举/校验/Clock）、storage/database.py（预检零变更）、storage/models.py（CHECK 约束）、scripts/m2_configure_provider.py（假 claim）
-- 新增：tests/unit/test_m2a1_fixes.py（47 tests）
-- 修改：双 Memory（§9G + 失败模式）、.ai-handoff/ 6 文件
-
-## 下一步
-
-- 外部 ChatGPT 复核 M2a.1（12 项审核点见 REVIEW_REQUEST）→ M2b 授权
-## 历史摘要（详情见 CHANGELOG_AI.md）
-
-| Milestone | 状态 |
-|---|---|
-| M0 / M0.1 / M0.2 / M1 / M1.1 / M1.2 / M1.3 | 全部 PASS（commit 见 Git history） |
-| M2a | 本轮（Data + Provider Foundation） |
-
-## 本轮修改文件
-
-- 新增：v2/src/campuscue/storage/{enums,models,database,clock}.py、repositories/repositories.py、services/source_service.py、providers/{base,models,errors,openai_compatible,manager}.py、scripts/m2_configure_provider.py、tests/integration/test_storage.py、tests/unit/test_provider.py、docs/v2/adr/ADR-012_M2_DATA_AND_PROVIDER_CONTRACTS.md
-- 修改：v2/pyproject.toml（+sqlalchemy/aiosqlite/httpx）、docs/v2/{06,09,17,18}、v2/README.md、双 Memory、.ai-handoff/ 6 文件
+- 真实 Provider（如 Ark）json_schema 支持度与 timeout 语义（M2b 真实验收）
+- 无迁移框架；未来 schema 版本需人工迁移（M2a.1 决定）
 
 ## 下一步
 
-- 外部 ChatGPT 复核 M2a（15 项审核点见 REVIEW_REQUEST）→ M2b 授权
+- 外部 ChatGPT M2a 最终复核（12 项审核点见 REVIEW_REQUEST）→ PASS 后 M2b 授权
+
+## 本轮修改文件
+
+- 修改：providers/validation.py（+validate_provider_config_numeric/validate_request_override）、providers/openai_compatible.py（共享校验 + 构造校验 + chat 前置校验 + 删死函数）、repositories/repositories.py（数值校验）、storage/models.py（去墙钟默认）
+- 新增：tests/unit/test_m2a2_fixes.py
+- 修改：双 Memory（§9H）、.ai-handoff/ 6 文件

@@ -60,17 +60,6 @@ class Base(DeclarativeBase):
     pass
 
 
-def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def _aware_utc(value: datetime) -> datetime:
-    """Enforce ADR-012-G: naive datetime at the domain boundary is REJECTED."""
-    if value.tzinfo is None:
-        raise ValueError(f"naive datetime rejected at storage boundary: {value!r}")
-    return value.astimezone(timezone.utc)
-
-
 class Source(Base):
     __tablename__ = "sources"
     __table_args__ = (
@@ -85,10 +74,8 @@ class Source(Base):
     auto_extract: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     context_window: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
     privacy_policy: Mapped[str] = mapped_column(String(32), nullable=False, default="default")
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=_utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        UTCDateTime(), nullable=False, default=_utcnow, onupdate=_utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
 
 
 class Task(Base):
@@ -118,10 +105,8 @@ class Task(Base):
     source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id"), nullable=True)
     source_message_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     source_text_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=_utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        UTCDateTime(), nullable=False, default=_utcnow, onupdate=_utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
 
 
 class Extraction(Base):
@@ -147,7 +132,7 @@ class Extraction(Base):
     audit: Mapped[str | None] = mapped_column(Text, nullable=True)
     # safe/redacted error text only (never keys/headers/raw provider bodies)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=_utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
 
 
 class ProviderConfig(Base):
@@ -169,10 +154,8 @@ class ProviderConfig(Base):
     # only the ENV VARIABLE NAME; the secret value never enters the DB
     secret_reference: Mapped[str | None] = mapped_column(String(128), nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=_utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        UTCDateTime(), nullable=False, default=_utcnow, onupdate=_utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
 
 
 class SchemaMeta(Base):

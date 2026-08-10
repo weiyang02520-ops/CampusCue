@@ -184,17 +184,17 @@ class TestRequestTimeoutContract:
             ))
 
     def test_provider_numeric_validation(self):
-        from campuscue.providers.openai_compatible import validate_provider_numeric
+        from campuscue.providers.validation import validate_provider_config_numeric
 
         with pytest.raises(ValueError, match="timeout_s"):
-            validate_provider_numeric(timeout_s=0)
+            validate_provider_config_numeric(timeout_s=0)
         with pytest.raises(ValueError, match="max_tokens"):
-            validate_provider_numeric(max_tokens=-1)
+            validate_provider_config_numeric(max_tokens=-1)
         with pytest.raises(ValueError, match="max_context_tokens"):
-            validate_provider_numeric(max_context_tokens=0)
+            validate_provider_config_numeric(max_context_tokens=0)
         with pytest.raises(ValueError, match="temperature"):
-            validate_provider_numeric(temperature=-0.5)
-        validate_provider_numeric(timeout_s=1.0, max_tokens=10, temperature=0.0)  # OK
+            validate_provider_config_numeric(temperature=-0.5)
+        validate_provider_config_numeric(timeout_s=1.0, max_tokens=10, temperature=0.0)  # OK
 
 
 # ------------------------------------------------------------------ C: closed enums
@@ -422,12 +422,12 @@ class TestSecretReferenceEarlyValidation:
 
     @pytest.mark.asyncio
     async def test_provider_rejects_invalid_before_http(self, monkeypatch):
-        p = OpenAICompatibleProvider(
-            base_url="https://x/v1", model="m", secret_reference="../secret",
-            client=httpx.AsyncClient(transport=httpx.MockTransport(lambda r: _ok_response())),
-        )
-        with pytest.raises(ProviderError, match="secret_reference"):
-            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="m"))
+        # M2a.2: canonical validation at construction fails fast (no HTTP possible)
+        with pytest.raises(ValueError, match="secret_reference"):
+            OpenAICompatibleProvider(
+                base_url="https://x/v1", model="m", secret_reference="../secret",
+                client=httpx.AsyncClient(transport=httpx.MockTransport(lambda r: _ok_response())),
+            )
 
 
 # ------------------------------------------------------------------ 15: get_by_id

@@ -101,3 +101,12 @@
 - **测试**：新增 47 → **186 passed**；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无新声明（M1.2 prior 保留）
 - **审核状态**：M2a.1 AWAITING_EXTERNAL_REVIEW；M2b NOT_AUTHORIZED
+
+## 2026-08-10 · M2a.2 FINAL FOUNDATION CLEANUP
+
+- **任务**：修复外部审核最终 7 项 finding（A-G）
+- **Commit**：fix: finalize M2 foundation contracts（本轮）
+- **主要修改**：secret_reference 单一规则（去重复 regex）、validate_provider_config_numeric 持久化前拒绝、request override 传输前校验、ORM 去墙钟默认（时间戳 required）、HANDOFF/PROJECT_STATE canonical 修复
+- **测试**：新增 17 → **203 passed**；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无新声明（M1.2 prior 保留）
+- **审核状态**：M2a AWAITING_EXTERNAL_FINAL_REVIEW；M2b NOT_AUTHORIZED
