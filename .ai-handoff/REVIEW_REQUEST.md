@@ -1,6 +1,6 @@
 # REVIEW_REQUEST.md
 
-> M1.1 审核请求（提交给外部 ChatGPT）。请基于 GitHub 仓库 `weiyang02520-ops/CampusCue` 审核本轮 correctness 修复。
+> M1.2 审核请求（提交给外部 ChatGPT）。请基于 GitHub 仓库 `weiyang02520-ops/CampusCue` 审核 M1 REAL ENV 验收。
 
 ## 请求审核内容（finding A-H 修复对照）
 

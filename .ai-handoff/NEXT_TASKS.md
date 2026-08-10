@@ -9,14 +9,9 @@
 - [x] OneBotAdapter（Reverse WS SERVER + token + 帧分类 + echo correlation + generation + dedup）
 - [x] unit 49 + integration 16 全绿；package isolation PASS
 - [x] **M1.1** 外部源码审核 8 项修复（stale finally/semaphore backpressure/config fail-fast/path 校验/严格响应/诊断模式/raw_message）+ 87 tests 全绿
-- [ ] **REAL ENV**：真实 NapCat 联调（阻塞：本机无 NapCat）——需用户提供环境：
-  1. 安装/启动 NapCat（QQ 登录）
-  2. 配置反向 WS 客户端指向 `ws://127.0.0.1:6199/ws`（可设 token）
-  3. `CAMPUSCUE_ONEBOT_TOKEN=...`（如配置了）`CAMPUSCUE_DIAGNOSTIC=1 python -m campuscue` 启动
-  4. 真实 QQ 群发送 `hello` → 验证收到 `received: hello`
-  5. 关闭 diagnostic；HANDOFF 只记脱敏 ID；更新状态 M1 PASS
+- [x] **REAL ENV**（2026-08-10）：NapCat v4.18.18 + 真实 QQ 验证完成（私聊/群聊 hello→received:hello、非 hello 无回复、重启自动重连、token 握手）→ **M1 = PASS**
 
-## M2 预备（M1 PASS + 外部审核后启动）
+## M2 预备（M1 外部最终审核通过后启动）
 
 - [ ] Provider Foundation（BaseProvider / LLMRequest 最小集 / LLMResponse / ProviderError taxonomy / OpenAICompatibleProvider / 最小 ProviderManager / structured output / secret_reference；**独立于 Tool System**）
 - [ ] SQLite（sources/tasks/extractions 表）+ SourceRepository / ExtractionRepository / TaskRepository / SourceService / TaskService

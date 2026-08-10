@@ -127,6 +127,22 @@ User
 - **[EXTERNAL_REVIEW][SECURITY]**：不为验收无必要扩大 QQ/message 明文 diagnostic logging；真实 QQ 收到 expected response 本身就是 M1 E2E 证据（diagnostic mode 仅 verbose debug，不 dump 明文）。
 - **[EXTERNAL_REVIEW][CORRECTION]**：CampusEvent 移除 OneBot-specific `raw_message` metadata（无用途、扩大隐私面、dialect 泄漏进 Domain；YAGNI）。
 
+## 9D. MEMORY DELTA（M1.2 REAL ENV 新增）
+
+- **[REAL_ENV_CONFIRMED]**：**M1 真实 QQ/NapCat 验证通过**（2026-08-10）：
+  - NapCat `v4.18.18`（官方 Framework 注入式，`C:\Tools\NapCat\`）
+  - Reverse WS：NapCat client → CampusCue server（127.0.0.1:6199/ws）**CONNECTED**
+  - token 握手真实验证（NapCat 带 token 连接成功）
+  - `messagePostFormat=array` 真实兼容（converter 处理真实 NapCat payload 正确）
+  - 真实私聊 + 群聊 `hello` → `received: hello`（action `send_private_msg`/`send_group_msg` + `retcode 0` 响应）
+  - 非 hello 消息不回复（EchoHandler 非复读机，机器侧证据：收到消息但 0 个 send action）
+  - reconnect 真实验证（CampusCue 重启 → NapCat 5s 内自动重连 → hello 仍回复）
+- **[REPO_CONFIRMED]**：NapCat 官方 WebSocket Client 配置 `messagePostFormat` 默认值为 array（此前 UNVERIFIED_HYPOTHESIS 升级）；但真实配置仍显式设置 array，不依赖动态默认值。
+- **[REPO_FACT][CONFIG_FACT]**：NapCat Framework 版配置文件位置：`<NapCat目录>/config/onebot11_<QQ号>.json`（QQ 登录后生成）；`napcat.json` 为框架配置。
+- **[OPERATIONAL_RULE]**：同一 repository 根有 Legacy `campuscue/`，V2 必须用独立 venv（`v2/.venv-m1-real`）运行，确认 `campuscue.__file__` 指向 `v2/src`。
+- **[REPO_FACT]**：真实 NapCat 默认连接是 `WebSocket Client`（反向 WS 拨入），不是 WebSocket Server——与架构一致。
+- **[USER_CONFIRMED][REAL_ENV]**：用户实际看到 QQ 中收到 `received: hello`（含重启后再次确认）。
+
 ## 9. REJECTED / SUPERSEDED APPROACHES
 
 | 旧方案 | 何时 | 为何改 | 替代 |

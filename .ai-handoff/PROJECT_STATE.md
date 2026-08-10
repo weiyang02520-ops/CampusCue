@@ -15,9 +15,9 @@
 ## current_milestone
 
 - M0 = **PASS**（最终外部审核通过）
-- M1 = **IMPLEMENTED_AWAITING_REAL_ENV**（实现 + M1.1 correctness fixes + 87 tests + package isolation 完成；真实 NapCat 联调待做，本机无 NapCat）
-- M2 = **NOT_READY**
-- status：**AWAITING_REAL_ENV + AWAITING_EXTERNAL_M1_REVIEW**
+- M1 = **PASS**（REAL ENV VERIFIED 2026-08-10）
+- M2 = **READY_NOT_STARTED**（等外部 M1 最终审核）
+- status：**AWAITING_EXTERNAL_M1_FINAL_REVIEW**
 
 ## completed
 
@@ -34,21 +34,21 @@
 
 ## in_progress
 
-- 真实 QQ/NapCat 联调（阻塞：本机无 NapCat；需用户提供环境或指导）
+- 无（M1 全部完成）
 
 ## blocked
 
-- M1 最终 PASS 阻塞于真实环境验证；M2 阻塞于外部审核
+- M2 阻塞于外部 M1 最终审核
 
 ## verified
 
-- STATIC/UNIT/INTEGRATION/PACKAGE ISOLATION VERIFIED（65 tests + fresh venv）
-- REAL ENV VERIFIED：**NOT VERIFIED**（诚实声明）
+- STATIC/UNIT/INTEGRATION/PACKAGE ISOLATION VERIFIED（87 tests + fresh venv）
+- REAL ENV VERIFIED：**VERIFIED**（NapCat v4.18.18 + 真实 QQ：私聊/群聊 hello→received:hello、非 hello 不回复、重启自动重连、token 握手）
 
 ## unverified / known unknowns
 
-- 真实 QQ hello → received: hello 链路（待 NapCat）
-- 真实 NapCat token handshake 行为（实现按 OneBot 协议标准；需真实环境确认）
+- 真实 NapCat token handshake：**已真实验证**（NapCat 带 token 连接成功）
+- NapCat post-format：**array 已真实兼容**
 - V1 `extract()` LLM 测试缺口（B13）、时区硬编码（B12）——M2 修
 
 ## architecture_decisions
@@ -57,7 +57,7 @@
 
 ## next_gate
 
-- 真实 NapCat 联调（用户提供环境）→ M1 REAL ENV VERIFIED → 外部 ChatGPT M1 审核 → M2
+- 外部 ChatGPT M1 最终审核（读 GitHub HEAD）→ M2
 
 ## external_review_focus（M1 审核点）
 

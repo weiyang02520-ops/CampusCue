@@ -74,3 +74,50 @@
 ## External Review Focus
 
 - 见 REVIEW_REQUEST.md（finding A-H 修复对照 + 回归测试证据）
+
+---
+
+# M1.2 REAL ENVIRONMENT VERIFICATION（追加）
+
+## 本轮目标
+
+REAL QQ / NapCat VERIFIED（M1 唯一剩余 Gate）。未修改任何 v2/src 源码。
+
+## REAL ENV 验证记录（2026-08-10）
+
+| 项 | 结果 | 证据 |
+|---|---|---|
+| NapCat | v4.18.18 官方 Framework 注入式（C:\Tools\NapCat\framework，独立于 Git 仓库） | gh release 下载官方包 |
+| QQ 登录 | Bot QQ（尾号 3455）扫码登录成功 | config 生成 onebot11_1552273455.json |
+| Reverse WS | CONNECTED（NapCat client → CampusCue server 127.0.0.1:6199/ws） | 双方日志：`WebSocket反向服务已启动` + `onebot client connected` |
+| Token handshake | REAL VERIFIED（NapCat 带 token 连接成功） | 连接无 401 |
+| messagePostFormat | array 真实兼容（显式配置） | 真实 payload 转换正确 |
+| Group hello | REAL VERIFIED（群"未央"：hello → received: hello） | 15:43:35 send_group_msg + retcode 0 + 用户确认 |
+| Private hello | REAL VERIFIED（私聊 hello → received: hello） | 15:43:22 send_private_msg + retcode 0 + 用户确认 |
+| Non-hello | NO REPLY VERIFIED（15:45:07 收到普通消息，0 个 send action） | 机器侧证据 + 用户确认 |
+| Reconnect | REAL VERIFIED（CampusCue 重启 → NapCat 5s 内自动重连 → hello 仍回复） | 15:47:24 connection open + 15:48:01 send 成功 |
+| 重启后 hello | REAL VERIFIED | 15:48:01 send_private_msg + retcode 0 |
+
+完整链路证据（15:43:35 群聊）：真实群消息(未央群) → 收到帧(444B) → send_group_msg action → {"status":"ok","retcode":0} 响应 → QQ 实际显示 received: hello [USER_CONFIRMED]
+
+## 环境事实
+
+- V2 独立 venv：v2/.venv-m1-real（import 来自 v2/src，无 Legacy 遮蔽）
+- CampusCue runtime 在 Git Bash 下启动需 MSYS_NO_PATHCONV=1（否则 /ws 被转成 C:/Program Files/Git/ws）——AGENT_DISCOVERED_DELTA
+- NapCat 登录态保存在 C:\Tools\NapCat\（不入 Git）
+- 本机有用户原有 QQ 实例（14:42 启动）与 NapCat 注入的新实例并存；未干扰用户原 QQ
+
+## AGENT_DISCOVERED_DELTA（M1.2）
+
+- [REAL_ENV_FACT]：Git Bash 启动 python -m campuscue 时 CAMPUSCUE_ONEBOT_PATH=/ws 会被 MSYS 路径转换破坏 → 必须 MSYS_NO_PATHCONV=1 或直接 cmd/PowerShell。已写入 v2/README.md runbook。
+- [REAL_ENV_FACT]：NapCat Framework 注入模式：napimain.exe <QQ.exe路径> <napiloader.dll> <nativeLoader.cjs>（绝对路径必需）；二次注入会触发 "NapiBoot DLL Unloading" 需先关旧 QQ。
+- [CONFIG_FACT]：NapCat Framework 版 onebot 配置在 <NapCat>/config/onebot11_<QQ号>.json，network.websocketClients[] 支持 name/enable/url/messagePostFormat/reportSelfMessage/reconnectInterval/token。
+- [CONFIG_FACT]：QQ 登录态在重启 NapCat 后自动复用（无需重复扫码）。
+- [PROTOCOL_FACT]：真实 NapCat lifecycle 帧（post_type=meta_event, meta_event_type=lifecycle, sub_type=connect）与 heartbeat（interval=30000）被 classify_frame 正确忽略，不产生业务事件。
+
+## 本轮修改文件
+
+- 新增：v2/README.md（runbook：安装/配置/运行/隐私/测试）
+- 修改：docs/context/CHATGPT_MEMORY.md（§9D 7 条 REAL ENV MEMORY DELTA）、AGENT_MEMORY.md（§2/§18）
+- 修改：.ai-handoff/ 全部 6 文件
+- v2/src 零修改；Legacy 零修改；NapCat 文件全部在仓库外

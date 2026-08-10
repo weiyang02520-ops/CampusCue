@@ -55,3 +55,12 @@
 - **测试**：87 passed（新增 22）；package isolation PASS；Anti-AstrBot Gate PASS
 - **REAL ENV**：NOT VERIFIED（本机无 NapCat）
 - **审核状态**：等待外部 M1.1 复核 → M1.2 Real Env Gate
+
+## 2026-08-10 · M1.2 REAL ENVIRONMENT VERIFICATION
+
+- **任务**：真实 QQ/NapCat 验收（M1 唯一剩余 Gate）
+- **Commit**：test: verify M1 with real NapCat QQ environment（本轮）
+- **主要修改**：新增 v2/README.md（runbook）；Memory §9D；.ai-handoff/ 6 文件。v2/src 零修改
+- **REAL ENV**：**VERIFIED**（NapCat v4.18.18 + 真实 QQ：私聊/群聊 hello→received:hello、非 hello 无回复、重启自动重连、token 握手成功、messagePostFormat=array 兼容）
+- **测试**：87 passed 保持；package isolation PASS；Anti-AstrBot PASS
+- **审核状态**：M1 = PASS（REAL ENV VERIFIED）；等待外部 M1 最终审核
