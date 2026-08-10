@@ -92,3 +92,12 @@
 - **测试**：新增 52（storage 29 + provider 23）；全量 **139 passed**；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无新声明（M1.2 prior verification 保留）；真实 Provider 验收留 M2b
 - **审核状态**：M2a AWAITING_EXTERNAL_REVIEW；M2b NOT_AUTHORIZED
+
+## 2026-08-10 · M2a.1 FOUNDATION CORRECTNESS FIX
+
+- **任务**：修复外部源码审核 6 项 finding + 3 项契约补全
+- **Commit**：fix: harden M2 data and provider foundation（本轮）
+- **主要修改**：provider.test 真实路径、timeout 契约生效、枚举 repository+CHECK 双层、schema 预检零变更、Clock 注入、secret_reference 共享校验、get_by_id、严格成功解析、状态先分类
+- **测试**：新增 47 → **186 passed**；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无新声明（M1.2 prior 保留）
+- **审核状态**：M2a.1 AWAITING_EXTERNAL_REVIEW；M2b NOT_AUTHORIZED

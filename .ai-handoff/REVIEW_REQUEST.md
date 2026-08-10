@@ -1,36 +1,32 @@
 # REVIEW_REQUEST.md
 
-> M2a 审核请求（提交给外部 ChatGPT）。请基于 GitHub 仓库 `weiyang02520-ops/CampusCue` 审核 Data & Provider Foundation。
+> M2a.1 审核请求（提交给外部 ChatGPT）。请基于 GitHub 仓库 `weiyang02520-ops/CampusCue` 审核 Foundation Correctness Fix。
 
-## 请求审核内容（对照 M2a prompt §54 的 15 项）
+## 请求审核内容（对照 M2a.1 prompt §25 的 12 项）
 
-1. **schema/domain 一致性**：sources/tasks/extractions/provider_configs/schema_meta 与 ADR-012 一致
-2. **TaskStatus 矛盾已解决**：唯一枚举 pending_confirm/pending/done/dismissed（storage/enums.py）
-3. **Extraction audit 足够 M2b**：audit JSON 结构（l1/l3/l4/l5/outcome）+ raw_result 本地 DB 不落日志
-4. **Source 身份唯一性**：(platform, conversation_id) 复合唯一约束（跨平台允许复用 ID）
-5. **SQLite 时区正确**：UTCDateTime TypeDecorator（写 UTC/读 aware；naive 拒绝；+08:00→UTC 测试）
-6. **DB 测试隔离**：CAMPUSCUE_ENV=test 无显式路径即 FAIL；测试全用 tmp_path
-7. **事务边界**：每个 repository 方法独立短事务；IntegrityError → rollback → DuplicateError
-8. **无真实 DB/PII 进 Git**：测试 DB 全临时；生产 DB 路径 data/ 已 gitignore
-9. **secret_reference 不存 secret 值**：测试证明 DB 只有引用名；格式正则校验
-10. **Provider 错误分类**：9 类 taxonomy（timeout/auth/rate_limit/network/invalid_model/context_overflow/malformed_output/invalid_request/server_error）+ 每类测试
-11. **structured output wire 格式**：contract 测试断言 response_format.json_schema 到达请求体
-12. **ProviderManager 默认歧义**：0→NoProviderConfiguredError；>1→AmbiguousDefaultProviderError；不静默选第一行
-13. **Provider mocks 走真实解析**：httpx.MockTransport 注入真实 client，响应解析走生产代码
-14. **无 Agent/Tool/M2b 实现**：无 Prefilter/Extractor/TimeNormalizer/Deduplicator/TaskService 占位
-15. **M1 仍绿/独立**：139 tests（含 87 旧）；M1 runtime 启动不依赖 DB/Provider
+1. **provider.test 真实路径**：test_m2a1_fixes.py 走真实链（get_default → test → chat → MockTransport → parse）；test_default 经 get_default
+2. **请求 timeout 到达传输**：LLMRequest.timeout_s=None 默认；request override > provider 默认；contract 测试断言 httpx extensions.timeout
+3. **非法枚举值拒绝**：repository _require_enum（status/category/priority/extraction）+ 直接 SQL 插 banana 触发 CHECK 约束
+4. **不兼容 DB 零变更拒绝**：预检（sqlite3 ro）先于任何写入；未来版本拒绝后 tasks/sources 不出现、version 行不变
+5. **未知 DB 无 schema_meta 安全处理**：有用户表 → SchemaRefusedError 拒绝认领；无用户表 → fresh bootstrap
+6. **Clock 实际控制持久化时间戳**：FixedClock 注入 → created_at/updated_at 确定；advance 确定性；naive clock 拒绝
+7. **非法 secret_reference 无法进 DB**：providers/validation.py 共享规则；repository 持久化前拒绝（6 种非法样例测试）
+8. **ProviderManager.get_by_id**：新增 + NotFound 测试
+9. **畸形成功载荷拒绝**：缺 choices/空 choices/缺 message/缺 content/content null/类型错 → MALFORMED_OUTPUT
+10. **非 JSON HTTP 错误按状态分类**：401 text/403 HTML/429 text/500 HTML 不读 body 正确分类；400 text→INVALID_REQUEST；200 text→MALFORMED
+11. **无 M2b 实现**：无 prefilter/extractor/timeresolve/deduplicator/TaskService
+12. **M1 回归保持绿**：186 tests（含 M1 87 旧）
 
 ## 风险与未验证项（诚实声明）
 
-- REAL PROVIDER：NOT RUN（无可用真实 Provider 凭据；M2b 真实验收）
-- REAL QQ：M1.2 prior verification 保留；**无新 M2 REAL ENV 声明**
-- [UNVERIFIED_HYPOTHESIS] 真实端点（如 Ark）json_schema 支持度——M2b 确认
-- M2a 无 Task Pipeline（M2b 范围）
+- REAL PROVIDER：NOT RUN（M2b 真实验收）
+- REAL QQ：M1.2 prior verification 保留；无新声明
+- 无迁移框架（M2a.1 明确不做）；未来版本 DB 需人工迁移
 
 ## Real Verified vs Not
 
-- **CONFIRMED**：139 tests 全绿（unit+integration+contract）、fresh venv 隔离安装含 DB smoke、Anti-AstrBot Gate、secret 值不进 DB（测试）
-- **NOT VERIFIED**：真实 Provider 调用、真实 QQ 任务抽取
+- **CONFIRMED**：186 tests 全绿、fresh venv 隔离、Anti-AstrBot、schema 零变更（测试证明）
+- **NOT VERIFIED**：真实 Provider 调用
 
 ## 视觉审核
 

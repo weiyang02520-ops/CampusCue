@@ -14,6 +14,7 @@ from typing import Any
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     DateTime,
     Float,
     ForeignKey,
@@ -98,6 +99,10 @@ class Task(Base):
         # one Task from one source message.
         UniqueConstraint("source_id", "source_message_id", name="uq_task_source_message"),
         Index("ix_task_dedup_key", "dedup_key"),
+        # DB-level closed-set defense (M2a.1-C): repository is not the only writer
+        CheckConstraint("status IN ('pending_confirm','pending','done','dismissed')", name="ck_task_status"),
+        CheckConstraint("category IN ('homework','exam','competition','activity','notice','other')", name="ck_task_category"),
+        CheckConstraint("priority IN ('high','normal','low')", name="ck_task_priority"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -121,6 +126,9 @@ class Task(Base):
 
 class Extraction(Base):
     __tablename__ = "extractions"
+    __table_args__ = (
+        CheckConstraint("status IN ('success','skipped','error','duplicate')", name="ck_extraction_status"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id"), nullable=True)
@@ -144,7 +152,10 @@ class Extraction(Base):
 
 class ProviderConfig(Base):
     __tablename__ = "provider_configs"
-    __table_args__ = (UniqueConstraint("name", name="uq_provider_name"),)
+    __table_args__ = (
+        UniqueConstraint("name", name="uq_provider_name"),
+        CheckConstraint("timeout_s > 0", name="ck_provider_timeout"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(64), nullable=False)

@@ -2,6 +2,11 @@
 
 Each repository method opens its own explicit short transaction via the
 session factory. No hidden global session.
+
+M2a.1 hardening:
+- closed-set enums enforced at the repository boundary (invalid strings rejected)
+- secret_reference validated before persistence (shared rule with Provider)
+- Clock injection: created_at/updated_at set explicitly from clock.utcnow()
 """
 
 from __future__ import annotations
@@ -9,11 +14,14 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Generic, TypeVar
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
+from campuscue.providers.validation import validate_secret_reference
+from campuscue.storage.clock import Clock, SystemClock
+from campuscue.storage.enums import ExtractionStatus, TaskCategory, TaskPriority, TaskStatus
 from campuscue.storage.models import Extraction, ProviderConfig, Source, Task
 
 T = TypeVar("T", bound=DeclarativeBase)
@@ -32,8 +40,25 @@ class NotFoundError(RepositoryError):
 
 
 class _BaseRepo(Generic[T]):
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession], clock: Clock | None = None) -> None:
         self._sf = session_factory
+        self._clock = clock or SystemClock()
+
+    def _now(self) -> datetime:
+        now = self._clock.utcnow()
+        if now.tzinfo is None:
+            raise ValueError("clock.utcnow() must return timezone-aware UTC datetime")
+        return now.astimezone(timezone.utc)
+
+
+def _require_enum(enum_cls, value: str, field: str) -> str:
+    """Closed-set enforcement: accept enum instance or canonical value; reject others."""
+    if isinstance(value, enum_cls):
+        return value.value
+    try:
+        return enum_cls(value).value
+    except ValueError:
+        raise ValueError(f"invalid {field}: {value!r} (allowed: {[e.value for e in enum_cls]})") from None
 
 
 class SourceRepository(_BaseRepo[Source]):
@@ -50,6 +75,7 @@ class SourceRepository(_BaseRepo[Source]):
     ) -> Source:
         if context_window < 1:
             raise ValueError("context_window must be >= 1")
+        now = self._now()
         async with self._sf() as session:
             source = Source(
                 platform=platform,
@@ -59,6 +85,8 @@ class SourceRepository(_BaseRepo[Source]):
                 auto_extract=auto_extract,
                 context_window=context_window,
                 privacy_policy=privacy_policy,
+                created_at=now,
+                updated_at=now,
             )
             session.add(source)
             try:
@@ -99,6 +127,7 @@ class SourceRepository(_BaseRepo[Source]):
         auto_extract: bool | None = None,
         context_window: int | None = None,
     ) -> Source:
+        now = self._now()
         async with self._sf() as session:
             source = await session.get(Source, source_id)
             if source is None:
@@ -113,6 +142,7 @@ class SourceRepository(_BaseRepo[Source]):
                 if context_window < 1:
                     raise ValueError("context_window must be >= 1")
                 source.context_window = context_window
+            source.updated_at = now
             await session.commit()
             await session.refresh(source)
             return source
@@ -135,22 +165,28 @@ class TaskRepository(_BaseRepo[Task]):
         source_message_id: str | None = None,
         source_text_reference: str | None = None,
     ) -> Task:
+        category_v = _require_enum(TaskCategory, category, "category")
+        status_v = _require_enum(TaskStatus, status, "status")
+        priority_v = _require_enum(TaskPriority, priority, "priority")
         if deadline is not None and deadline.tzinfo is None:
             raise ValueError("naive deadline rejected at storage boundary")
+        now = self._now()
         async with self._sf() as session:
             task = Task(
                 title=title,
                 description=description,
-                category=category,
+                category=category_v,
                 course=course,
                 deadline=deadline.astimezone(timezone.utc) if deadline else None,
-                status=status,
-                priority=priority,
+                status=status_v,
+                priority=priority_v,
                 confidence=confidence,
                 dedup_key=dedup_key,
                 source_id=source_id,
                 source_message_id=source_message_id,
                 source_text_reference=source_text_reference,
+                created_at=now,
+                updated_at=now,
             )
             session.add(task)
             try:
@@ -171,7 +207,6 @@ class TaskRepository(_BaseRepo[Task]):
             return task
 
     async def find_by_source_message(self, source_id: int, source_message_id: str) -> Task | None:
-        """Primitive for M2b dedup: the same source message yields at most one Task."""
         async with self._sf() as session:
             return await session.scalar(
                 select(Task).where(
@@ -219,6 +254,8 @@ class ExtractionRepository(_BaseRepo[Extraction]):
         audit: str | None = None,
         error: str | None = None,
     ) -> Extraction:
+        status_v = _require_enum(ExtractionStatus, status, "status")
+        now = self._now()
         async with self._sf() as session:
             row = Extraction(
                 source_id=source_id,
@@ -226,12 +263,13 @@ class ExtractionRepository(_BaseRepo[Extraction]):
                 trace_id=trace_id,
                 provider=provider,
                 model=model,
-                status=status,
+                status=status_v,
                 confidence=confidence,
                 raw_result=raw_result,
                 normalized_result=normalized_result,
                 audit=audit,
                 error=error,
+                created_at=now,
             )
             session.add(row)
             await session.commit()
@@ -267,6 +305,9 @@ class ProviderConfigRepository(_BaseRepo[ProviderConfig]):
         secret_reference: str | None = None,
         enabled: bool = True,
     ) -> ProviderConfig:
+        # M2a.1-F: validate BEFORE persistence (shared rule with Provider runtime)
+        validate_secret_reference(secret_reference)
+        now = self._now()
         async with self._sf() as session:
             cfg = ProviderConfig(
                 name=name,
@@ -279,6 +320,8 @@ class ProviderConfigRepository(_BaseRepo[ProviderConfig]):
                 timeout_s=timeout_s,
                 secret_reference=secret_reference,
                 enabled=enabled,
+                created_at=now,
+                updated_at=now,
             )
             session.add(cfg)
             try:
@@ -303,11 +346,13 @@ class ProviderConfigRepository(_BaseRepo[ProviderConfig]):
             )
 
     async def set_enabled(self, provider_id: int, enabled: bool) -> ProviderConfig:
+        now = self._now()
         async with self._sf() as session:
             cfg = await session.get(ProviderConfig, provider_id)
             if cfg is None:
                 raise NotFoundError(f"provider config {provider_id} not found")
             cfg.enabled = enabled
+            cfg.updated_at = now
             await session.commit()
             await session.refresh(cfg)
             return cfg

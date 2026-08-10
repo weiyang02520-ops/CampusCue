@@ -48,7 +48,10 @@ async def _main(args: argparse.Namespace) -> None:
             print(f"provider configured: id={cfg.id} name={cfg.name} model={cfg.model}")
             print(f"secret_reference stored: {cfg.secret_reference!r} (value never stored)")
         except DuplicateError:
-            print(f"provider {args.name!r} already exists; use --replace or delete first")
+            print(
+                f"provider {args.name!r} already exists; disable or remove it explicitly "
+                "before reconfiguring (no --replace flag in M2 dev bootstrap)"
+            )
     finally:
         await db.dispose()
 

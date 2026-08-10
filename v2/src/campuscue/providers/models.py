@@ -22,7 +22,8 @@ class LLMRequest:
     model: str
     temperature: float | None = None
     max_tokens: int | None = None
-    timeout_s: float = 30.0
+    # None = fall back to provider-configured timeout (M2a.1-B)
+    timeout_s: float | None = None
     # JSON Schema for structured output (ADR-012; M2b uses this for extraction)
     response_schema: dict[str, Any] | None = None
     # provider-neutral intent; M2 default false. No vendor-specific wire field

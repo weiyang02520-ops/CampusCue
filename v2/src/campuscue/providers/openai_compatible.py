@@ -3,6 +3,10 @@
 - normalized endpoint: base_url + /chat/completions (no duplicate slash)
 - Authorization: Bearer <secret> when secret_reference resolves; omitted otherwise
 - structured output: response_format json_schema when response_schema given
+- request timeout: LLMRequest.timeout_s overrides provider default when set (M2a.1-B)
+- HTTP status classified BEFORE body parsing (M2a.1-17): non-JSON 401/429/5xx
+  still map to correct categories
+- strict success parsing: missing content is MALFORMED_OUTPUT (M2a.1-16)
 - error taxonomy per errors.py; never logs request/response/Authorization
 - test injection via httpx.AsyncClient/transport
 """
@@ -20,7 +24,7 @@ import httpx
 
 from campuscue.providers.base import BaseProvider
 from campuscue.providers.errors import ProviderError, ProviderErrorCode
-from campuscue.providers.models import LLMRequest, LLMResponse
+from campuscue.providers.models import LLMMessage, LLMRequest, LLMResponse
 
 logger = logging.getLogger("campuscue.providers.openai_compatible")
 
@@ -42,6 +46,7 @@ class OpenAICompatibleProvider(BaseProvider):
         timeout_s: float = 30.0,
         client: httpx.AsyncClient | None = None,
     ) -> None:
+        validate_provider_numeric(timeout_s=timeout_s, max_tokens=max_tokens, max_context_tokens=max_context_tokens)
         self._base_url = base_url.rstrip("/") + "/"
         self._model = model
         self._secret_reference = secret_reference
@@ -75,7 +80,6 @@ class OpenAICompatibleProvider(BaseProvider):
         if request.max_tokens is not None or self._max_tokens is not None:
             payload["max_tokens"] = request.max_tokens if request.max_tokens is not None else self._max_tokens
         if request.response_schema is not None:
-            # M2 structured output contract (§38): JSON Schema reaches response_format
             payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
@@ -84,8 +88,6 @@ class OpenAICompatibleProvider(BaseProvider):
                     "schema": request.response_schema,
                 },
             }
-        # disable_thinking: M2 §33 — provider-neutral intent; we do NOT emit an
-        # invented vendor field unless a documented capability mapping exists.
         return payload
 
     def _headers(self) -> dict[str, str]:
@@ -95,22 +97,54 @@ class OpenAICompatibleProvider(BaseProvider):
             headers["Authorization"] = f"Bearer {secret}"
         return headers
 
-    async def _post(self, payload: dict[str, Any], headers: dict[str, str]) -> httpx.Response:
-        client = self._client
-        if client is None:
-            async with httpx.AsyncClient(timeout=self._timeout_s) as c:
-                return await c.post(self.endpoint, json=payload, headers=headers)
-        return await client.post(self.endpoint, json=payload, headers=headers)
+    def _effective_timeout(self, request: LLMRequest) -> float:
+        """M2a.1-B: request-level timeout overrides provider default when set."""
+        if request.timeout_s is not None:
+            if request.timeout_s <= 0:
+                raise ProviderError(
+                    ProviderErrorCode.INVALID_REQUEST,
+                    f"request timeout must be > 0, got {request.timeout_s!r}",
+                )
+            return request.timeout_s
+        return self._timeout_s
+
+    async def _post(self, payload: dict[str, Any], headers: dict[str, str], timeout_s: float) -> httpx.Response:
+        if self._client is not None:
+            return await self._client.post(self.endpoint, json=payload, headers=headers, timeout=timeout_s)
+        async with httpx.AsyncClient(timeout=timeout_s) as c:
+            return await c.post(self.endpoint, json=payload, headers=headers)
 
     async def chat(self, request: LLMRequest) -> LLMResponse:
         payload = self._build_payload(request)
         headers = self._headers()
+        timeout_s = self._effective_timeout(request)
         try:
-            resp = await self._post(payload, headers)
+            resp = await self._post(payload, headers, timeout_s)
         except httpx.TimeoutException:
             raise ProviderError(ProviderErrorCode.TIMEOUT, "provider request timed out") from None
         except httpx.TransportError:
             raise ProviderError(ProviderErrorCode.NETWORK, "provider connection failed") from None
+
+        # M2a.1-17: classify by STATUS FIRST, independent of body content.
+        if resp.status_code == 401 or resp.status_code == 403:
+            raise ProviderError(
+                ProviderErrorCode.AUTH_ERROR, "provider authentication failed", status_code=resp.status_code
+            )
+        if resp.status_code == 429:
+            raise ProviderError(ProviderErrorCode.RATE_LIMIT, "provider rate limited", status_code=429)
+        if resp.status_code >= 500:
+            raise ProviderError(ProviderErrorCode.SERVER_ERROR, "provider server error", status_code=resp.status_code)
+
+        if resp.status_code == 400:
+            raise self._classify_400(resp)
+        if resp.status_code != 200:
+            raise ProviderError(
+                ProviderErrorCode.INVALID_REQUEST,
+                f"provider returned status {resp.status_code}",
+                status_code=resp.status_code,
+            )
+
+        # 200: body must be JSON (M2a.1-17)
         try:
             data = resp.json()
         except (json.JSONDecodeError, ValueError):
@@ -118,42 +152,34 @@ class OpenAICompatibleProvider(BaseProvider):
                 ProviderErrorCode.MALFORMED_OUTPUT,
                 f"provider returned non-JSON response (status {resp.status_code})",
             ) from None
-        if resp.status_code >= 500:
-            raise ProviderError(
-                ProviderErrorCode.SERVER_ERROR, "provider server error", status_code=resp.status_code
-            )
-        if resp.status_code == 401 or resp.status_code == 403:
-            raise ProviderError(
-                ProviderErrorCode.AUTH_ERROR,
-                "provider authentication failed",
-                status_code=resp.status_code,
-            )
-        if resp.status_code == 429:
-            raise ProviderError(ProviderErrorCode.RATE_LIMIT, "provider rate limited", status_code=429)
-        if resp.status_code == 400:
-            raise self._classify_400(data, resp.status_code)
-        if resp.status_code != 200:
-            raise ProviderError(
-                ProviderErrorCode.INVALID_REQUEST,
-                f"provider returned status {resp.status_code}",
-                status_code=resp.status_code,
-            )
         return self._parse_ok(data)
 
-    def _classify_400(self, data: dict[str, Any], status: int) -> ProviderError:
+    def _classify_400(self, resp: httpx.Response) -> ProviderError:
+        """400: safe JSON parse only for finer classification; non-JSON -> INVALID_REQUEST."""
+        try:
+            data = resp.json()
+        except (json.JSONDecodeError, ValueError):
+            return ProviderError(ProviderErrorCode.INVALID_REQUEST, "provider rejected request (non-JSON)", status_code=400)
         err = data.get("error") or {}
         message = str(err.get("message", "")).lower() if isinstance(err, dict) else str(err).lower()
         if any(k in message for k in ("context length", "context_length", "maximum context", "token limit", "too many tokens")):
-            return ProviderError(ProviderErrorCode.CONTEXT_OVERFLOW, "context length exceeded", status_code=status)
+            return ProviderError(ProviderErrorCode.CONTEXT_OVERFLOW, "context length exceeded", status_code=400)
         if any(k in message for k in ("model", "not found", "does not exist", "unknown model")):
-            return ProviderError(ProviderErrorCode.INVALID_MODEL, "invalid or unknown model", status_code=status)
-        return ProviderError(ProviderErrorCode.INVALID_REQUEST, "provider rejected request", status_code=status)
+            return ProviderError(ProviderErrorCode.INVALID_MODEL, "invalid or unknown model", status_code=400)
+        return ProviderError(ProviderErrorCode.INVALID_REQUEST, "provider rejected request", status_code=400)
 
     def _parse_ok(self, data: dict[str, Any]) -> LLMResponse:
+        """M2a.1-16 STRICT success parsing: content presence is mandatory."""
         try:
-            choice = data["choices"][0]
-            message = choice.get("message") or {}
-            content = message.get("content") or ""
+            choices = data["choices"]
+            if not choices or not isinstance(choices, list):
+                raise KeyError("empty choices")
+            message = choices[0].get("message")
+            if not isinstance(message, dict):
+                raise KeyError("missing message dict")
+            content = message.get("content")
+            if not isinstance(content, str):
+                raise KeyError("missing string content")
             role = message.get("role") or "assistant"
             usage = data.get("usage") or {}
         except (KeyError, IndexError, TypeError):
@@ -163,6 +189,7 @@ class OpenAICompatibleProvider(BaseProvider):
         return LLMResponse(role=role, content=content, usage=usage, raw=data)
 
     async def test(self) -> dict:
+        """Real connectivity test path: chat -> transport -> parse -> safe result."""
         resp = await self.chat(
             LLMRequest(
                 messages=[LLMMessage(role="user", content="Reply PONG only")],
@@ -172,3 +199,21 @@ class OpenAICompatibleProvider(BaseProvider):
             )
         )
         return {"ok": True, "model": self._model, "reply": resp.content[:20]}
+
+
+def validate_provider_numeric(
+    *, timeout_s: float | None = None, max_tokens: int | None = None, max_context_tokens: int | None = None,
+    temperature: float | None = None,
+) -> None:
+    """M2a.1-5: conservative numeric validation shared by config boundary and provider."""
+    if timeout_s is not None and timeout_s <= 0:
+        raise ValueError(f"timeout_s must be > 0, got {timeout_s!r}")
+    if max_tokens is not None and max_tokens <= 0:
+        raise ValueError(f"max_tokens must be > 0, got {max_tokens!r}")
+    if max_context_tokens is not None and max_context_tokens <= 0:
+        raise ValueError(f"max_context_tokens must be > 0, got {max_context_tokens!r}")
+    if temperature is not None:
+        if not isinstance(temperature, (int, float)) or isinstance(temperature, bool):
+            raise ValueError(f"temperature must be a finite number, got {temperature!r}")
+        if temperature < 0:
+            raise ValueError(f"temperature must be >= 0, got {temperature!r}")

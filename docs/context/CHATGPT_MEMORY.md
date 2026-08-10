@@ -229,3 +229,13 @@ User
 - **[EXTERNAL_REVIEW][SECURITY_DECISION]**：ProviderConfig 只存 secret_reference（环境变量名）；secret 值永不进 DB/Git/日志/Memory/Handoff。
 - **[EXTERNAL_REVIEW][CORRECTION]**：milestone commit 进入 HISTORY 后记录实际 commit 或指向 Git，不留 stale "pending" 措辞。
 - **[REPO_CONFIRMED]**：M2a 实现（SQLAlchemy 2.x + aiosqlite + httpx）：sources/tasks/extractions/provider_configs/schema_meta 表；Source/Task/Extraction/ProviderConfig Repository；SourceService；providers/（base/models/errors/openai_compatible/manager）+ scripts/m2_configure_provider.py（临时 bootstrap，M5 替换）。
+
+## 9G. MEMORY DELTA（M2a.1 新增）
+
+- **[EXTERNAL_REVIEW][CORRECTION]**：Provider.test 存在但未被测试且缺 import（NameError）。**方法存在 + 相邻测试 ≠ 真实调用路径已验证**；public/acceptance 方法需要直接路径测试。
+- **[EXTERNAL_REVIEW][CORRECTION]**：LLMRequest 字段是契约不是文档装饰；request 级 timeout 必须真正影响传输或删除。
+- **[EXTERNAL_REVIEW][CORRECTION]**：规范枚举不是"能存合法值"就算强制；闭集域规则需要显式非法值拒绝（repository 边界 + DB CHECK 双层）。
+- **[EXTERNAL_REVIEW][STORAGE_SAFETY]**：schema 兼容性必须先于任何 DB 变更检查；不兼容/未来/未知 DB：检测 → 拒绝 → **零变更**。无 schema_meta 但有用户表的 DB 拒绝认领（迁移明确要求）。
+- **[EXTERNAL_REVIEW][CORRECTION]**：Clock 抽象只有在持久化/服务时间戳路径真正使用它才有用；不要造生产代码绕过的架构抽象。Repository 现在显式从 clock.utcnow() 取时间戳。
+- **[EXTERNAL_REVIEW][SECURITY]**：secret_reference 必须在持久化前校验（不只首次网络请求）；配置与 Provider 运行时共享同一校验规则（providers/validation.py）。
+- **[REPO_CONFIRMED]**：M2a.1 修复全部落地（186 tests 全绿）：timeout 契约生效、枚举 CHECK 约束、schema 零变更拒绝、Clock 注入、get_by_id、严格成功解析、状态码先于 body 分类。

@@ -30,6 +30,11 @@ class ProviderManager:
             raise AmbiguousDefaultProviderError(len(enabled))
         return self._instantiate(enabled[0])
 
+    async def get_by_id(self, provider_id: int) -> OpenAICompatibleProvider:
+        """Retrieve and instantiate a specific provider config (M2a.1-15)."""
+        cfg = await self._configs.get(provider_id)
+        return self._instantiate(cfg)
+
     def _instantiate(self, cfg: ProviderConfig) -> OpenAICompatibleProvider:
         if cfg.provider_type != "openai_compatible":
             raise ValueError(f"unsupported provider_type: {cfg.provider_type!r}")

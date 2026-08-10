@@ -16,8 +16,8 @@
 
 - M0 = **PASS**（最终外部审核通过）
 - M1 = **PASS**（含 M1.1 correctness + M1.2 REAL ENV + M1.3 隐私清理）
-- M2 = **IN_PROGRESS**：M2a（Data+Provider Foundation）完成 — AWAITING_EXTERNAL_REVIEW；**M2b NOT_AUTHORIZED**
-- status：**AWAITING_EXTERNAL_M2A_REVIEW**
+- M2 = **IN_PROGRESS**：M2a + M2a.1 修复完成 — AWAITING_EXTERNAL_REVIEW；**M2b NOT_AUTHORIZED**
+- status：**AWAITING_EXTERNAL_M2A1_REVIEW**
 
 ## completed
 

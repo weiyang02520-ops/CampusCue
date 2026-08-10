@@ -245,6 +245,7 @@ async def db_session_factory(tmp_path):
     database = Database(DatabaseConfig(path=tmp_path / "p.db", env="test"))
     await database.initialize()
     repo = ProviderConfigRepository(database.session)
+    repo._database = database  # expose for tests that need the raw db file
     yield repo
     await database.dispose()
 

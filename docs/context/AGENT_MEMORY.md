@@ -89,6 +89,9 @@ external/platform → adapters → core(events/bus/router) → services → repo
 | **测试复制生产代码片段** | connection generation 测试手工模拟 half-finally，漏真实 finally 的 global pending cleanup（M1.1 finding A） | **lifecycle/race 测试必须走真实执行路径**（如真实 `_handle_connection`），禁止测试复制品（M1.1 教训） |
 | **handler 内 detach 绕过并发限制** | EventBus handler create_task 后立即返回 → semaphore 被绕过 | **完整链路 bounded**：queue + in-flight handler + outbound send 都在 handler 内 await（M1.1 finding B） |
 | **PII 泄漏（secret scan 干净也中招）** | M1.2 HANDOFF 经真实 NapCat 配置文件名提交完整 QQ 号；secret scan 只查高熵凭据 | **checkpoint 隐私检查区分 SECRET / PII / PUBLIC FIXTURE**：真实环境标识符（QQ 号/群号/含标识符文件名/用户路径/真实聊天内容）也要查；文档用语义脱敏（如 onebot11_<BOT_QQ_REDACTED>.json）；历史泄漏不擅自重写 Git 历史（需显式授权）（M1.3 教训） |
+| **方法存在 ≠ 路径已验证** | Provider.test() 存在但缺 import（NameError）且从未被直接测试（M2a.1 finding A） | **public/acceptance 方法必须有直接路径回归测试**（真实调用链含 transport/parse），不能只靠相邻测试（M2a.1 教训） |
+| **枚举未强制** | 规范 Enum 定义后 repository 仍接受任意字符串（M2a.1 finding C） | **闭集校验在 repository/domain 边界显式拒绝非法值 + DB CHECK 约束双层防御**（M2a.1 教训） |
+| **schema 变更先于兼容检查** | initialize 先 create_all 再查版本，不兼容 DB 已被改写（M2a.1 finding D） | **先只读检测 → 拒绝 → 零变更**；无 schema_meta 但有用户表的 DB 拒绝认领（M2a.1 教训） |
 
 ## 8. EVIDENCE FIRST（置信度纪律）
 
@@ -163,4 +166,4 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **运行 V2 必须用独立 venv**（repo 根有 Legacy campuscue/，import 会遮蔽）——真实环境已用 `v2/.venv-m1-real` 验证。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。
 
-- **M2a 运行时事实**：数据层用 SQLAlchemy 2.x + aiosqlite（UTC TypeDecorator 处理 tz）；Provider 用 httpx（MockTransport 注入测试）；fresh venv 已验证可独立安装。
+- **M2a.1 运行时事实**：LLMRequest.timeout_s=None 默认（回落 provider 配置）；secret_reference 共享校验 providers/validation.py；Clock 注入 repository 时间戳；DB CHECK 约束（tasks/extractions/provider_configs）；schema 预检零变更（SchemaRefusedError）；186 tests 全绿。
