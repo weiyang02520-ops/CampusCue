@@ -66,6 +66,7 @@ def resolve_deadline(phrase: str, current_time: datetime, tz: ZoneInfo) -> Resol
 
     # explicit date first (cannot be off by a week)
     if m := _DATE_RE.search(stripped):
+        has_explicit_year = bool(m.group("year") or m.group("y2"))
         year = int(m.group("year")) if m.group("year") else int(m.group("y2")) if m.group("y2") else local_now.year
         if m.group("month"):
             month, day = int(m.group("month")), int(m.group("day"))
@@ -78,6 +79,12 @@ def resolve_deadline(phrase: str, current_time: datetime, tz: ZoneInfo) -> Resol
         except ValueError:
             return ResolvedDeadline(deadline=None, is_explicit=False, reason="invalid_date")
         if dt < local_now - PAST_TOLERANCE:
+            # M2b.1.1 (Finding F): ONLY yearless dates may use cross-year
+            # inference ("8月10日" after Aug 10 -> next year). An EXPLICITLY
+            # supplied past year/date (e.g. "2026年8月9日" on 2026-08-10) must
+            # be rejected as past — never silently rewritten to next year.
+            if has_explicit_year:
+                return ResolvedDeadline(deadline=None, is_explicit=False, reason="past_rejected:explicit_date")
             dt = dt.replace(year=year + 1)  # cross-year: "8月10日" after Aug 10 -> next year
         return _check_future(dt, local_now, is_explicit=True, reason="explicit_date")
 

@@ -128,3 +128,17 @@
 - **测试**：新增 7（低分进 Provider/模糊上下文/单次调用/fallback 上限）→ **264 passed**；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无新声明（M2b.2）
 - **审核状态**：M2b.1 AWAITING_EXTERNAL_REVIEW；M2b.2 NOT_AUTHORIZED
+
+## 2026-08-10 · M2b.1.1 REAL-GATE HARDENING
+
+- **任务**：外部审核 PASS_WITH_FIXES 的 Real-Gate 硬化轮（不改 AI-first；不开始真实 Provider/QQ）
+- **Commit**：fix: harden AI-first pipeline for real provider gate（本轮）
+- **主要修改**：
+  - providers：secret env 缺失/空 → CONFIG_ERROR（0 transport）；新错误码 STRUCTURED_OUTPUT_UNSUPPORTED（HTTP 结构化字段通用分类）；BaseProvider.model 公共属性
+  - tasks：extractor fallback 仅 structured 不兼容（≤2 calls）；model_said_none 保留 confidence/reason；ContextCollector window resize；显式年份不 auto-roll；build_dedup_key 单一 helper；prompt-injection 防御纵深
+  - services/task_service：去 _confidence_threshold 与死 decide_pending_confirm（状态判定归 Pipeline）
+  - config：test + pipeline + 无 DB_PATH → ConfigError；confidence ∈[0,1]；timezone 可解析
+  - pipeline：移除死 _dedup；Extraction 记录 provider/model
+- **测试**：新增 38 断言组（secret/fallback 分类/审计 provider-model/model_said_none/resize/年份/dedup key/config/ownership/injection/fake provider）→ **302 passed**；package isolation PASS（.venv-m2iso）；Anti-AstrBot PASS
+- **REAL ENV**：无新声明（M1.2 prior 保留；真实 Provider/QQ 留 M2b.2）
+- **审核状态**：M2b.1 = AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 NOT_AUTHORIZED

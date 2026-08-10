@@ -31,6 +31,27 @@ def normalize_title(title: str) -> str:
     return t.casefold()
 
 
+def build_dedup_key(*, title: str, course: str | None, deadline: datetime | None) -> str:
+    """CANONICAL semantic dedup key (M2b.1.1 Finding 15).
+
+    ONE helper defines the STORED Task.dedup_key semantics, consistent with
+    the Deduplicator's matching rules (same normalized title + deadline minute;
+    course participates when both are known):
+    - normalized title
+    - course when present (both-known comparison)
+    - deadline MINUTE precision (matches Deduplicator's same_minute check)
+
+    Source scope stays separate via source_id. NO fuzzy matching.
+    """
+    parts = [normalize_title(title), course or ""]
+    if deadline is not None:
+        minute = deadline.astimezone(timezone.utc).replace(second=0, microsecond=0)
+        parts.append(minute.isoformat())
+    else:
+        parts.append("")
+    return ":".join(parts)
+
+
 class Deduplicator:
     def __init__(self, tasks: TaskRepository, clock: Clock | None = None) -> None:
         self._tasks = tasks

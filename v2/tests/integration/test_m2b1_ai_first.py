@@ -205,7 +205,8 @@ class TestSingleCallTriage:
 
     @pytest.mark.asyncio
     async def test_fallback_max_two_calls(self, ai_env):
-        """§23/24: schema INVALID_REQUEST -> exactly one fallback (2 calls total, never 3)."""
+        """§23/24: STRUCTURED_OUTPUT_UNSUPPORTED -> exactly one fallback (2 calls
+        total, never 3). Generic INVALID_REQUEST does NOT fallback (M2b.1.1 D)."""
         from campuscue.providers.errors import ProviderError, ProviderErrorCode
 
         env = ai_env
@@ -215,7 +216,7 @@ class TestSingleCallTriage:
         def handler(request):
             calls.append(1)
             if len(calls) == 1:
-                raise ProviderError(ProviderErrorCode.INVALID_REQUEST, "json_schema unsupported")
+                raise ProviderError(ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED, "json_schema unsupported")
             return _resp(json.dumps({"has_task": True, "title": "作业F", "confidence": 0.9}))
 
         env["pipeline"]._provider_manager = _fake_manager(handler)

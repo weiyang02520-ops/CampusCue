@@ -112,6 +112,56 @@ class TestAuth:
             _make_provider(secret_ref="BAD REF WITH SPACES")
 
     @pytest.mark.asyncio
+    async def test_secret_env_missing_fails_before_transport(self, monkeypatch):
+        """M2b.1.1 (A): configured secret_reference + env missing -> ProviderError
+        CONFIG_ERROR with ZERO transport calls (never an unauthenticated HTTP)."""
+        monkeypatch.delenv("TEST_FAKE_PROVIDER_KEY", raising=False)
+        called = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            called.append(1)
+            return _ok_response()
+
+        p = _make_provider(secret_ref="TEST_FAKE_PROVIDER_KEY",
+                           client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.CONFIG_ERROR
+        assert called == []  # ZERO TRANSPORT CALLS
+
+    @pytest.mark.asyncio
+    async def test_secret_env_empty_fails_before_transport(self, monkeypatch):
+        """M2b.1.1 (A): configured ref + empty env -> CONFIG_ERROR, no transport."""
+        monkeypatch.setenv("TEST_FAKE_PROVIDER_KEY", "")
+        called = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            called.append(1)
+            return _ok_response()
+
+        p = _make_provider(secret_ref="TEST_FAKE_PROVIDER_KEY",
+                           client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.CONFIG_ERROR
+        assert called == []  # no transport
+
+    @pytest.mark.asyncio
+    async def test_secret_env_valid_bearer(self, monkeypatch):
+        """M2b.1.1 (A): configured ref + valid secret -> Bearer auth sent."""
+        monkeypatch.setenv("TEST_FAKE_PROVIDER_KEY", "fake-secret-value")
+        seen = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen["auth"] = request.headers.get("Authorization")
+            return _ok_response()
+
+        p = _make_provider(secret_ref="TEST_FAKE_PROVIDER_KEY",
+                           client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+        await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert seen["auth"] == "Bearer fake-secret-value"
+
+    @pytest.mark.asyncio
     async def test_secret_not_in_error(self, monkeypatch, caplog):
         monkeypatch.setenv("TEST_FAKE_PROVIDER_KEY", "super-secret-value-42")
 
@@ -228,6 +278,35 @@ class TestErrorClassification:
         assert ei.value.code == ProviderErrorCode.INVALID_REQUEST
 
     @pytest.mark.asyncio
+    async def test_400_json_schema_evidence_classified_structured_output_unsupported(self):
+        """M2b.1.1 (D): explicit structured-output evidence -> dedicated code
+        (the ONLY invalid-request category that permits one schema fallback)."""
+        p = _make_provider(client=httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda r: httpx.Response(400, json={
+                "error": {"type": "invalid_json_schema", "message": "json_schema is not supported"}}))))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED
+
+    @pytest.mark.asyncio
+    async def test_400_message_only_evidence_classified(self):
+        """M2b.1.1 (D): message-level evidence also classified (no vendor strings)."""
+        p = _make_provider(client=httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda r: httpx.Response(400, json={"error": {"message": "response_format json_schema unsupported"}}))))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED
+
+    @pytest.mark.asyncio
+    async def test_400_model_error_not_structured(self):
+        """M2b.1.1 (D): model errors remain INVALID_MODEL (no fallback)."""
+        p = _make_provider(client=httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda r: httpx.Response(400, json={"error": {"message": "model 'gpt-4o' does not exist"}}))))
+        with pytest.raises(ProviderError) as ei:
+            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert ei.value.code == ProviderErrorCode.INVALID_MODEL
+
+    @pytest.mark.asyncio
     async def test_500_server_error(self):
         p = _make_provider(client=httpx.AsyncClient(transport=httpx.MockTransport(
             lambda r: httpx.Response(500, json={"error": {"message": "internal"}}))))
@@ -262,7 +341,7 @@ class TestProviderManager:
         await db_session_factory.create(name="only", base_url="https://x/v1", model="m")
         mgr = ProviderManager(db_session_factory)
         provider = await mgr.get_default()
-        assert provider._model == "m"
+        assert provider.model == "m"  # public abstraction property, not _model
 
     @pytest.mark.asyncio
     async def test_multiple_enabled_ambiguous(self, db_session_factory):
@@ -278,4 +357,13 @@ class TestProviderManager:
         await db_session_factory.create(name="b", base_url="https://x/v1", model="m2", enabled=False)
         mgr = ProviderManager(db_session_factory)
         provider = await mgr.get_default()  # only 'a' enabled -> OK
-        assert provider._model == "m1"
+        assert provider.model == "m1"
+
+    def test_model_property_public(self):
+        """M2b.1.1 abstraction contract: BaseProvider exposes model publicly."""
+        from campuscue.providers.base import BaseProvider
+
+        p = _make_provider()
+        assert isinstance(p, BaseProvider)
+        assert p.model == "gpt-4o"
+        assert p.provider_type == "openai_compatible"

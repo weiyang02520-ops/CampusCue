@@ -41,12 +41,19 @@ class ExtractedTask:
 
 @dataclass
 class ExtractionResult:
-    """Provider-neutral L3 output."""
+    """Provider-neutral L3 output.
+
+    has_task=false retains confidence/reason/raw/structured_mode for
+    auditability (M2b.1.1 Finding C) — WITHOUT fabricating a Task object.
+    No title/course/deadline/submission_method is kept for a non-task result.
+    """
 
     has_task: bool
     task: ExtractedTask | None = None
     raw: str = ""
     structured_mode: str = "json_schema"  # json_schema | json_fallback
+    confidence: float | None = None  # model_said_none audit (has_task=false)
+    reason: str = ""  # model_said_none audit reason (has_task=false)
 
     def to_json(self) -> str:
         import json
@@ -64,6 +71,9 @@ class ExtractionResult:
                     "reason": self.task.reason,
                 }
             )
+        else:
+            data["confidence"] = self.confidence
+            data["reason"] = self.reason
         return json.dumps(data, ensure_ascii=False)
 
 

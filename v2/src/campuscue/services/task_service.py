@@ -1,8 +1,13 @@
 """TaskService (M2b.1) — the ONLY business task-creation path.
 
 Owns: candidate validation, AUTHORITATIVE dedup recheck (inside a process-local
-lock critical section), status selection, task construction, DB create.
+lock critical section), status application from the pipeline-provided
+candidate.pending_confirm, task construction, DB create.
 Pipeline must not call TaskRepository.create() directly.
+
+M2b.1.1 (Finding 13): status determination (confidence vs threshold, deadline
+resolution) lives in the Pipeline (L4/L6); TaskService does NOT recompute
+confidence and holds no threshold of its own.
 
 Concurrent safety: a single process-local asyncio.Lock serializes
 dedup-recheck + insert. Same-source-message DB UNIQUE remains final defense.
@@ -11,7 +16,6 @@ dedup-recheck + insert. Same-source-message DB UNIQUE remains final defense.
 from __future__ import annotations
 
 import asyncio
-import json
 from dataclasses import dataclass
 
 from campuscue.repositories.repositories import DuplicateError, TaskRepository
@@ -30,16 +34,9 @@ class TaskCreationResult:
 
 
 class TaskService:
-    def __init__(
-        self,
-        tasks: TaskRepository,
-        *,
-        clock: Clock | None = None,
-        confidence_threshold: float = 0.6,
-    ) -> None:
+    def __init__(self, tasks: TaskRepository, *, clock: Clock | None = None) -> None:
         self._tasks = tasks
         self._clock = clock or SystemClock()
-        self._confidence_threshold = confidence_threshold
         self._lock = asyncio.Lock()
         self._dedup = Deduplicator(tasks, clock=self._clock)
 
@@ -85,20 +82,6 @@ class TaskService:
                     created=False, reason="same_source_message", task=None
                 )
             return TaskCreationResult(created=True, task=task, reason="created")
-
-
-def decide_pending_confirm(*, confidence: float, deadline: object | None, deadline_resolved: bool) -> bool:
-    """Status selection (M2b.1 §34):
-
-    pending when confidence >= threshold AND deadline is resolved (or absent
-    where confirmation is not useful). pending_confirm when confidence low OR
-    deadline was stated but failed to resolve.
-    """
-    if confidence < 0.6:
-        return True
-    if deadline is not None and not deadline_resolved:
-        return True
-    return False
 
 
 def candidate_description(*, submission_method: str | None, reason: str | None) -> str | None:

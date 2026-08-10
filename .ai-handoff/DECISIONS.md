@@ -14,3 +14,6 @@
 | 008 | Provider 请求实体承载工具链路 | Provider 不感知 agent 循环，可单独测试/替换 |
 | 009 | 本地优先，LAN 需重新设计安全模型 | 默认 loopback，YAGNI |
 | 010 | 时区显式注入，前端不硬编码偏移 | V1 B12 教训：可测试性 + 多时区正确 |
+| 011 | V2 代码与 Legacy 物理隔离（v2/ root） | Legacy 冻结为 reference；import 不遮蔽 |
+| 012 | M2 数据/Provider 契约锁定 | TaskStatus 单一枚举/Secret 引用/UTC/L2 上下文/恰好一 Provider |
+| 013 | AI-First Task Extraction | 正常消息都交 LLM；本地规则只做 hygiene/hints/确定性兜底 |

@@ -64,18 +64,36 @@ class OpenAICompatibleProvider(BaseProvider):
         self._client = client  # injectable for tests (httpx.MockTransport)
 
     @property
+    def model(self) -> str:
+        """Configured model identifier (M2b.1.1 abstraction contract)."""
+        return self._model
+
+    @property
     def endpoint(self) -> str:
         return urljoin(self._base_url, "chat/completions")
 
-    def _resolve_secret(self) -> str | None:
-        """Runtime secret resolution; the canonical rule lives in validation.py."""
+    def _resolve_secret(self) -> str:
+        """Runtime secret resolution; canonical rule in validation.py.
+
+        M2b.1.1 (Real-Gate): secret_reference configured but referenced env
+        missing/empty -> ProviderError CONFIG_ERROR, ZERO transport calls.
+        Never silently send an unauthenticated HTTP request, never print the
+        secret value, never let this turn into a remote 401.
+        """
         if not self._secret_reference:
-            return None
+            return ""
         try:
             validate_secret_reference(self._secret_reference)
         except ValueError as e:
-            raise ProviderError(ProviderErrorCode.INVALID_REQUEST, str(e)) from None
-        return os.environ.get(self._secret_reference)
+            raise ProviderError(ProviderErrorCode.CONFIG_ERROR, str(e)) from None
+        value = os.environ.get(self._secret_reference)
+        if value is None or value == "":
+            raise ProviderError(
+                ProviderErrorCode.CONFIG_ERROR,
+                f"secret_reference env {self._secret_reference} is missing/empty; "
+                "refusing to call the provider without authentication",
+            ) from None
+        return value
 
     def _build_payload(self, request: LLMRequest) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -167,15 +185,34 @@ class OpenAICompatibleProvider(BaseProvider):
         return self._parse_ok(data)
 
     def _classify_400(self, resp: httpx.Response) -> ProviderError:
-        """400: safe JSON parse only for finer classification; non-JSON -> INVALID_REQUEST."""
+        """400: safe JSON parse only for finer classification; non-JSON -> INVALID_REQUEST.
+
+        M2b.1.1 (Finding D): generic evidence of structured-output incompatibility
+        is classified STRUCTURED_OUTPUT_UNSUPPORTED (the ONLY invalid-request
+        category that permits one schema fallback). HTTP structured error fields
+        (error.message / error.code / error.type) are used — no vendor-specific
+        string matching, no guessing at one real vendor's wire format.
+        """
         try:
             data = resp.json()
         except (json.JSONDecodeError, ValueError):
             return ProviderError(ProviderErrorCode.INVALID_REQUEST, "provider rejected request (non-JSON)", status_code=400)
         err = data.get("error") or {}
+        err_type = str(err.get("type", "")).lower() if isinstance(err, dict) else ""
+        err_code = str(err.get("code", "")).lower() if isinstance(err, dict) else ""
         message = str(err.get("message", "")).lower() if isinstance(err, dict) else str(err).lower()
         if any(k in message for k in ("context length", "context_length", "maximum context", "token limit", "too many tokens")):
             return ProviderError(ProviderErrorCode.CONTEXT_OVERFLOW, "context length exceeded", status_code=400)
+        # structured-output / json_schema evidence FIRST (explicit error fields OR
+        # message), so "invalid json_schema for model X" is not misclassified as
+        # INVALID_MODEL and still gets its exactly-once schema fallback:
+        if any(k in err_type for k in ("invalid_json_schema", "json_schema", "response_format", "structured_output")) or \
+           any(k in err_code for k in ("invalid_json_schema", "json_schema", "response_format", "structured_output", "unsupported")) or \
+           any(k in message for k in ("json_schema", "response_format", "structured_output", "structured output")):
+            return ProviderError(
+                ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED,
+                "endpoint rejected structured output (json_schema)", status_code=400,
+            )
         if any(k in message for k in ("model", "not found", "does not exist", "unknown model")):
             return ProviderError(ProviderErrorCode.INVALID_MODEL, "invalid or unknown model", status_code=400)
         return ProviderError(ProviderErrorCode.INVALID_REQUEST, "provider rejected request", status_code=400)

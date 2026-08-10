@@ -18,23 +18,23 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M2a）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-10 · M2b.1.1）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b = IN_PROGRESS（M2b.1 AI-first 完成待外部复核；M2b.2 NOT_AUTHORIZED）** |
+| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b.1 = AI-first 方向 PASS + M2b.1.1 Hardening 完成 AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 NOT_AUTHORIZED；M2 FINAL = NOT PASS** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 root 已有 M1 实现**（src/campuscue + 87 tests）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结 |
-| REAL ENV | 已验证：NapCat v4.18.18 + 真实 QQ hello→received:hello（私聊+群聊）+ 非 hello 不回复 + 重启自动重连 |
+| REAL ENV | 已验证：NapCat v4.18.18 + 真实 QQ hello→received:hello（私聊+群聊）+ 非 hello 不回复 + 重启自动重连（M1.2 保留） |
 
 ## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-10）
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M0/M1/M2a 全部 PASS。**M2 = IN_PROGRESS**：M2b.1（AI-first Task Extraction Pipeline）已完成，AWAITING_EXTERNAL_REVIEW；**M2b.2 NOT_AUTHORIZED**（等 M2b.1 外部确认）。
-- 下一个待执行：**M2b.2（真实 Provider + 真实 NapCat/QQ 验收）**——等 M2b.1 外部审核确认后才开始。
+- **当前状态**：M0/M1/M2a 全部 PASS。**M2b.1 = AI_FIRST_PIPELINE_HARDENED AWAITING_EXTERNAL_FINAL_REVIEW**；**M2b.2 NOT_AUTHORIZED**（等 M2b.1.1 外部最终确认）。
+- 下一个待执行：**M2b.2（真实 Provider + 真实 NapCat/QQ 验收）**——等 M2b.1.1 外部最终审核确认后才开始。
 
 ## 4. ARCHITECTURE RULES（违反 = FAIL）
 
@@ -165,11 +165,13 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：M2b.1 完成（256 tests 全绿 + package isolation PASS），AWAITING_EXTERNAL_REVIEW；**M2b.2 NOT_AUTHORIZED**。
-- **M2 预备（M1.3 外部确认后启动）**：Provider Foundation（BaseProvider/LLMRequest 最小集/LLMResponse/taxonomy/OpenAICompatible/最小 Manager/structured output）**独立于 Tool System**；SQLite（sources/tasks/extractions）+ Source/Extraction/Task 仓储 + SourceService/TaskService；Task Pipeline（L0-L7）；修 V1 遗留 B12（时区注入）/B13（LLM 测试缺口）。
-- **运行 V2 必须用独立 venv**（repo 根有 Legacy campuscue/，import 会遮蔽）——真实环境已用 `v2/.venv-m1-real` 验证。
+- **当前状态**：M2b.1.1（Real-Gate Hardening）完成（302 tests 全绿 + fresh venv 隔离 `.venv-m2iso` + Anti-AstrBot），AWAITING_EXTERNAL_FINAL_REVIEW；**M2b.2 NOT_AUTHORIZED**。
+- **M2 预备（M2b.1.1 外部确认后启动）**：M2b.2 = 真实 Provider（如 Ark）+ 真实 NapCat/QQ + SQLite 验收；真实 Provider 凭据走环境变量（不向用户索要、不抓取）。
+- **运行 V2 必须用独立 venv**（repo 根有 Legacy campuscue/，import 会遮蔽）——真实环境已用 `v2/.venv-m1-real` 验证；本轮隔离验证用 `v2/.venv-m2iso`。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。
 
 - **M2a.1 运行时事实**：LLMRequest.timeout_s=None 默认（回落 provider 配置）；secret_reference 共享校验 providers/validation.py；Clock 注入 repository 时间戳；DB CHECK 约束（tasks/extractions/provider_configs）；schema 预检零变更（SchemaRefusedError）；186 tests 全绿。
 
 - **AI-first 规则（ADR-013）**：本地规则不是语义 gate——MessageHygieneFilter 只 hard drop 高确定性垃圾；LocalSignalAnalyzer score 是 hints 绝不否决 LLM 调用（score=0 的正常消息仍进 LLM）；LLM 单次 triage+extraction（正常 1 call，schema fallback ≤2 calls）。
+
+- **M2b.1.1 Hardening 事实（外部 PASS_WITH_FIXES 修复轮）**：secret env 缺失 → CONFIG_ERROR 0 transport；Extraction 审计带 provider_type+model（BaseProvider.model 公共属性）；model_said_none 保留 confidence/reason 不存输入 context；fallback 仅 STRUCTURED_OUTPUT_UNSUPPORTED（新错误码）；ContextCollector resize；显式年份不 auto-roll；CAMPUSCUE_ENV=test + pipeline + 无 DB_PATH → ConfigError；TaskService 无 threshold/死函数；dedup_key 唯一 helper build_dedup_key()；prompt-injection 防御纵深（消息永在 user role）。

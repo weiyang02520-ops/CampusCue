@@ -1,9 +1,14 @@
 """L3 TaskExtractor (M2b.1).
 
 Provider-neutral extraction through the M2a Provider abstraction. Business
-code never builds HTTP JSON. JSON Schema preferred; documented fallback to a
-strict JSON-only prompt + tolerant parser ONLY on ProviderError INVALID_REQUEST
-(retry once). AUTH/TIMEOUT/NETWORK/RATE_LIMIT/etc are real failures — no fallback.
+code never builds HTTP JSON and never touches implementation-private fields
+(e.g. OpenAICompatibleProvider._model) — it depends on BaseProvider.model /
+provider_type only (M2b.1.1 abstraction contract).
+
+JSON Schema preferred; documented fallback to a strict JSON-only prompt +
+tolerant parser ONLY on STRUCTURED_OUTPUT_UNSUPPORTED (evidence of a
+structured-output incompatibility), exactly once. Generic INVALID_REQUEST,
+AUTH/RATE/TIMEOUT/NETWORK/MODEL/CONTEXT are real failures — no fallback.
 """
 
 from __future__ import annotations
@@ -13,9 +18,9 @@ import logging
 import re
 from typing import Any
 
+from campuscue.providers.base import BaseProvider
 from campuscue.providers.errors import ProviderError, ProviderErrorCode
 from campuscue.providers.models import LLMMessage, LLMRequest
-from campuscue.providers.openai_compatible import OpenAICompatibleProvider
 from campuscue.tasks.models import EXTRACTION_JSON_SCHEMA, ExtractedTask, ExtractionResult
 from campuscue.tasks.prompts import FALLBACK_PROMPT, build_system_prompt, build_user_message
 
@@ -29,8 +34,13 @@ class ExtractionError(Exception):
 
 
 class TaskExtractor:
-    def __init__(self, provider: OpenAICompatibleProvider) -> None:
+    def __init__(self, provider: BaseProvider) -> None:
         self._provider = provider
+
+    @property
+    def provider_model(self) -> str:
+        """Safe provider/model identity for Extraction audit (no secrets)."""
+        return self._provider.model
 
     async def extract(
         self,
@@ -55,22 +65,24 @@ class TaskExtractor:
                 LLMMessage(role="system", content=build_system_prompt()),
                 LLMMessage(role="user", content=user_msg),
             ],
-            model=self._provider._model,
+            model=self._provider.model,
             response_schema=EXTRACTION_JSON_SCHEMA,
         )
         try:
             resp = await self._provider.chat(base_request)
             return self._parse_and_normalize(resp.content, structured_mode="json_schema")
         except ProviderError as e:
-            if e.code != ProviderErrorCode.INVALID_REQUEST:
-                raise  # real failure: no fallback
+            # M2b.1.1 (Finding D): fallback ONLY on structured-output
+            # incompatibility evidence; every other error is a real failure.
+            if e.code != ProviderErrorCode.STRUCTURED_OUTPUT_UNSUPPORTED:
+                raise
         # Attempt 2 (ONCE, final): strict JSON-only fallback (schema unsupported)
         fallback_request = LLMRequest(
             messages=[
                 LLMMessage(role="system", content="你是校园事务提取器。只输出一个 JSON 对象。"),
                 LLMMessage(role="user", content=FALLBACK_PROMPT.format(message=user_msg)),
             ],
-            model=self._provider._model,
+            model=self._provider.model,
         )
         resp = await self._provider.chat(fallback_request)
         return self._parse_and_normalize(resp.content, structured_mode="json_fallback")
@@ -79,7 +91,16 @@ class TaskExtractor:
         data = parse_json_object(content)
         normalized = normalize_extraction(data)
         if not normalized["has_task"]:
-            return ExtractionResult(has_task=False, raw=content, structured_mode=structured_mode)
+            # M2b.1.1 (Finding C): model_said_none must RETAIN confidence/reason
+            # for auditability without fabricating a Task object.
+            return ExtractionResult(
+                has_task=False,
+                task=None,
+                confidence=normalized.get("confidence"),
+                reason=normalized.get("reason") or "",
+                raw=content,
+                structured_mode=structured_mode,
+            )
         title = normalized.get("title")
         if not title or not title.strip():
             raise ExtractionError("model returned has_task=true but missing title")
@@ -146,10 +167,17 @@ def _null_or_str(value: Any) -> str | None:
 
 def normalize_extraction(data: dict[str, Any]) -> dict[str, Any]:
     """Defensive normalization of model drift. Never raises on bad values except
-    structural impossibility."""
+    structural impossibility. has_task=false STILL retains confidence/reason
+    (M2b.1.1 Finding C: auditability without fabricating a Task object); no
+    title/course/deadline/submission_method is kept for a non-task result."""
     has_task = _as_bool(data.get("has_task", False))
     normalized: dict[str, Any] = {"has_task": has_task}
     if not has_task:
+        # preserve the model's actual confidence when given; NO fabricated
+        # default (0.5) for non-task results (M2b.1.1 Finding C)
+        raw_conf = data.get("confidence")
+        normalized["confidence"] = _coerce_confidence(raw_conf) if raw_conf is not None else None
+        normalized["reason"] = str(data.get("reason") or "")
         return normalized
 
     category = str(data.get("category") or "other").strip().lower()

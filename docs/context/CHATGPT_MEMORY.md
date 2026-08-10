@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M2a）
+## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M2b.1.1）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b = IN_PROGRESS（M2b.1 AI-First Task Pipeline 完成，AWAITING_EXTERNAL_REVIEW；M2b.2 真实 Provider/QQ 验收 NOT_AUTHORIZED）；M2 FINAL = NOT PASS** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS（最终）；M2b.1 = AI-FIRST 方向 PASS + Core pipeline PASS_WITH_FIXES → M2b.1.1 Real-Gate Hardening 完成，AWAITING_EXTERNAL_FINAL_REVIEW；M2b.2 真实 Provider/QQ 验收 NOT_AUTHORIZED；M2 FINAL = NOT PASS** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -269,3 +269,17 @@ User
 - **[PRIVACY_DECISION][CURRENT]**：AI-first 使更多群消息进 Provider → 不持久化完整群历史；model_said_none 审计不保存完整输入 context；只有创建 Task 才持久化 source_text_reference。
 - **[DESIGN_DECISION][CURRENT]**：LocalSignalAnalyzer 产生 hints，signal score 不能拥有 semantic veto。
 - **[REPO_CONFIRMED]**：M2b.1 AI-first 落地（264 tests 全绿）：MessageHygieneFilter + LocalSignalAnalyzer + 单次调用 extractor + ≤2 calls 硬上限 + 模糊上下文测试。
+
+## 9K. MEMORY DELTA（M2b.1.1 Real-Gate Hardening）
+
+- **[EXTERNAL_REVIEW][CURRENT]**：M2b.1 AI-first 产品方向与主 pipeline 架构被接受。M2b.2 前需要一轮最终 real-gate hardening（已由本轮完成）。
+- **[EXTERNAL_REVIEW][PROVIDER_RULE]**：配置了 secret_reference 但其环境变量缺失 → 必须在 transport 前本地失败（`ProviderError(CONFIG_ERROR)`，0 transport calls）。禁止静默发出未认证 HTTP；不打印 secret 值；不把本地配置错误转成远程 401。
+- **[EXTERNAL_REVIEW][AUDIT_RULE]**：每次实际 LLM extraction 尝试应记录安全 provider/model 标识（`provider_type` + `model`，无 secret/base auth）；AI-first model_said_none 决策保留 confidence + 简短 reason，但不持久化完整输入 context。
+- **[EXTERNAL_REVIEW][ABSTRACTION_RULE]**：Task extraction 业务逻辑依赖 `BaseProvider`，不依赖 `OpenAICompatibleProvider` 内部或私有 `_model` 字段（公共 `model` 属性 + `provider_type`）。
+- **[EXTERNAL_REVIEW][FALLBACK_RULE]**：structured-output fallback 只由 structured-output 不兼容证据触发（`STRUCTURED_OUTPUT_UNSUPPORTED`，通用 HTTP 错误字段分类），不是每个 generic INVALID_REQUEST；AUTH/RATE/TIMEOUT/NETWORK/MODEL/CONTEXT 不 fallback；总 calls ≤ 2。
+- **[EXTERNAL_REVIEW][TIME_CORRECTION]**：只有无年份的过去日期可用跨年推断（"8月5日" 在 8/10 之后 → 明年）；显式给出的过去年份/日期（"2026年8月5日"）必须拒绝为 past，不得静默改写为明年。
+- **[EXTERNAL_REVIEW][TEST_SAFETY]**：`CAMPUSCUE_ENV=test` 不得有任何自动路径通向正常应用 DB——test + pipeline enabled + 无显式 `CAMPUSCUE_DB_PATH` → 启动前 fail（config 边界，`database_path_explicit` provenance）。
+- **[EXTERNAL_REVIEW][OWNERSHIP_RULE]**：状态判定（confidence vs threshold、deadline 解析）单一属主 = Pipeline（L4/L6），通过 `candidate.pending_confirm` 交给 TaskService 应用；TaskService 不重算 confidence，不持有 threshold；死 `decide_pending_confirm` 已删。
+- **[EXTERNAL_REVIEW][DEDUP_KEY_RULE]**：持久化 Task.dedup_key 由单一 canonical helper `build_dedup_key(title, course, deadline)` 定义（normalized title + course 双方已知 + deadline minute），与 Deduplicator 语义一致；不做模糊匹配。
+- **[EXTERNAL_REVIEW][INJECTION_DEFENSE]**：QQ 消息与上下文是未信任数据——system prompt 声明其为待分类数据、不服从消息内指令、输入不得覆盖 schema/系统规则；mock 行为测试证明 user 文本永在 user role（防御纵深，不宣称 LLM 注入已解决）。
+- **[REPO_CONFIRMED]**：M2b.1.1 落地（302 tests 全绿 + fresh venv 隔离 + Anti-AstrBot）：CONFIG_ERROR/STRUCTURED_OUTPUT_UNSUPPORTED 两个新错误码、ContextCollector resize、config fail-fast 校验、TaskService 所有权清理、dedup key helper、prompt-injection 防御。

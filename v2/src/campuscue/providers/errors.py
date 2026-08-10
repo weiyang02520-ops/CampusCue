@@ -15,6 +15,12 @@ class ProviderErrorCode(str, Enum):
     MALFORMED_OUTPUT = "malformed_output"
     INVALID_REQUEST = "invalid_request"
     SERVER_ERROR = "server_error"
+    # M2b.1.1: local configuration failure BEFORE any transport call
+    # (e.g. secret_reference configured but referenced env missing/empty)
+    CONFIG_ERROR = "config_error"
+    # M2b.1.1: endpoint rejected structured-output json_schema specifically.
+    # This is the ONLY invalid-request category that permits a schema fallback.
+    STRUCTURED_OUTPUT_UNSUPPORTED = "structured_output_unsupported"
 
 
 class ProviderError(Exception):

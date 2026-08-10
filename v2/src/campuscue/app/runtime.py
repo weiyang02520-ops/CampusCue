@@ -99,9 +99,7 @@ class CampusRuntime:
         await database.initialize()
         self._database = database
         sf = database.session
-        task_service = TaskService(
-            TaskRepository(sf), confidence_threshold=self.config.tasks.confidence_threshold
-        )
+        task_service = TaskService(TaskRepository(sf))
         pipeline = TaskPipeline(
             sources=SourceRepository(sf),
             extractions=ExtractionRepository(sf),

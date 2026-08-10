@@ -27,10 +27,31 @@ class ContextCollector:
         # source identity (platform, conversation_id) -> deque of ContextMessage
         self._buffers: dict[tuple[str, str], deque[ContextMessage]] = {}
 
+    def _buffer_for(self, key: tuple[str, str], *, context_window: int) -> deque[ContextMessage]:
+        """Get-or-create the source buffer, RESIZING when the configured
+        context_window changed since the buffer was created (M2b.1.1 Finding E).
+
+        deque.maxlen is fixed at construction; a stale maxlen would silently
+        cap/slice the ring at the old window. Preserve as many currently
+        retained messages as possible when resizing (older discarded messages
+        cannot be recovered — acceptable). Shrink safely too.
+        """
+        window = max(context_window, 1)
+        buf = self._buffers.get(key)
+        if buf is None:
+            buf = deque(maxlen=window)
+            self._buffers[key] = buf
+            return buf
+        if buf.maxlen != window:
+            resized = deque(buf, maxlen=window)
+            self._buffers[key] = resized
+            return resized
+        return buf
+
     def observe(self, event: CampusEvent, *, source_id: int, context_window: int) -> None:
         """Append current message to the source buffer (after L0 pass)."""
         key = (event.platform, event.conversation_id)
-        buf = self._buffers.setdefault(key, deque(maxlen=max(context_window, 1)))
+        buf = self._buffer_for(key, context_window=context_window)
         buf.append(
             ContextMessage(
                 message_id=event.message_id,
@@ -41,7 +62,7 @@ class ContextCollector:
 
     def snapshot(self, event: CampusEvent, *, context_window: int) -> list[str]:
         """Previous messages for the source, EXCLUDING the current one, honoring
-        the CURRENT configured context_window bound."""
+        the CURRENT configured context_window bound (resize-safe)."""
         key = (event.platform, event.conversation_id)
         buf = self._buffers.get(key)
         if buf is None:

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import math
 import os
 from dataclasses import dataclass, field
+from zoneinfo import ZoneInfo
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,7 @@ class EventBusConfig:
 class TaskPipelineConfig:
     enabled: bool = False  # CAMPUSCUE_TASK_PIPELINE=1 (M2 opt-in; M1 works without)
     database_path: str = "data/campuscue.db"
+    database_path_explicit: bool = False  # CAMPUSCUE_DB_PATH was actually supplied
     timezone: str = "Asia/Shanghai"
     confidence_threshold: float = 0.6
     # NOTE: no prefilter threshold — LocalSignalAnalyzer score is NOT a gate
@@ -62,6 +65,38 @@ class RuntimeConfig:
             raise ValueError(f"{name} must be > 0, got {value!r}")
 
 
+class ConfigError(ValueError):
+    """Safe, classified configuration failure (fail-fast before runtime start)."""
+
+
+def _validate_task_config(tasks: TaskPipelineConfig, *, env: str) -> None:
+    """M2b.1.1 (Finding G + config validation):
+
+    1. confidence_threshold must be finite and 0 <= x <= 1.
+    2. timezone must resolve via ZoneInfo when the task pipeline is enabled.
+    3. TEST-SAFETY INVARIANT: CAMPUSCUE_ENV=test + pipeline enabled + DB path
+       not explicitly supplied -> FAIL (test environment must have NO automatic
+       path to the normal/production DB, including the default data/campuscue.db).
+    """
+    if not tasks.enabled:
+        return
+    threshold = tasks.confidence_threshold
+    if not isinstance(threshold, (int, float)) or isinstance(threshold, bool) or not math.isfinite(threshold):
+        raise ConfigError(f"confidence_threshold must be finite, got {threshold!r}")
+    if not 0.0 <= threshold <= 1.0:
+        raise ConfigError(f"confidence_threshold must be in [0, 1], got {threshold!r}")
+    try:
+        ZoneInfo(tasks.timezone)
+    except Exception as e:
+        raise ConfigError(f"invalid timezone {tasks.timezone!r}: {e}") from None
+    if env == "test" and not tasks.database_path_explicit:
+        raise ConfigError(
+            "CAMPUSCUE_ENV=test with the task pipeline enabled requires an explicit "
+            "CAMPUSCUE_DB_PATH (isolated test database). Refusing to fall back to "
+            f"the default application DB ({tasks.database_path!r})."
+        )
+
+
 _TOKEN_ENV = "CAMPUSCUE_ONEBOT_TOKEN"
 
 
@@ -77,6 +112,16 @@ def load_config() -> RuntimeConfig:
     token = os.environ.get(_TOKEN_ENV) or None
     if token == "":
         token = None
+    env = os.environ.get("CAMPUSCUE_ENV", "production")
+    db_path = os.environ.get("CAMPUSCUE_DB_PATH")
+    tasks = TaskPipelineConfig(
+        enabled=_env_bool("CAMPUSCUE_TASK_PIPELINE"),
+        database_path=db_path if db_path is not None else "data/campuscue.db",
+        database_path_explicit=db_path is not None,
+        timezone=os.environ.get("CAMPUSCUE_TIMEZONE", "Asia/Shanghai"),
+        confidence_threshold=float(os.environ.get("CAMPUSCUE_CONFIDENCE_THRESHOLD", "0.6")),
+    )
+    _validate_task_config(tasks, env=env)
     return RuntimeConfig(
         onebot=OneBotConfig(
             host=os.environ.get("CAMPUSCUE_ONEBOT_HOST", "127.0.0.1"),
@@ -92,11 +137,6 @@ def load_config() -> RuntimeConfig:
             queue_maxsize=int(os.environ.get("CAMPUSCUE_QUEUE_MAXSIZE", "256")),
             max_in_flight=int(os.environ.get("CAMPUSCUE_MAX_IN_FLIGHT", "32")),
         ),
-        tasks=TaskPipelineConfig(
-            enabled=_env_bool("CAMPUSCUE_TASK_PIPELINE"),
-            database_path=os.environ.get("CAMPUSCUE_DB_PATH", "data/campuscue.db"),
-            timezone=os.environ.get("CAMPUSCUE_TIMEZONE", "Asia/Shanghai"),
-            confidence_threshold=float(os.environ.get("CAMPUSCUE_CONFIDENCE_THRESHOLD", "0.6")),
-        ),
+        tasks=tasks,
         diagnostic=_env_bool("CAMPUSCUE_DIAGNOSTIC"),
     )

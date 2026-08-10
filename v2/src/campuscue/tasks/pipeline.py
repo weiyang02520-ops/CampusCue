@@ -40,7 +40,7 @@ from campuscue.storage.clock import Clock, SystemClock
 from campuscue.storage.enums import ExtractionStatus
 from campuscue.storage.models import Extraction, Task
 from campuscue.tasks.context import ContextCollector
-from campuscue.tasks.dedup import Deduplicator, normalize_title
+from campuscue.tasks.dedup import build_dedup_key
 from campuscue.tasks.extractor import ExtractionError, TaskExtractor
 from campuscue.tasks.models import TaskCandidate
 from campuscue.tasks.prefilter import analyze_signals, hygiene_check
@@ -80,7 +80,6 @@ class TaskPipeline:
         self._confidence_threshold = confidence_threshold
         self._policy = SourcePolicy(sources)
         self._context = ContextCollector()
-        self._dedup = Deduplicator(task_service._tasks, clock=self._clock)
 
     async def handle(self, event: CampusEvent) -> None:
         outcome = await self._run(event)
@@ -123,6 +122,9 @@ class TaskPipeline:
                 audit=audit, error="no_provider_configured",
             )
             return PipelineOutcome(kind="provider_error")
+        # safe provider/model identity for audit (no secrets; M2b.1.1 Finding B)
+        provider_ident = provider.provider_type
+        model_ident = provider.model
         extractor = TaskExtractor(provider)
         try:
             result = await extractor.extract(
@@ -135,28 +137,32 @@ class TaskPipeline:
             await self._record_extraction(
                 source_id=source.id, event=event, status=ExtractionStatus.ERROR.value,
                 audit=audit, error=f"provider:{e.code.value}",
+                provider=provider_ident, model=model_ident,
             )
             return PipelineOutcome(kind="provider_error")
         except ExtractionError as e:
             await self._record_extraction(
                 source_id=source.id, event=event, status=ExtractionStatus.ERROR.value,
                 audit=audit, error=f"parse:{e}",
+                provider=provider_ident, model=model_ident,
             )
             return PipelineOutcome(kind="parse_error")
 
         audit["l3"] = {
             "structured_mode": result.structured_mode,
             "has_task": result.has_task,
-            "confidence": result.task.confidence if result.task else None,
-            "reason": result.task.reason if result.task else None,
+            "confidence": result.task.confidence if result.task else result.confidence,
+            "reason": result.task.reason if result.task else result.reason,
         }
         if not result.has_task:
             # model said none: one audit Extraction WITHOUT full input context
-            # (only the model output + reason; input text is NOT persisted here)
+            # (only the model output + confidence + short reason; input text is
+            # NOT persisted here — M2b.1.1 Finding C auditability contract)
             await self._record_extraction(
                 source_id=source.id, event=event, status=ExtractionStatus.SKIPPED.value,
                 audit=audit, raw_result=result.raw, normalized_result=result.to_json(),
-                confidence=result.task.confidence if result.task else None,
+                confidence=result.confidence,
+                provider=provider_ident, model=model_ident,
             )
             return PipelineOutcome(kind="model_said_none")
 
@@ -189,7 +195,7 @@ class TaskPipeline:
                 submission_method=task.submission_method, reason=task.reason
             ),
             confidence=task.confidence,
-            dedup_key=f"{source.id}:{normalize_title(task.title)}:{deadline.isoformat() if deadline else ''}",
+            dedup_key=build_dedup_key(title=task.title, course=task.course, deadline=deadline),
             source_id=source.id,
             source_message_id=event.message_id,
             source_text_reference=event.text,
@@ -205,6 +211,7 @@ class TaskPipeline:
                 source_id=source.id, event=event, status=ExtractionStatus.DUPLICATE.value,
                 audit=audit, raw_result=result.raw, normalized_result=result.to_json(),
                 confidence=task.confidence,
+                provider=provider_ident, model=model_ident,
             )
             return PipelineOutcome(kind="duplicate", dedup_reason=created.reason)
 
@@ -215,6 +222,7 @@ class TaskPipeline:
             source_id=source.id, event=event, status=ExtractionStatus.SUCCESS.value,
             audit=audit, raw_result=result.raw, normalized_result=result.to_json(),
             confidence=task.confidence,
+            provider=provider_ident, model=model_ident,
         )
         kind = "pending_confirm" if created.task.status == "pending_confirm" else "task_created"
         return PipelineOutcome(kind=kind, task_id=created.task.id)
@@ -230,6 +238,8 @@ class TaskPipeline:
         normalized_result: str | None = None,
         confidence: float | None = None,
         error: str | None = None,
+        provider: str | None = None,
+        model: str | None = None,
     ) -> Extraction:
         audit.setdefault("outcome", {"status": status})
         audit["outcome"].update({"status": status})
@@ -237,8 +247,8 @@ class TaskPipeline:
             source_id=source_id,
             source_message_id=event.message_id,
             trace_id=event.trace_id,
-            provider=None,
-            model=None,
+            provider=provider,
+            model=model,
             status=status,
             confidence=confidence,
             raw_result=raw_result,
