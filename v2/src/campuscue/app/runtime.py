@@ -110,12 +110,22 @@ class CampusRuntime:
         reminder_service: ReminderService | None = None
         reminder_scheduler: ReminderScheduler | None = None
         if self.config.reminders.enabled:
+            from campuscue.tasks.reminder_policy import ReminderPolicy
+
             reminder_scheduler = ReminderScheduler(fire_callback=self._fire_reminder)
+            # M3.1-A: canonical ReminderPolicy built from RuntimeConfig.reminders
+            # (timezone/min_lead_seconds/quiet hours are runtime-consumed, not
+            # just declared). No duplicate policy configuration elsewhere.
             reminder_service = ReminderService(
                 reminder_repo,
                 task_repo,
                 scheduler=reminder_scheduler,
-                timezone=tz,
+                timezone=ZoneInfo(self.config.reminders.timezone),
+                policy=ReminderPolicy(
+                    min_lead_seconds=self.config.reminders.min_lead_seconds,
+                    quiet_start_hour=self.config.reminders.quiet_start_hour,
+                    quiet_end_hour=self.config.reminders.quiet_end_hour,
+                ),
             )
             reminder_service.set_delivery(NoopDelivery())
             self._reminder_service = reminder_service

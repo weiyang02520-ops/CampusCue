@@ -15,14 +15,14 @@
 ## current_milestone
 
 - M0-M2 全部 **FINAL PASS**（含 M2b.2 REAL ENV；M2 FINAL PASS @ 23083cb）
-- **M3 Reminder = IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_REVIEW**（schema v1→v2 + ReminderService + APScheduler 3.11 + TaskService 联动 + 本地真实调度器验收 PASS）
+- **M3 = HARDENING_COMPLETE AWAITING_EXTERNAL_REVIEW**（M3 实现 + M3.1 修复轮：config 接线/post-deadline 禁/resync 真重建/迁移验证/约束对齐/默认投递）
 - **M3 FINAL = NOT YET DECLARED**（等外部）；**M4+ = NOT_AUTHORIZED**
-- status：**AWAITING_EXTERNAL_M3_REVIEW**
+- status：**AWAITING_EXTERNAL_M3_FINAL_REVIEW**
 
 ## completed
 
 - M0 / M0.1 / M0.2（PASS）；M1 / M1.1 / M1.2 / M1.3（PASS）；M2a / M2a.1 / M2a.2 / M2b.1 / M2b.1.1 / M2b.1.2（PASS）；M2b.2（REAL ENV PASS）
-- **M3 Reminder（本轮）**：DB reminder facts（canonical）+ ReminderService（plan/cancel/resync/fire 幂等）+ APScheduler 3.11（derived jobs，确定性 job_id）+ TaskService 生命周期联动（create/deadline/complete/dismiss/delete）+ schema v1→v2 迁移（零变更拒绝）+ 本地真实调度器验收（任务→3 facts/3 jobs；重启重建无重复；deadline 变更；complete 全取消 0 投递）
+- **M3 Reminder（M3 + M3.1）**：DB reminder facts（canonical）+ ReminderService（幂等 plan/cancel/resync/fire）+ APScheduler 3.11（确定性 job_id）+ TaskService 联动 + schema v1→v2 迁移 + 本地真实调度器验收；**M3.1 硬化**：ReminderPolicy runtime 接线、quiet-hours 不超 deadline、resync 先 clear 真重建、迁移前 schema 验证 + CHECK 约束对齐、默认 NoopDelivery
 
 ## in_progress
 
@@ -34,7 +34,7 @@
 
 ## verified（Workspace Agent 报告；外部审核待复核）
 
-- **344 tests passed**（+28 M3）；package isolation PASS（fresh venv `.venv-m2iso` + apscheduler 3.11.3）；Anti-AstrBot PASS
+- **354 tests passed**（+28 M3 + 10 M3.1）；package isolation PASS（fresh venv `.venv-m2iso` + apscheduler 3.11.3）；Anti-AstrBot PASS
 - **LOCAL REAL SCHEDULER VERIFIED（M3，2026-08-12）**：真实 APScheduler 3.11（非 mock）——facts/jobs 一致性、重启 resync、deadline 变更、complete 取消、无投递
 - REAL ENV（M2b.2，2026-08-10）保留；M3 无 QQ 验收（不需要）
 - 外部审核状态：**awaiting**（M0-M2 PASS；M3 待复核）

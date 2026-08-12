@@ -185,3 +185,13 @@
 - **测试**：新增 28 → **344 passed**；本地真实调度器验收 PASS（facts/jobs 一致性、重启 resync、deadline 变更、complete 取消、0 投递）；package isolation PASS（apscheduler 3.11.3）；Anti-AstrBot PASS
 - **REAL ENV**：M3 无 QQ/NapCat（LOCAL REAL SCHEDULER）；M2b.2 REAL ENV 保留
 - **审核状态**：M3 = IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED
+
+
+## 2026-08-12 · M3.1 REMINDER HARDENING
+
+- **任务**：外部 M3 复核 PASS_WITH_FIXES 的 6 项硬化修复（A-F）
+- **Commit**：fix: harden M3 reminder invariants（本轮）
+- **主要修改**：runtime ReminderPolicy 接线（config 真消费，去重复真值）；quiet-hours 不超 deadline 硬不变量（clamp/discard）；resync_all 先 clear_all 真重建；v1 迁移前 schema 验证（表/列/单行版本，零变更拒绝）+ 迁移 SQL CHECK 约束与 fresh 对齐；ReminderService 默认 NoopDelivery
+- **测试**：新增 10 → **354 passed**；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无 QQ（M3 本地调度器）；M2b.2 REAL ENV 保留
+- **审核状态**：M3 = HARDENING_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED

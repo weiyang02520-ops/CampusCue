@@ -23,7 +23,7 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV）；M3 Reminder = IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED** |
+| 当前门 | **M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV）；M3 = HARDENING_COMPLETE（M3.1 修复轮）AWAITING_EXTERNAL_REVIEW；M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**（ADR-011）包含：M1 独立 QQ runtime、M2 storage/provider foundation、M2 AI-first task extraction pipeline、M3 reminder lifecycle（schema v2）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结。最新 Workspace Agent checkpoint 证据：344 tests（2026-08-12）——测试数是 checkpoint 证据，不是代码身份 |
@@ -33,7 +33,7 @@
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M0/M1/M2a/M2b.1/M2b.2 全部 PASS（M2 FINAL PASS @ 23083cb）。**M3 Reminder = AUTHORIZED → IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**（本地真实调度器验收 PASS，无 QQ 验收——M3 不需要）。
+- **当前状态**：M0/M1/M2a/M2b.1/M2b.2 全部 PASS（M2 FINAL PASS @ 23083cb）。**M3 = HARDENING_COMPLETE（M3.1 外部修复轮：config 接线/post-deadline 禁/resync 真重建/迁移验证/约束对齐/默认投递）AWAITING_EXTERNAL_REVIEW**。
 - **M4+ = NOT_AUTHORIZED**（等 M3 外部最终复核）。
 - 下一个待执行：**外部 ChatGPT M3 源码复核**（不开始 M4）。
 
@@ -169,7 +169,7 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：**M0-M2 全部 FINAL PASS；M3 Reminder = IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_REVIEW**（schema v1→v2 迁移 + Reminder 域 + ReminderService + APScheduler 3.11 集成 + TaskService 联动 + 本地真实调度器验收 PASS；344 tests 全绿 + fresh venv + Anti-AstrBot）。**M3 FINAL = NOT YET DECLARED；M4+ NOT_AUTHORIZED**。
+- **当前状态**：**M0-M2 全部 FINAL PASS；M3 = HARDENING_COMPLETE AWAITING_EXTERNAL_REVIEW**（M3 实现 + M3.1 修复轮：ReminderPolicy 从 RuntimeConfig 接线/quiet-hours 不超 deadline/resync 先 clear 真重建/v1 迁移前验证 + CHECK 约束对齐/默认 NoopDelivery；354 tests 全绿 + fresh venv + Anti-AstrBot）。**M3 FINAL = NOT YET DECLARED；M4+ NOT_AUTHORIZED**。
 - **下一步**：外部 ChatGPT M3 源码复核 → M3 FINAL PASS → M4 授权。**未授权禁止启动 M4**。
 - **M3 关键事实**：DB reminder facts canonical / scheduler jobs derived（resync_all 重建）；确定性 job_id `reminder:<id>`；APScheduler 3.11 实测：replace_existing 会追加→用显式 remove-then-add；shutdown 未启动调度器抛 SchedulerNotRunningError→容错；misfire_grace_time 必须 >0；quiet-hours 23-08 折叠 + 同分钟去重 + MIN_LEAD_SECONDS=60；停机错过不补发。
 - **REAL ENV 关键事实**：NapCat Framework 启动建议 **stdout/stderr 重定向**（2026-08-10 本机实测前台启动触发 EPIPE，重定向后成功——本地观察，非普适规则）；`napimain.exe <QQ> <dll> <cjs>` 注入；WS client 配置在账号专用 `onebot11_<id>.json`；**用户大号受保护不可动**；测试 bot 独立小号。

@@ -609,7 +609,15 @@ class TestClockTimezone:
         assert t.trigger_at == d.astimezone(timezone.utc)
 
     def test_policy_dst_boundary(self):
-        """V2: DST-observing timezone (America/New_York) arithmetic is sane."""
+        """V2: DST-observing timezone (America/New_York) arithmetic is sane.
+
+        M3.1-B: deadline 00:00 NY sits INSIDE quiet hours (23-08); folding the
+        deadline intent would exceed the deadline -> intent discarded (never a
+        post-deadline reminder). day_before (00:00) folds to 08:00 same day —
+        still before the 00:00 deadline? no — 08:00 > 00:00 of the same day,
+        so it folds FORWARD past the deadline and is discarded too; hours_before
+        (22:00 Mar 9) is outside quiet -> kept. Result: 1 intent, all <= deadline.
+        """
         from campuscue.storage.models import Task
         from campuscue.tasks.reminder_policy import plan_desired_reminders
 
@@ -625,8 +633,12 @@ class TestClockTimezone:
             created_at=now_utc, updated_at=now_utc,
         )
         r = plan_desired_reminders(task=task, now=now_utc, tz=ny)
-        assert len(r) == 3
-        assert all(x.trigger_at_utc.tzinfo is not None for x in r)
+        # hard invariant (M3.1-B): never after deadline
+        assert all(x.trigger_at_utc <= local_deadline.astimezone(timezone.utc) for x in r)
+        # day_before folds from 00:00 to 08:00 same day (still before deadline);
+        # hours_before 22:00 stays; deadline intent folds past deadline -> discarded
+        assert len(r) == 2
+        assert {x.type for x in r} == {"day_before", "hours_before"}
 
 
 # ------------------------------------------------------------------ X: TaskService gate

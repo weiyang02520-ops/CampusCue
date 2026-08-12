@@ -9,6 +9,11 @@
 - quiet hours folding: 23:00 -> 08:00 local (configurable); a trigger landing
   inside quiet hours folds FORWARD to 08:00 same day (or next day when the
   fold would itself be past); calculation in supplied timezone, persisted UTC
+- HARD INVARIANT (M3.1-B): a reminder is NEVER scheduled after task.deadline.
+  If forward folding would exceed the deadline, the trigger clamps to the last
+  allowed pre-deadline quiet boundary (quiet_end-1s of the same local day) when
+  that is still before the deadline, otherwise that intent is DISCARDED. No
+  post-deadline notification is ever emitted to satisfy quiet hours.
 - same-minute dedup: if two intents collapse onto the same final minute, keep
   ONE (deterministic precedence: day_before > hours_before > deadline)
 - task with deadline=None -> no reminders
@@ -108,19 +113,37 @@ def plan_desired_reminders(
         ),
     ]
 
-    # 1) quiet-hours folding (local computation, persisted UTC)
+    # 1) quiet-hours folding (local computation, persisted UTC). HARD INVARIANT
+    # (M3.1-B): folding must NEVER move a reminder AFTER task.deadline — no
+    # notifying after the deadline merely to satisfy quiet hours. When forward
+    # folding would exceed the deadline, use a deterministic allowed time
+    # BEFORE the deadline (the last quiet-allowed second at quiet_end - 1s of
+    # the same local day when still before deadline, else the deadline minute
+    # itself is kept only if within quiet hours; otherwise discard).
     folded: list[DesiredReminder] = []
     for c in candidates:
         local_t = c.trigger_at_utc.astimezone(tz)
         folded_local = _fold_quiet_hours(local_t, policy)
-        folded.append(
-            DesiredReminder(type=c.type, trigger_at_utc=folded_local.astimezone(timezone.utc))
-        )
+        if folded_local > local_deadline:
+            # fold would exceed deadline -> clamp deterministically:
+            # last allowed pre-deadline quiet boundary (quiet_end-1s of the
+            # same local day) when that is still before deadline; else discard
+            clamped = local_t.replace(
+                hour=policy.quiet_end_hour - 1, minute=59, second=59, microsecond=0
+            )
+            folded_local = clamped if clamped < local_deadline else None
+        if folded_local is not None:
+            folded.append(
+                DesiredReminder(type=c.type, trigger_at_utc=folded_local.astimezone(timezone.utc))
+            )
 
     # 2) discard: < MIN_LEAD_SECONDS from now, or already past (no backfill)
     lead = timedelta(seconds=policy.min_lead_seconds)
     kept: list[DesiredReminder] = []
     for c in folded:
+        # defensive hard invariant (M3.1-B): never after the deadline
+        if c.trigger_at_utc > task.deadline:
+            continue
         if c.trigger_at_utc < now:
             continue  # past: no backfill
         if c.trigger_at_utc - now < lead:

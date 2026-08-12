@@ -324,3 +324,11 @@ User
 - **[DESIGN_DECISION][M3]**：Reminder 业务时间用注入 Clock + timezone（无隐藏墙钟）；trigger_at 存 aware UTC。
 - **[REAL_ENV_LOCAL][M3]**：本地真实调度器验收 PASS（APScheduler 3.11 真实验证）：任务→3 facts/3 jobs；重启 resync 重建无重复；deadline 变更旧计划取消新计划就位；complete 后全取消 0 jobs 0 投递。
 - **[REPO_CONFIRMED][M3]**：344 tests 全绿（+28 M3）；APScheduler 3.11 实测行为：memory jobstore 的 replace_existing 会**追加**而非替换 → 显式 remove-then-add；shutdown 未启动调度器抛 SchedulerNotRunningError → 容错。misfire_grace_time 必须 >0（3.11 拒绝 0）。
+
+## 9P. MEMORY DELTA（M3.1 Reminder Hardening）
+
+- **[EXTERNAL_REVIEW][M3_FINDING]**：**配置存在 ≠ runtime 已接线**。Reminder 配置必须通过真实 composition root 测试（ReminderPolicy 从 RuntimeConfig.reminders 构造：timezone/min_lead/quiet hours 被运行时消费）；移除重复配置真值（tasks.reminders_enabled 删除，唯一真值在 ReminderConfig）。
+- **[EXTERNAL_REVIEW][M3_FINDING]**：**quiet-hour 变换必须保留业务不变量：提醒绝不可排在任务 deadline 之后**。前向折叠超过 deadline → clamp 到 quiet_end-1s 同日（仍 < deadline）或丢弃该 intent（23:59 deadline / 凌晨 deadline 测试覆盖）。
+- **[EXTERNAL_REVIEW][M3_FINDING]**：**真 resync 用 DB facts 替换派生 scheduler 状态**，不得假定 scheduler 已空——resync_all 先 clear_all 再重建（同进程 stale job 清理测试）。
+- **[EXTERNAL_REVIEW][M3_FINDING]**：**schema 迁移必须产生与 fresh bootstrap 相同的域约束**（迁移 SQL 含 reminders CHECK 约束：type/status 闭集），且迁移前必须验证源 schema（表/关键列/schema_meta 恰一行）——malformed/任意 SQLite 带 schema_meta=1 → SchemaRefusedError 零变更。
+- **[REPO_CONFIRMED]**：M3.1 落地（354 tests 全绿 + fresh venv + Anti-AstrBot）：ReminderService delivery 默认 NoopDelivery（直接构造 fire 不失败）；DST 测试更新反映 post-deadline 不变量。

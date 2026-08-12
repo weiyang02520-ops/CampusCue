@@ -2,46 +2,41 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY / Git history。
 
-## 当前（M3 Reminder）
+## 当前（M3.1 Reminder Hardening）
 
-- **本轮**：M3 Reminder 里程碑——DB reminder facts + ReminderService + APScheduler 3.11 集成 + TaskService 生命周期联动 + schema v1→v2 迁移 + 本地真实调度器验收
-- **状态**：M3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED**
-- **Gate**：M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV @ 23083cb 授权）
+- **本轮**：外部 ChatGPT 对 M3 复核 = PASS_WITH_FIXES（6 项 finding A-F），执行硬化修复轮
+- **状态**：M3 = HARDENING_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M3 FINAL = NOT YET DECLARED；M4 = NOT_AUTHORIZED**
 
-## 本轮完成（M3）
+## 本轮完成（M3.1）
 
-1. **schema v1→v2 迁移**：`SCHEMA_VERSION=2`；`_precheck` 读版本（零变更）→ v1 DB owned migration（建 reminders 表 + version bump，保留全部旧数据）→ v2 幂等重开；v0/更新/未知 → SchemaRefusedError 零变更
-2. **Reminder 域**：`ReminderType`（day_before/hours_before/deadline）+ `ReminderStatus`（scheduled/fired/cancelled）闭集枚举；Reminder ORM（task_id FK、trigger_at aware UTC、job_id 派生标注）；DB CHECK + repository 双层闭集
-3. **ReminderRepository**：create/get/list_for_task/list_scheduled/cancel_for_task/delete_for_task（FK-safe）/mark_fired/mark_cancelled——纯持久化
-4. **reminder_policy.py（纯函数）**：三档（-1d/-2h/deadline）、MIN_LEAD_SECONDS=60 丢弃、quiet-hours 23-08 前向折叠、同分钟去重（优先级 day_before>hours_before>deadline）、deadline=None/非 pending → 零提醒
-5. **ReminderService**：plan_reminders（**幂等**：cancel 旧 → 算 desired → persist facts → scheduler 重建）/cancel_for_task/resync_all（**跳过过期 trigger 不补发**、跳过 done/dismissed/deleted task）/fire（**重读最新状态**，非 pending 即 cancel 不投递）；delivery 注入边界（NoopDelivery 默认，M3 不宣称端用户 UX）
-6. **ReminderScheduler（APScheduler 3.11 隔离）**：确定性 job_id `reminder:<id>`；**实测 3.11 replace_existing 会追加 → 显式 remove-then-add**；shutdown 容错 SchedulerNotRunningError；misfire_grace_time=1（3.11 拒绝 0）；startup 前可 add_job（resync → start 模式）
-7. **TaskService 联动（ADR-006）**：create（pending+deadline → plan）/change_deadline（旧计划取消+新计划）/complete/dismiss（cancel）/delete（FK-safe hard-delete 先行）；**reminder_service 可选注入——禁用时 M2 行为不变**
-8. **runtime 接线**：CAMPUSCUE_REMINDERS=1 启用；启动顺序 DB→repos→services→resync→scheduler.start；关闭 scheduler.shutdown(wait) 先于 DB dispose；失败路径逆序清理
-9. **config**：ReminderConfig（enabled/min_lead/quiet_start/quiet_end，fail-fast 校验）
-10. **pyproject**：+`apscheduler>=3.10,<4`
+1. **[A] Reminder runtime config 接线**：`CampusRuntime` 从 `RuntimeConfig.reminders` 构造 `ReminderPolicy`（timezone/min_lead_seconds/quiet_start/quiet_end 真实被消费，不再用 tasks.timezone + 默认 policy）；删除 `TaskPipelineConfig.reminders_enabled` 重复真值（唯一真值在 ReminderConfig）；测试通过真实 `load_config` 验证 runtime-consumed policy
+2. **[B] quiet-hours 绝不超过 deadline**：硬不变量 `trigger_at_utc <= task.deadline`——前向折叠超过 deadline → clamp 到 quiet_end-1s 同日（仍 < deadline）或丢弃该 intent；防御性第二道检查在 discard 阶段；测试：23:59 deadline（无 post-deadline）、凌晨 deadline（quiet 内）、fold-clamp 场景、DST（NY）场景更新
+3. **[C] resync 真重建**：`resync_all` 先 `scheduler.clear_all()` 再加载 facts 重建——同进程 stale job 不可能存活；测试：注入 stale job `reminder:9999` + task done → resync 后 stale 消失、仅 canonical jobs 保留
+4. **[D] v1 迁移前 schema 验证**：`_validate_v1_schema`——必需表齐全 + schema_meta **恰一行** + 各表关键列存在；malformed/任意 SQLite 带 schema_meta=1 → SchemaRefusedError 零变更；测试：malformed tasks 表拒绝（字节不变）、多行 schema_meta 拒绝（零变更）
+5. **[E] 迁移约束对齐**：迁移 SQL 的 reminders 表加 CHECK（type/status 闭集）与 fresh ORM v2 完全一致；测试：v1→v2 后直接非法 INSERT（invalid type/status）被 SQLite 拒绝
+6. **[F] 默认投递安全**：`ReminderService.__init__` 默认 `_delivery = NoopDelivery()`（直接构造 + fire 永不失败）；测试：不调 set_delivery 直接 fire → 成功 fired
 
 ## 测试
 
-- **344 passed**（+28 M3：schema 迁移 3/策略 8/service 10/resync 3/scheduler real 3/clock-timezone 2/gate 1）；Anti-AstrBot PASS；package isolation PASS（`.venv-m2iso` + apscheduler 3.11.3）
-- **本地真实调度器验收 PASS**（真实 APScheduler，无 QQ）：任务→3 facts/3 jobs → 重启 resync 重建无重复 → deadline 变更旧计划取消新计划 → complete 全取消 0 jobs 0 投递
+- **354 passed**（+10 M3.1）；Anti-AstrBot PASS；package isolation PASS（`.venv-m2iso`，354）
+- 无 QQ/NapCat（M3 不需要）
 
-## AGENT_DISCOVERED_DELTA（M3）
+## AGENT_DISCOVERED_DELTA（M3.1）
 
-- [REPO_CONFIRMED] APScheduler 3.11 实测行为：memory jobstore replace_existing **追加**而非替换（→ 显式 remove-then-add）；shutdown 未启动调度器抛 SchedulerNotRunningError（→ 容错）；misfire_grace_time=0 被拒（→ 用 1）；AsyncIOScheduler 用真实墙钟（测试需真实 near-future deadline）
-- [DESIGN_DECISION] schema v1→v2 owned migration（不引入 Alembic）；旧 M2a 测试"unsupported older version"措辞更新（v0 仍拒，v1 现合法迁移）
-- 完整 Memory Delta 见 CHATGPT_MEMORY §9O
+- [DESIGN_CHANGE]：DST 测试语义更新——deadline 落在 quiet hours 时 deadline intent 被 post-deadline 不变量丢弃（行为变更，非 bug）
+- [REPO_CONFIRMED]：schema_meta.schema_version 有 UNIQUE 约束，"多行冲突"测试需用不同 version 值构造
+- Memory Delta 见 CHATGPT_MEMORY §9P（4 条 M3_FINDING）
 
 ## REAL ENV
 
-- M3 为 **LOCAL REAL SCHEDULER**（temp SQLite + 真实 APScheduler + FixedClock）；**无 QQ/NapCat 验收**（M3 不需要）
-- 用户大号/QQ/NapCat 全程未触碰
+- M3/M3.1 为 LOCAL REAL SCHEDULER（无 QQ）；M2b.2 REAL ENV 保留；用户 QQ/NapCat 未触碰
 
 ## 下一步
 
-- 外部 ChatGPT M3 源码复核（schema 迁移/DB fact vs scheduler derived/TaskService 集成/幂等/resync/missed reminder/Clock/timezone/runtime 生命周期/M2 回归/privacy）→ PASS 后 M4 授权
+- 外部 ChatGPT M3（含 M3.1）复核 → M3 FINAL PASS → M4 授权
 
 ## 本轮修改文件
 
-- 新增：src/campuscue/tasks/reminder_policy.py、src/campuscue/services/reminder_service.py、src/campuscue/services/reminder_scheduler.py、tests/integration/test_m3_reminders.py
-- 修改：storage/{enums,models,database}.py（schema v2 + Reminder）、repositories/repositories.py（ReminderRepository + Task 变更原语）、services/task_service.py（生命周期联动）、app/runtime.py（接线）、config.py（ReminderConfig）、pyproject.toml（apscheduler）、tests/unit/test_m2a1_fixes.py（旧措辞）、Memory/handoff/README
+- 修改：app/runtime.py（policy 接线）、config.py（去 reminders_enabled）、tasks/reminder_policy.py（post-deadline 不变量 + clamp）、services/reminder_service.py（resync clear_all + 默认 NoopDelivery）、storage/database.py（_validate_v1_schema + 迁移 CHECK）
+- 新增：tests/integration/test_m31_hardening.py（10 tests）
+- 修改：tests/integration/test_m3_reminders.py（DST 语义更新）、Memory/handoff

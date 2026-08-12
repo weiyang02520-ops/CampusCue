@@ -33,9 +33,10 @@ class TaskPipelineConfig:
     database_path_explicit: bool = False  # CAMPUSCUE_DB_PATH was actually supplied
     timezone: str = "Asia/Shanghai"
     confidence_threshold: float = 0.6
-    reminders_enabled: bool = False  # CAMPUSCUE_REMINDERS=1 (M3 opt-in)
     # NOTE: no prefilter threshold — LocalSignalAnalyzer score is NOT a gate
     # (ADR-013 AI-first: local signals are hints, never a semantic veto)
+    # NOTE: reminder enablement/knobs live in ReminderConfig only (M3.1-A:
+    # one configuration truth — no duplicate reminders_enabled here).
 
 
 @dataclass(frozen=True)

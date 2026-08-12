@@ -105,6 +105,9 @@ class ReminderService:
         self._clock = clock or SystemClock()
         self._tz = timezone or ZoneInfo("Asia/Shanghai")
         self._policy = policy or DEFAULT_POLICY
+        # M3.1-F: safe by default — direct construction + fire() must never
+        # fail because _delivery is unset. NoopDelivery = no end-user UX claim.
+        self._delivery: object = NoopDelivery()
 
     # ---------------------------------------------------------------- planning
 
@@ -156,16 +159,20 @@ class ReminderService:
         return await self._reminders.delete_for_task(task_id)
 
     async def resync_all(self) -> int:
-        """REBUILD derived scheduler state from canonical DB facts.
+        """TRUE REBUILD (M3.1-C): derived scheduler state is fully replaced
+        from canonical DB facts — never assumed already empty.
 
-        - scheduler memory starts empty after restart
+        - CLEAR all derived scheduler jobs first (stale same-process state
+          cannot survive)
         - reads all SCHEDULED reminder facts
         - skips facts whose trigger is already in the past (missed while down:
           MUST NOT fire/backfill; close them as cancelled with a safe error note)
         - skips facts whose task is no longer active (done/dismissed/deleted)
         - (re)installs deterministic jobs for the survivors
+        - after resync, scheduler state == canonical valid DB-derived state
         - returns number of jobs installed (for tests/audit)
         """
+        await self._scheduler.clear_all()  # true rebuild: drop ALL derived state
         scheduled = await self._reminders.list_scheduled()
         now = self._clock.utcnow()
         installed = 0
@@ -218,10 +225,9 @@ class ReminderService:
         return True
 
     async def _deliver(self, reminder: Reminder, task: Task) -> None:
-        """Injected delivery sink. M3 ships a NoopDelivery (no end-user UX
-        claim); real QQ/desktop delivery is a later milestone."""
-        if self._delivery is not None:
-            await self._delivery.deliver(reminder=reminder, task=task)
+        """Injected delivery sink (NoopDelivery by default — M3 does not claim
+        end-user UX). Real QQ/desktop delivery is a later milestone."""
+        await self._delivery.deliver(reminder=reminder, task=task)
 
     def set_delivery(self, delivery) -> None:
         self._delivery = delivery

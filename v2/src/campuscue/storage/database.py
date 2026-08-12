@@ -131,6 +131,53 @@ class Database:
         finally:
             conn.close()
 
+    @staticmethod
+    def _validate_v1_schema(conn: sqlite3.Connection, tables: set[str]) -> None:
+        """M3.1-D: prove a schema_meta=1 database is a VALID CampusCue v1
+        schema BEFORE mutation. Distinguishes VALID V1 from MALFORMED/ARBITRARY
+        SQLite that merely carries schema_meta=1.
+
+        - required application tables present
+        - schema_meta has EXACTLY ONE coherent version row
+        - required critical columns exist on each application table
+        If malformed -> SchemaRefusedError, ZERO MUTATION (nothing written yet).
+        """
+        required_tables = {
+            "sources",
+            "tasks",
+            "extractions",
+            "provider_configs",
+            "schema_meta",
+        }
+        missing_tables = required_tables - tables
+        if missing_tables:
+            raise SchemaRefusedError(
+                "refusing to migrate: malformed v1 database missing table(s) "
+                f"{sorted(missing_tables)} (schema_meta=1 is insufficient proof)"
+            )
+        # schema_meta exactly one coherent row
+        rows = conn.execute("SELECT schema_version FROM schema_meta").fetchall()
+        if len(rows) != 1:
+            raise SchemaRefusedError(
+                f"refusing to migrate: schema_meta has {len(rows)} version row(s); "
+                "exactly one coherent version required"
+            )
+        # required critical columns per application table
+        required_columns = {
+            "sources": {"id", "platform", "conversation_id", "enabled", "auto_extract"},
+            "tasks": {"id", "title", "category", "status", "priority", "deadline"},
+            "extractions": {"id", "source_message_id", "trace_id", "status"},
+            "provider_configs": {"id", "name", "provider_type", "base_url", "model", "enabled"},
+        }
+        for table, cols in required_columns.items():
+            actual = {r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+            missing_cols = cols - actual
+            if missing_cols:
+                raise SchemaRefusedError(
+                    f"refusing to migrate: table {table!r} missing required column(s) "
+                    f"{sorted(missing_cols)} (malformed v1 schema)"
+                )
+
     def _migrate_v1_to_v2(self) -> None:
         """Owned migration v1 -> v2 (M3): add reminders table, bump version.
 
@@ -142,7 +189,8 @@ class Database:
         conn = sqlite3.connect(path)
         try:
             cur = conn.cursor()
-            # create reminders table with the same shape as the ORM model (v2)
+            # create reminders table with the same shape AND DB-level closed-set
+            # CHECK constraints as the fresh ORM-created v2 table (M3.1-E parity)
             cur.executescript(
                 """
                 CREATE TABLE reminders (
@@ -155,7 +203,9 @@ class Database:
                     error TEXT,
                     job_id VARCHAR(64),
                     created_at DATETIME NOT NULL,
-                    updated_at DATETIME NOT NULL
+                    updated_at DATETIME NOT NULL,
+                    CHECK (type IN ('day_before','hours_before','deadline')),
+                    CHECK (status IN ('scheduled','fired','cancelled'))
                 );
                 CREATE INDEX ix_reminder_task_id ON reminders (task_id);
                 CREATE INDEX ix_reminder_status_trigger ON reminders (status, trigger_at);
@@ -172,9 +222,15 @@ class Database:
     async def initialize(self) -> None:
         """Precheck (zero mutation) -> owned migration if v1 -> engine -> pragmas ->
         create_all -> ensure version row. Reopen of a supported DB is idempotent."""
-        version, _tables = self._precheck()
+        version, tables = self._precheck()
         if version == _V1_SUPPORTED:
-            # owned v1 -> v2 migration (M3): BEFORE opening the ORM engine
+            # owned v1 -> v2 migration (M3): validate source schema FIRST
+            # (zero mutation until proven valid), then migrate
+            conn = sqlite3.connect(str(self._config.path))
+            try:
+                self._validate_v1_schema(conn, tables)
+            finally:
+                conn.close()
             self._migrate_v1_to_v2()
         url = self._url()
         self._engine = create_async_engine(url, connect_args={"timeout": self._config.busy_timeout_ms / 1000})
