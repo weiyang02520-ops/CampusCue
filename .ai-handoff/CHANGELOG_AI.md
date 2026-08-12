@@ -164,3 +164,15 @@
 - **REAL ENV**：**VERIFIED**——真实群消息 → Task（deadline `2026-08-14 15:59 UTC` 精确）；structured_mode=json_fallback（DeepSeek）；普通聊天 skipped 无泄漏；语义重复不创建第二 Task；重启 DB 持久化 + NapCat 自动重连；M1 hello 共存（retcode 0）
 - **测试**：316 passed 保持；package isolation PASS；Anti-AstrBot PASS
 - **审核状态**：M2b.2 = REAL_ENV_ACCEPTANCE_COMPLETE AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 FINAL = NOT PASS；M3 NOT_AUTHORIZED
+
+## 2026-08-10 · M2 FINAL CONTINUITY CLEANUP
+
+- **任务**：外部 M2b.2 技术审核 PASS 后的纯文档连续性修复（M2 FINAL 暂 CHANGES_REQUESTED 因 stale 状态）
+- **Commit**：docs: finalize M2 continuity state（本轮）
+- **主要修改**：
+  - AGENT_MEMORY：Section 2/3/18 语义扫描修复（M2b.1 PASS / M2b.2 REAL_ENV PASS / M2 TECHNICALLY_COMPLETE / M3 NOT_AUTHORIZED）；代码状态表中性化
+  - README：能力现状 Implemented/Not-yet 双区、架构双路径（Echo + TaskPipeline）、依赖以 pyproject 为准、NapCat EPIPE 本机观察措辞
+  - pyproject：仅 description milestone-neutral（version/deps/packages/build 未动）
+  - CHATGPT_MEMORY §9N：CONTINUITY_CORRECTION / DOCUMENTATION_RULE ×2
+- **测试**：**未重跑**（零生产源码修改）；316 passed 为 M2b.2 历史证据
+- **审核状态**：M2 = AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW；M2 FINAL = NOT YET DECLARED；M3 NOT_AUTHORIZED

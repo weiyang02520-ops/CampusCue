@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "campuscue-v2"
 version = "0.1.0"
-description = "CampusCue V2 - independent campus affairs agent runtime (M1: QQ runtime)"
+description = "CampusCue V2 - independent campus affairs AI agent platform"
 requires-python = ">=3.12"
 dependencies = [
     "websockets>=12,<17",

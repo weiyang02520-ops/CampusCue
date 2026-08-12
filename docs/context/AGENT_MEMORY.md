@@ -23,18 +23,19 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS；M2b.1 = PASS（最终）；M2b.2 = REAL_ENV_ACCEPTANCE_COMPLETE AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 FINAL = NOT PASS（等外部）** |
+| 当前门 | **M0 = PASS；M1 = PASS；M2a = PASS；M2b.1 = PASS（最终）；M2b.2 = REAL_ENV PASS；M2 = TECHNICALLY_COMPLETE AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW；M2 FINAL = NOT YET DECLARED（等外部）；M3 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
-| 代码 | **v2/ 独立 root 已有 M1 实现**（src/campuscue + 87 tests）；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结 |
+| 代码 | **v2/ 独立 implementation root**（ADR-011）包含：M1 独立 QQ runtime、M2 storage/provider foundation、M2 AI-first task extraction pipeline；Legacy `campuscue/`/`astrbot/`/`dashboard/` 冻结。最新 Workspace Agent checkpoint 证据：316 tests（2026-08-10）——测试数是 checkpoint 证据，不是代码身份 |
 | REAL ENV | 已验证（M1.2 + M2b.2）：NapCat Framework + 真实 QQ；hello Echo + 真实任务抽取全链路 |
 
 ## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-10）
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M0/M1/M2a 全部 PASS。**M2b.1 = FINAL_IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_FINAL_REVIEW**；**M2b.2 NOT_AUTHORIZED**（等 M2b.1 外部最终确认）。
-- 下一个待执行：**M2b.2（真实 Provider + 真实 NapCat/QQ 验收）**——等 M2b.1 外部最终审核确认后才开始。
+- **当前状态**：M0/M1/M2a 全部 PASS；**M2b.1 = PASS（最终）**；**M2b.2 = REAL_ENV PASS**（真实 QQ → NapCat → WS → AI-first pipeline → DeepSeek → SQLite 全链路验证）。**M2 = TECHNICALLY_COMPLETE AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW**。
+- **M3（Reminder）= NOT_AUTHORIZED**（等 M2 外部最终连续性复核 → M2 FINAL PASS → M3 授权）。
+- 下一个待执行：**外部 ChatGPT 最终连续性复核**（不开始 M3）。
 
 ## 4. ARCHITECTURE RULES（违反 = FAIL）
 
@@ -168,9 +169,9 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：**M2b.2 REAL ENV ACCEPTANCE COMPLETE**（真实 QQ → NapCat → WS → AI-first pipeline → DeepSeek → SQLite 全链路验证；测试 A-E 全 PASS；316 tests 全绿 + fresh venv + Anti-AstrBot）。**AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 FINAL = NOT PASS（等外部）**。
-- **M3（Reminder）**：等外部 M2 最终复核授权后才开始；**未授权禁止启动**。
-- **REAL ENV 关键事实**：NapCat Framework 启动需 **stdout/stderr 重定向**（否则 EPIPE）；`napimain.exe <QQ> <dll> <cjs>` 注入；WS client 配置在账号专用 `onebot11_<id>.json`；用户大号受保护不可动；测试 bot 独立小号。
+- **当前状态**：**M2 技术实现 + M2b.2 REAL ENV 验收完成**（真实 QQ → NapCat → WS → AI-first pipeline → DeepSeek → SQLite 全链路验证；测试 A-E 全 PASS；最新 checkpoint 316 tests 全绿 + fresh venv + Anti-AstrBot）。**M2 = TECHNICALLY_COMPLETE AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW；M2 FINAL = NOT YET DECLARED；M3 NOT_AUTHORIZED**。
+- **下一步**：外部 ChatGPT 最终连续性复核（文档/状态一致性）→ M2 FINAL PASS → M3 授权。**未授权禁止启动 M3**。
+- **REAL ENV 关键事实**：NapCat Framework 启动建议 **stdout/stderr 重定向**（2026-08-10 本机实测前台启动触发 EPIPE，重定向后成功——本地观察，非普适规则）；`napimain.exe <QQ> <dll> <cjs>` 注入；WS client 配置在账号专用 `onebot11_<id>.json`；**用户大号受保护不可动**；测试 bot 独立小号。
 - **运行 V2 必须用独立 venv**（`v2/.venv-m1-real` 真实环境 / `.venv-m2iso` 隔离验证）。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_TASK_PIPELINE。
 

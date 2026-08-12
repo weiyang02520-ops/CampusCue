@@ -305,3 +305,11 @@ User
 - **[REAL_ENV_CONFIRMED][DEDUP]**：重复真实任务消息 → `same_semantic_task` duplicate，Task 数保持 1。
 - **[REAL_ENV_CONFIRMED][M1_COMPAT]**：M2 pipeline 启用时 M1 hello Echo 继续工作（send_group_msg retcode 0）。
 - **[REAL_MODEL_VARIANCE]**：真实 DeepSeek 对同一任务的 course 提取存在 variance（一次 null 一次 高等数学——取决于消息原文是否含课程名）；确定性代码正确，不加模糊匹配。
+
+## 9N. MEMORY DELTA（M2 Final Continuity Cleanup）
+
+- **[EXTERNAL_REVIEW][M2_TECHNICAL_VERDICT]**：M2 实现与 M2b.2 REAL ENV 链路已通过外部技术审核。M2 FINAL 暂缓仅因连续性文档含 stale 状态（本轮已修复）。
+- **[EXTERNAL_REVIEW][CONTINUITY_CORRECTION]**：技术正确的 milestone 也可能在最终连续性门失败——当持久恢复文档含**相互矛盾的 active 状态**时。**AGENT_MEMORY 必须整文件语义扫描，不能只看顶部 CURRENT TRUTH 表**（Section 2 正确但 Section 3 残留旧门 = 复发模式）。
+- **[EXTERNAL_REVIEW][DOCUMENTATION_RULE]**：README 当前能力陈述必须跟踪已实现 milestone 状态——M2 实现后不得残留"当前能力仅 M1 / M2+ 未实现"。用 Implemented / Not-yet-implemented 显式区分。
+- **[EXTERNAL_REVIEW][DOCUMENTATION_RULE]**：不得手动声明与 pyproject.toml 矛盾的依赖集——**pyproject.toml 是 canonical 依赖源**。
+- **[REPO_CONFIRMED]**：M2 Final Continuity Cleanup 落地：AGENT_MEMORY/README/pyproject description 修复；生产源码零修改；测试未重跑（316 为历史证据）。

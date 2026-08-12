@@ -14,11 +14,10 @@
 
 ## current_milestone
 
-- M0 = **PASS**；M1 = **PASS**（含 REAL ENV）；M2a = **PASS**；**M2b.1 = PASS（最终）**
-- **M2b.2 = REAL_ENV_ACCEPTANCE_COMPLETE — AWAITING_EXTERNAL_M2_FINAL_REVIEW**
-- **M2 = AWAITING_EXTERNAL_FINAL_REVIEW；M2 FINAL = NOT PASS（等外部复核）**
-- M3+ = NOT_AUTHORIZED
-- status：**AWAITING_EXTERNAL_M2_FINAL_REVIEW**
+- M0 = **PASS**；M1 = **PASS**（含 REAL ENV）；M2a = **PASS**；**M2b.1 = PASS（最终）**；**M2b.2 = REAL_ENV PASS**
+- **M2 = AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW**（技术实现 + REAL ENV 已通过；仅剩连续性文档复核）
+- **M2 FINAL = NOT YET DECLARED**（等外部）；**M3 = NOT_AUTHORIZED**
+- status：**AWAITING_EXTERNAL_M2_FINAL_CONTINUITY_REVIEW**
 
 ## completed
 
@@ -26,21 +25,22 @@
 - M1 / M1.1 / M1.2 / M1.3（PASS）
 - M2a / M2a.1 / M2a.2（PASS）
 - M2b.1 / M2b.1.1 / M2b.1.2（PASS）
-- **M2b.2（REAL ENV ACCEPTANCE COMPLETE）**：真实 QQ 群消息 → NapCat（Framework）→ Reverse WS → AI-first pipeline → DeepSeek → SQLite 全链路；测试 A-E 全 PASS（hello 共存/明确任务 deadline 精确/普通聊天 skipped/语义重复/重启持久化 + 自动重连）
+- **M2b.2（REAL ENV PASS）**：真实 QQ 群消息 → NapCat → Reverse WS → AI-first pipeline → DeepSeek → SQLite 全链路；测试 A-E 全 PASS（hello 共存/明确任务 deadline 精确/普通聊天 skipped/语义重复/重启持久化 + 自动重连）
+- **M2 Final Continuity Cleanup（本轮）**：AGENT_MEMORY/README/pyproject 描述 stale 状态修复（纯文档）
 
 ## in_progress
 
-- 无（M2b.2 验收完成，checkpoint 后停止，等待外部 M2 最终复核）
+- 无（M2 技术完成；checkpoint 后停止，等待外部最终连续性复核）
 
 ## blocked
 
-- **M3+ 仅阻塞于 M2 外部最终复核**（无其他阻塞）
+- **M3 仅阻塞于 M2 外部最终连续性复核**（无其他阻塞）
 
 ## verified（Workspace Agent 报告；外部审核待复核）
 
-- **316 tests passed**；package isolation PASS（fresh venv `.venv-m2iso` + tzdata）；Anti-AstrBot PASS
 - **REAL ENV VERIFIED（M2b.2，2026-08-10）**：真实 QQ 群消息全链路；structured_mode=json_fallback（DeepSeek）；deadline `2026-08-14 15:59 UTC` 精确；duplicate 不创建第二 Task；重启 DB 持久化 + NapCat 自动重连
-- 外部审核状态：**awaiting**（M2a/M2b.1 PASS；M2b.2 REAL ENV 待最终复核）
+- 最新 Workspace Agent checkpoint：316 tests（2026-08-10，M2b.2 时）——本轮零源码修改未重跑
+- 外部审核状态：**awaiting**（M2a/M2b.1/M2b.2 技术 PASS；M2 最终连续性复核待通过）
 
 ## unverified / known unknowns
 
@@ -53,17 +53,15 @@
 
 ## next_gate
 
-- 外部 ChatGPT M2 最终复核（读取 GitHub HEAD + REAL ENV 证据）→ PASS 则 **M3（Reminder）授权**
+- 外部 ChatGPT M2 最终连续性复核 → PASS 则 **M2 FINAL PASS + M3（Reminder）授权**
 
-## external_review_focus（M2b.2 REAL ENV 复核点）
+## external_review_focus（M2 Final Continuity 复核点）
 
-1. REAL QQ 群消息完整链路（NapCat → WS → pipeline → DeepSeek → SQLite）
-2. structured_mode=json_fallback（DeepSeek 不支持 json_schema，回退共享 canonical 语义契约）
-3. deadline 精确 `2026-08-14 15:59 UTC`（TimeNormalizer）
-4. provider/model provenance（openai_compatible / deepseek-chat）
-5. 普通聊天 → skipped 无 Task 无输入泄漏（privacy）
-6. 语义重复 → 不创建第二 Task
-7. 重启 DB 持久化 + NapCat 自动重连
-8. M1 hello 共存
-9. 用户大号保护（未触碰；测试用独立小号 bot）
-10. 无 CampusCue source changes（纯验收轮）
+1. AGENT_MEMORY 全文件语义一致（无 stale 活动状态：M2b.1 PASS / M2b.2 PASS / M2 TECHNICALLY_COMPLETE / M3 NOT_AUTHORIZED）
+2. README 能力现状 = Implemented（M1+M2）/ Not yet（Reminder/Agent/API/WebUI）无矛盾
+3. README 架构双路径（Echo + TaskPipeline）
+4. README 依赖以 pyproject.toml 为准（不手动断言）
+5. pyproject description milestone-neutral
+6. NapCat EPIPE 措辞 = 本机观察非普适规则
+7. 用户大号保护事实保留（无真实 ID）
+8. 生产源码零修改

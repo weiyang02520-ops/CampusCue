@@ -1,26 +1,40 @@
-# CampusCue V2 — M1 Runtime
+# CampusCue V2 — M2 AI-first Task Extraction
 
 独立 QQ 运行闭环（NapCat / OneBot v11），**不依赖 AstrBot**。
 
-> 当前能力仅 M1（Echo）：真实 QQ 群/私聊发 `hello` → 回复 `received: hello`。
-> M2+ 功能（任务抽取/提醒/WebUI）尚未实现，不在此文档描述。
->
-> **开发者注（M2b.2）**：数据层 + Provider Foundation（M2a）+ Task Extraction Pipeline（M2b.1：L0-L7）已完成；**M2b.2 真实环境验收通过**（真实 QQ 群消息 → NapCat → Reverse WS → AI-first pipeline → 真实 Provider → SQLite Task）。
->
-> **启用方式**：`CAMPUSCUE_TASK_PIPELINE=1` + `CAMPUSCUE_DB_PATH=<验收 DB>` + `CAMPUSCUE_TIMEZONE=Asia/Shanghai`。真实 Provider 配置见 `scripts/m2_configure_provider.py`（secret 只存 env 变量名）；真实来源配置见 `scripts/m2_configure_source.py`（conversation ID 走 `CAMPUSCUE_SOURCE_CONVERSATION` 环境变量，不写 Git）。
+## 当前能力（Implemented）
+
+- **M1**：独立 QQ / NapCat / OneBot Reverse WS runtime（`hello` → `received: hello` Echo）
+- **M2**：数据层 + Provider foundation；AI-first 任务抽取（L0-L7 pipeline）；**真实 QQ → 真实 Provider → SQLite Task 全链路**（2026-08-10 真实验收通过）
+
+## 未实现（Not yet implemented）
+
+- M3 Reminder（提醒调度）
+- M4 Agent / Tool loop
+- M5 API / SSE / Realtime
+- M6 WebUI
+- 插件系统 / MCP / RAG
+
+> **M2 启用方式**：`CAMPUSCUE_TASK_PIPELINE=1` + `CAMPUSCUE_DB_PATH=<验收 DB>` + `CAMPUSCUE_TIMEZONE=Asia/Shanghai`。真实 Provider 配置见 `scripts/m2_configure_provider.py`（secret 只存 env 变量名）；真实来源配置见 `scripts/m2_configure_source.py`（conversation ID 走 `CAMPUSCUE_SOURCE_CONVERSATION` 环境变量，不写 Git）。
 >
 > **真实环境验证事实（2026-08-10，M2b.2）**：
 > - 真实群消息"高数第三章作业周五晚上12点前交学习通"→ Task（deadline 精确 `2026-08-14 15:59 UTC`）
 > - 真实 DeepSeek `deepseek-chat`：**structured_mode=json_fallback**（json_schema 不支持时 CampusCue 自动回退 JSON-only，共享同一语义契约）
 > - 普通聊天 → skipped Extraction 无 Task；重复任务 → 语义去重不创建第二 Task；重启 CampusCue 后 NapCat 自动重连、Task 持久化
-> - NapCat Framework 启动：**必须把 stdout/stderr 重定向到文件**（前台终端可能触发 EPIPE broken pipe）；注入命令 `napimain.exe <QQ路径> <napiloader.dll> <nativeLoader.cjs>`
+> - NapCat Framework 启动：在 2026-08-10 本机实测，前台启动触发 EPIPE broken pipe；**stdout/stderr 重定向到文件后启动成功**（本地观察，非普适规则）。注入命令 `napimain.exe <QQ路径> <napiloader.dll> <nativeLoader.cjs>`
 
 ## 架构
 
 ```
 QQ ←→ NapCat（CLIENT，反向 WS 拨入）→ CampusCue OneBotAdapter（SERVER，127.0.0.1:6199/ws）
-  → CampusEvent → EventBus（有界队列 + 有界并发）→ Router → EchoHandler → 回复
+  → CampusEvent → EventBus（有界队列 + 有界并发）→ Router
+    ├─ Path A: EchoHandler → OneBot reply（M1）
+    └─ Path B: TaskPipeline → Provider → TimeNormalizer → TaskService → SQLite（M2）
 ```
+
+## 依赖
+
+运行时依赖以 `pyproject.toml` 为准（canonical source）：`websockets`、`sqlalchemy`、`aiosqlite`、`httpx`（Windows 额外 `tzdata`）。
 
 ## 安装与运行（真实环境验证过的步骤）
 

@@ -2,12 +2,11 @@
 
 > 当前状态摘要（checkpoint 时自动刷新）。实时信息（HEAD/visibility）由脚本获取，不手写。
 
-- 阶段：**M2b.2 REAL ENV ACCEPTANCE**
-- 状态：**REAL_ENV_ACCEPTANCE_COMPLETE** — 真实 QQ → NapCat → WS → AI-first pipeline → DeepSeek → SQLite 全链路验证；测试 A-E 全 PASS（hello 共存/明确任务 deadline 精确/普通聊天 skipped/语义重复/重启持久化）；316 tests 全绿；等待外部 M2 最终复核
-- **Gate**：M0/M1/M2a/M2b.1 = PASS；**M2b.2 = AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 FINAL = NOT PASS**
-- 验证层级：STATIC ✓ / UNIT ✓ / INTEGRATION ✓ / PACKAGE ISOLATION ✓ / **REAL ENV ✓（M2b.2 新增）**
-- REAL ENV 证据：真实群消息全链路（NapCat Framework 小号 bot + DeepSeek json_fallback + SQLite Task）；用户大号受保护未触碰
+- 阶段：**M2 FINAL CONTINUITY CLEANUP**
+- 状态：**DOCS COMPLETE** — M2 技术实现 + M2b.2 REAL ENV 验收已通过外部技术审核；本轮修复连续性/文档 stale 状态（AGENT_MEMORY/README/pyproject description）；零生产源码修改
+- **Gate**：M0/M1/M2a/M2b.1/M2b.2 = PASS；**M2 = AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW；M2 FINAL = NOT YET DECLARED；M3 = NOT_AUTHORIZED**
+- 验证层级：REAL ENV ✓（M2b.2，2026-08-10 保留）；本轮未重跑测试（无源码修改）
 - 已知 Bug Inventory：docs/v2/13_BUG_LESSONS.md（B01-B13）
-- 下一步：外部 M2 最终复核 → M3（Reminder）授权
+- 下一步：外部 M2 最终连续性复核 → M2 FINAL PASS → M3（Reminder）授权
 
 （本文件由 checkpoint 流程生成/刷新，详细见 HANDOFF.md 与 PROJECT_STATE.md）
