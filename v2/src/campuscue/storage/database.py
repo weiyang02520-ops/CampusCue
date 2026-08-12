@@ -110,11 +110,18 @@ class Database:
                         "schema_meta; refusing to claim an arbitrary DB file (migration required)"
                     )
                 return None, user_tables  # effectively fresh
-            # schema_meta exists: read version FIRST, no writes
+            # schema_meta exists: read version FIRST, no writes.
+            # M3.2-B: schema_meta cardinality is a GLOBAL database identity
+            # invariant — exactly one version row must be validated BEFORE any
+            # version dispatch (v1/v2/future alike). Never rely on SELECT row
+            # order: [1,2] and [2,1] both REFUSE with ZERO MUTATION.
             rows = conn.execute("SELECT schema_version FROM schema_meta").fetchall()
+            if len(rows) != 1:
+                raise SchemaRefusedError(
+                    f"schema_meta has {len(rows)} version row(s); exactly one "
+                    "coherent version row is required"
+                )
             versions = [r[0] for r in rows]
-            if not versions:
-                raise SchemaRefusedError("schema_meta exists but is empty; refusing to guess")
             unsupported = [v for v in versions if v > SCHEMA_VERSION]
             if unsupported:
                 raise SchemaRefusedError(
@@ -155,7 +162,8 @@ class Database:
                 "refusing to migrate: malformed v1 database missing table(s) "
                 f"{sorted(missing_tables)} (schema_meta=1 is insufficient proof)"
             )
-        # schema_meta exactly one coherent row
+        # schema_meta exactly one coherent row — also enforced globally in
+        # _precheck (M3.2-B) before version dispatch; kept here as defense
         rows = conn.execute("SELECT schema_version FROM schema_meta").fetchall()
         if len(rows) != 1:
             raise SchemaRefusedError(

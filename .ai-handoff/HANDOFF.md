@@ -2,41 +2,38 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY / Git history。
 
-## 当前（M3.1 Reminder Hardening）
+## 当前（M3.2 Final Gate Fix）
 
-- **本轮**：外部 ChatGPT 对 M3 复核 = PASS_WITH_FIXES（6 项 finding A-F），执行硬化修复轮
-- **状态**：M3 = HARDENING_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M3 FINAL = NOT YET DECLARED；M4 = NOT_AUTHORIZED**
+- **本轮**：外部 ChatGPT 对 M3.1 复核 = PASS，M3 FINAL = CHANGES_REQUESTED——仅 3 项窄修复（A quiet 窗外部不变量 / B schema_meta 全局单行 / C composition-root 接线测试）
+- **状态**：M3 = FINAL_FIX_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M3 FINAL = NOT YET DECLARED；M4 = NOT_AUTHORIZED**
 
-## 本轮完成（M3.1）
+## 本轮完成（M3.2）
 
-1. **[A] Reminder runtime config 接线**：`CampusRuntime` 从 `RuntimeConfig.reminders` 构造 `ReminderPolicy`（timezone/min_lead_seconds/quiet_start/quiet_end 真实被消费，不再用 tasks.timezone + 默认 policy）；删除 `TaskPipelineConfig.reminders_enabled` 重复真值（唯一真值在 ReminderConfig）；测试通过真实 `load_config` 验证 runtime-consumed policy
-2. **[B] quiet-hours 绝不超过 deadline**：硬不变量 `trigger_at_utc <= task.deadline`——前向折叠超过 deadline → clamp 到 quiet_end-1s 同日（仍 < deadline）或丢弃该 intent；防御性第二道检查在 discard 阶段；测试：23:59 deadline（无 post-deadline）、凌晨 deadline（quiet 内）、fold-clamp 场景、DST（NY）场景更新
-3. **[C] resync 真重建**：`resync_all` 先 `scheduler.clear_all()` 再加载 facts 重建——同进程 stale job 不可能存活；测试：注入 stale job `reminder:9999` + task done → resync 后 stale 消失、仅 canonical jobs 保留
-4. **[D] v1 迁移前 schema 验证**：`_validate_v1_schema`——必需表齐全 + schema_meta **恰一行** + 各表关键列存在；malformed/任意 SQLite 带 schema_meta=1 → SchemaRefusedError 零变更；测试：malformed tasks 表拒绝（字节不变）、多行 schema_meta 拒绝（零变更）
-5. **[E] 迁移约束对齐**：迁移 SQL 的 reminders 表加 CHECK（type/status 闭集）与 fresh ORM v2 完全一致；测试：v1→v2 后直接非法 INSERT（invalid type/status）被 SQLite 拒绝
-6. **[F] 默认投递安全**：`ReminderService.__init__` 默认 `_delivery = NoopDelivery()`（直接构造 + fire 永不失败）；测试：不调 set_delivery 直接 fire → 成功 fired
+1. **[A] quiet-hours 外部不变量**：canonical `is_inside_quiet_hours(local_dt, policy)` 谓词（折叠/校验/测试单一真源，不复制）；clamp 目标改为 **quiet_start 前一刻**（默认 23-08 → 22:59:59，不再是错误的 07:59:59 仍在 quiet 内）；最终过滤加"不在 quiet 内"硬不变量（trigger<=deadline AND 不在 quiet AND >=now+min_lead）；**overnight-only 契约**：ReminderPolicy.__post_init__ 校验 start>end（同日/相等/越界 fail-fast），quiet_end=0 合法
+2. **[B] schema_meta 全局恰一行**：`_precheck` 在版本分发（v1/v2/未来）**之前**要求 len(rows)==1——[1,2] 与 [2,1] 都 SchemaRefusedError 零变更（不依赖 SELECT 行序）；_validate_v1_schema 保留防御性检查
+3. **[C] composition-root 接线测试**：spy 生产 `ReminderService.__init__`（不复制 wiring 逻辑）→ 走真实 `CampusRuntime._init_task_pipeline` → 断言构造的 timezone=America/New_York + ReminderPolicy(min_lead=120, quiet 22-09)
 
 ## 测试
 
-- **354 passed**（+10 M3.1）；Anti-AstrBot PASS；package isolation PASS（`.venv-m2iso`，354）
-- 无 QQ/NapCat（M3 不需要）
+- **363 passed**（+9 M3.2：quiet 边界 A-E 5 / schema_meta [1,2]+[2,1] 2 / composition-root 1 / 其余）；Anti-AstrBot PASS；package isolation PASS（`.venv-m2iso`，363）
+- M3 系列 47 个测试全绿
 
-## AGENT_DISCOVERED_DELTA（M3.1）
+## AGENT_DISCOVERED_DELTA（M3.2）
 
-- [DESIGN_CHANGE]：DST 测试语义更新——deadline 落在 quiet hours 时 deadline intent 被 post-deadline 不变量丢弃（行为变更，非 bug）
-- [REPO_CONFIRMED]：schema_meta.schema_version 有 UNIQUE 约束，"多行冲突"测试需用不同 version 值构造
-- Memory Delta 见 CHATGPT_MEMORY §9P（4 条 M3_FINDING）
+- [DESIGN_CHANGE]：quiet 窗改为 overnight-only 契约（YAGNI：产品只要求 23-8）；非 overnight 配置显式拒绝而非静默误释
+- [REPO_CONFIRMED]：schema_meta.schema_version UNIQUE 约束使"多行"测试必须用不同 version 值；[1,2]/[2,1] 两种顺序均被 _precheck 拒绝
+- Memory Delta 见 CHATGPT_MEMORY §9Q（3 条 M3_FINDING + TESTING_RULE + DESIGN_DECISION）
 
 ## REAL ENV
 
-- M3/M3.1 为 LOCAL REAL SCHEDULER（无 QQ）；M2b.2 REAL ENV 保留；用户 QQ/NapCat 未触碰
+- M3/M3.1/M3.2 均为 LOCAL REAL SCHEDULER（无 QQ）；M2b.2 REAL ENV 保留；用户 QQ/NapCat 未触碰
 
 ## 下一步
 
-- 外部 ChatGPT M3（含 M3.1）复核 → M3 FINAL PASS → M4 授权
+- 外部 ChatGPT M3 最终复核（含 M3.1+M3.2）→ M3 FINAL PASS → M4 授权
 
 ## 本轮修改文件
 
-- 修改：app/runtime.py（policy 接线）、config.py（去 reminders_enabled）、tasks/reminder_policy.py（post-deadline 不变量 + clamp）、services/reminder_service.py（resync clear_all + 默认 NoopDelivery）、storage/database.py（_validate_v1_schema + 迁移 CHECK）
-- 新增：tests/integration/test_m31_hardening.py（10 tests）
-- 修改：tests/integration/test_m3_reminders.py（DST 语义更新）、Memory/handoff
+- 修改：tasks/reminder_policy.py（is_inside_quiet_hours + overnight-only 契约 + clamp 修正）、storage/database.py（_precheck 全局恰一行）
+- 新增：tests/integration/test_m32_final_gate.py（9 tests）
+- 修改：Memory（双）、.ai-handoff/（HANDOFF/PROJECT_STATE/STATUS/REVIEW_REQUEST/CHANGELOG）

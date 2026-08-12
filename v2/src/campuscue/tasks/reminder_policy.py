@@ -6,14 +6,16 @@
     deadline     = at deadline
 - MIN_LEAD_SECONDS = 60: candidates closer than 60s to `now` are discarded
 - already-past candidates: discarded (never fire immediately, never backfill)
-- quiet hours folding: 23:00 -> 08:00 local (configurable); a trigger landing
-  inside quiet hours folds FORWARD to 08:00 same day (or next day when the
-  fold would itself be past); calculation in supplied timezone, persisted UTC
-- HARD INVARIANT (M3.1-B): a reminder is NEVER scheduled after task.deadline.
-  If forward folding would exceed the deadline, the trigger clamps to the last
-  allowed pre-deadline quiet boundary (quiet_end-1s of the same local day) when
-  that is still before the deadline, otherwise that intent is DISCARDED. No
-  post-deadline notification is ever emitted to satisfy quiet hours.
+- quiet hours: OVERNIGHT-only wrapping window 23:00 -> 08:00 local (default,
+  configurable via start>end); canonical `is_inside_quiet_hours` predicate is
+  the single source of truth used by folding, validation and tests
+- HARD INVARIANTS (M3.1-B + M3.2-A) for every returned DesiredReminder:
+    1. trigger_at <= task.deadline (never after the deadline)
+    2. trigger_at NOT inside quiet hours (07:59:59 is still quiet; latest
+       allowed pre-quiet moment is 22:59:59 for default 23-08)
+    3. trigger_at >= now + min_lead
+  Forward folding exceeding the deadline clamps to the latest allowed
+  pre-quiet moment of the same local day, else that intent is DISCARDED.
 - same-minute dedup: if two intents collapse onto the same final minute, keep
   ONE (deterministic precedence: day_before > hours_before > deadline)
 - task with deadline=None -> no reminders
@@ -44,6 +46,23 @@ class ReminderPolicy:
     quiet_start_hour: int = QUIET_START_HOUR
     quiet_end_hour: int = QUIET_END_HOUR
 
+    def __post_init__(self) -> None:
+        # M3.2-A: OVERNIGHT-ONLY quiet window contract (23->8). The policy only
+        # supports wrapping windows where start > end. Same-day / equal / invalid
+        # configurations are rejected explicitly — never silently misinterpreted.
+        for name, value in (
+            ("quiet_start_hour", self.quiet_start_hour),
+            ("quiet_end_hour", self.quiet_end_hour),
+        ):
+            if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value <= 23:
+                raise ValueError(f"{name} must be an hour 0-23, got {value!r}")
+        if not self.quiet_start_hour > self.quiet_end_hour:
+            raise ValueError(
+                f"quiet hours must be an OVERNIGHT wrapping window "
+                f"(quiet_start_hour > quiet_end_hour), got start={self.quiet_start_hour} "
+                f"end={self.quiet_end_hour}"
+            )
+
 
 DEFAULT_POLICY = ReminderPolicy()
 
@@ -54,17 +73,38 @@ class DesiredReminder:
     trigger_at_utc: datetime  # aware UTC
 
 
+def is_inside_quiet_hours(local_dt: datetime, policy: ReminderPolicy) -> bool:
+    """CANONICAL quiet-hours predicate (M3.2-A). Single source of truth used by
+    folding, validation and tests — never duplicated.
+
+    Overnight window [quiet_start_hour, quiet_end_hour): a local datetime is
+    inside quiet hours when hour >= start OR hour < end (wrapping window).
+    """
+    h = local_dt.hour
+    return h >= policy.quiet_start_hour or h < policy.quiet_end_hour
+
+
+def _last_allowed_before_quiet(local_dt: datetime, policy: ReminderPolicy) -> datetime:
+    """Deterministic latest allowed moment BEFORE quiet starts on the given
+    local day: (quiet_start_hour - 1):59:59. For default 23-08 this is 22:59:59
+    — NOT 07:59:59 (07:59:59 is still inside quiet hours)."""
+    start = policy.quiet_start_hour
+    if start == 0:  # defensive: cannot build hour=-1
+        raise ValueError("quiet_start_hour=0 is not an overnight window")
+    return local_dt.replace(hour=start - 1, minute=59, second=59, microsecond=0)
+
+
 def _fold_quiet_hours(local_dt: datetime, policy: ReminderPolicy) -> datetime:
     """Fold a local trigger into the nearest allowed deterministic time.
 
-    If the trigger lands inside quiet hours [start_hour, end_hour):
+    If the trigger lands inside quiet hours [start, end):
     - fold FORWARD to end_hour (08:00) of the same local day when that is
       still in the future at decision time; otherwise next day 08:00.
-    This is deterministic (no wall-clock dependence beyond `local_now`).
+    Uses the canonical is_inside_quiet_hours predicate.
     """
-    if not (policy.quiet_start_hour <= local_dt.hour or local_dt.hour < policy.quiet_end_hour):
+    if not is_inside_quiet_hours(local_dt, policy):
         return local_dt
-    # inside quiet hours -> next allowed boundary
+    # inside quiet hours -> next allowed boundary (end of window)
     candidate = local_dt.replace(hour=policy.quiet_end_hour, minute=0, second=0, microsecond=0)
     if candidate <= local_dt:
         candidate = candidate + timedelta(days=1)
@@ -113,36 +153,39 @@ def plan_desired_reminders(
         ),
     ]
 
-    # 1) quiet-hours folding (local computation, persisted UTC). HARD INVARIANT
-    # (M3.1-B): folding must NEVER move a reminder AFTER task.deadline — no
-    # notifying after the deadline merely to satisfy quiet hours. When forward
-    # folding would exceed the deadline, use a deterministic allowed time
-    # BEFORE the deadline (the last quiet-allowed second at quiet_end - 1s of
-    # the same local day when still before deadline, else the deadline minute
-    # itself is kept only if within quiet hours; otherwise discard).
+    # 1) quiet-hours folding (local computation, persisted UTC). HARD INVARIANTS
+    # (M3.1-B + M3.2-A) for every returned DesiredReminder:
+    #   1. trigger_at <= task.deadline  (never notify after the deadline)
+    #   2. trigger_at NOT inside quiet hours (07:59:59 is still quiet; the
+    #      latest allowed pre-quiet moment is 22:59:59 for default 23-08)
+    # When forward folding would exceed the deadline, clamp to the latest
+    # allowed pre-quiet moment on the same local day (still < deadline),
+    # otherwise DISCARD that intent.
     folded: list[DesiredReminder] = []
     for c in candidates:
         local_t = c.trigger_at_utc.astimezone(tz)
         folded_local = _fold_quiet_hours(local_t, policy)
         if folded_local > local_deadline:
-            # fold would exceed deadline -> clamp deterministically:
-            # last allowed pre-deadline quiet boundary (quiet_end-1s of the
-            # same local day) when that is still before deadline; else discard
-            clamped = local_t.replace(
-                hour=policy.quiet_end_hour - 1, minute=59, second=59, microsecond=0
-            )
+            # fold would exceed deadline -> clamp deterministically to the
+            # latest allowed BEFORE quiet starts (e.g. 22:59:59), still before
+            # deadline; else discard
+            clamped = _last_allowed_before_quiet(local_t, policy)
             folded_local = clamped if clamped < local_deadline else None
         if folded_local is not None:
             folded.append(
                 DesiredReminder(type=c.type, trigger_at_utc=folded_local.astimezone(timezone.utc))
             )
 
-    # 2) discard: < MIN_LEAD_SECONDS from now, or already past (no backfill)
+    # 2) discard: < MIN_LEAD_SECONDS from now, already past (no backfill), or
+    # inside quiet hours (defense in depth — the same canonical predicate)
     lead = timedelta(seconds=policy.min_lead_seconds)
     kept: list[DesiredReminder] = []
     for c in folded:
         # defensive hard invariant (M3.1-B): never after the deadline
         if c.trigger_at_utc > task.deadline:
+            continue
+        # M3.2-A: never inside quiet hours
+        if is_inside_quiet_hours(c.trigger_at_utc.astimezone(tz), policy):
             continue
         if c.trigger_at_utc < now:
             continue  # past: no backfill

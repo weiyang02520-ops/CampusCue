@@ -195,3 +195,13 @@
 - **测试**：新增 10 → **354 passed**；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无 QQ（M3 本地调度器）；M2b.2 REAL ENV 保留
 - **审核状态**：M3 = HARDENING_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED
+
+
+## 2026-08-12 · M3.2 FINAL GATE FIX
+
+- **任务**：外部 M3.1 复核 PASS；M3 FINAL CHANGES_REQUESTED——3 项窄修复（A/B/C）
+- **Commit**：fix: close M3 final reminder edge cases（本轮）
+- **主要修改**：quiet-hours canonical is_inside_quiet_hours 谓词 + clamp 改 quiet_start 前（22:59:59）+ overnight-only 契约 fail-fast；_precheck 全局恰一行（版本分发前）；composition-root spy 接线测试
+- **测试**：新增 9 → **363 passed**；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无 QQ（M3 本地调度器）；M2b.2 REAL ENV 保留
+- **审核状态**：M3 = FINAL_FIX_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED

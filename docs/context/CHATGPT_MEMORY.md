@@ -332,3 +332,11 @@ User
 - **[EXTERNAL_REVIEW][M3_FINDING]**：**真 resync 用 DB facts 替换派生 scheduler 状态**，不得假定 scheduler 已空——resync_all 先 clear_all 再重建（同进程 stale job 清理测试）。
 - **[EXTERNAL_REVIEW][M3_FINDING]**：**schema 迁移必须产生与 fresh bootstrap 相同的域约束**（迁移 SQL 含 reminders CHECK 约束：type/status 闭集），且迁移前必须验证源 schema（表/关键列/schema_meta 恰一行）——malformed/任意 SQLite 带 schema_meta=1 → SchemaRefusedError 零变更。
 - **[REPO_CONFIRMED]**：M3.1 落地（354 tests 全绿 + fresh venv + Anti-AstrBot）：ReminderService delivery 默认 NoopDelivery（直接构造 fire 不失败）；DST 测试更新反映 post-deadline 不变量。
+
+## 9Q. MEMORY DELTA（M3.2 Final Gate Fix）
+
+- **[EXTERNAL_REVIEW][M3_FINDING]**：post-deadline guard 单独不足——每个计划提醒必须同时满足：trigger <= deadline **且** trigger 不在 quiet hours 内（07:59:59 仍是 quiet；默认 23-08 窗最后允许时刻是 22:59:59）。
+- **[EXTERNAL_REVIEW][M3_FINDING]**：schema_meta 基数（恰一行）是**全局数据库身份不变量**——必须在版本分发（v1/v2/未来）之前验证；不能依赖 SELECT 行序（[1,2] 与 [2,1] 都拒绝）。
+- **[EXTERNAL_REVIEW][TESTING_RULE]**：composition-root 契约必须通过真实 composition root 测试（spy 生产 ReminderService 构造器）；测试中手动重建同一对象 ≠ 验证接线。
+- **[DESIGN_DECISION][M3.2]**：quiet hours 采用 **overnight-only** 契约（start > end 校验 fail-fast；同日/相等窗口显式拒绝）；canonical `is_inside_quiet_hours` 谓词为折叠/校验/测试单一真源；clamp 目标 = quiet_start 前一刻（22:59:59）。
+- **[REPO_CONFIRMED]**：M3.2 落地（363 tests 全绿 + fresh venv + Anti-AstrBot）：_precheck 全局恰一行、composition-root spy 测试、quiet 边界 A-E。
