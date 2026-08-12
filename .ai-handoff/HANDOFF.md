@@ -2,35 +2,27 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY / Git history。
 
-## 当前（M3.3 Final Recovery Fix）
+## 当前（M3.4 Storage Safety Final Seal）
 
-- **本轮**：外部 ChatGPT 对 M3.2 复核 = PASS；M3 FINAL = CHANGES_REQUESTED——1 个主要 reminder 对账缺口（A）+ 2 个一致性/安全小问题（B/C）
-- **状态**：M3 = FINAL_RECOVERY_FIX_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M3 FINAL = NOT YET DECLARED；M4 = NOT_AUTHORIZED**
+- **本轮**：外部 ChatGPT 对 M3.3 复核 = PASS；M3 FINAL = CHANGES_REQUESTED——2 个存储安全 blocker（A 原子迁移 / B 完整列验证）
+- **状态**：M3 = STORAGE_SAFETY_FINAL_SEAL_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M3 FINAL = NOT YET DECLARED；M4 = NOT_AUTHORIZED**
 
-## 本轮完成（M3.3）
+## 本轮完成（M3.4）
 
-1. **[A] resync_all 真业务对账**：`Tasks → reconcile Reminder facts → rebuild scheduler jobs`（不再只从既有 facts 重建 jobs）：
-   - clear 派生 jobs → 枚举**所有**相关任务（`TaskRepository.list_pending_with_deadline` 专用查询，不截断）→ 每个任务用同一 Clock/timezone/policy/quiet 规则计算 DesiredReminder → 对账：
-     - 匹配的有效未来 facts（同 type+trigger_at）**保留身份**（重启不重建）
-     - 缺失 desired facts **创建**
-     - 不再 desired 的 stale scheduled facts **取消**
-   - done/dismissed/pending_confirm/no-deadline 任务 → 无 active facts（stale 取消）
-   - past/missed 不重建不补发
-   - 之后只 schedule 有效 canonical facts
-   - **幂等**：unchanged task → resync → 同 fact IDs + 同 job ids + 无 cancelled-history 增长
-2. **[B] 当前 v2 结构验证**：`_validate_application_schema`（v1/v2 共享）+ `_precheck` 在 create_all 前对既有 v2 DB 只读验证（缺 reminders 表/缺 tasks 关键列 → SchemaRefusedError 零变更）；fresh DB 正常 bootstrap、valid v1 走 owned migration、valid v2 幂等重开
-3. **[C] 17_MILESTONES gate 修复**：M2 FINAL PASS @ 23083cb + M3 FINAL_RECOVERY_FIX_COMPLETE AWAITING_EXTERNAL_REVIEW + M3 FINAL NOT YET DECLARED + M4 NOT_AUTHORIZED
+1. **[A] 原子迁移**：`_migrate_v1_to_v2` 改为单显式事务——`BEGIN IMMEDIATE` + 逐条 `execute()`（CREATE TABLE reminders / 2 个索引 / UPDATE schema_meta）+ `COMMIT`；任何异常 `ROLLBACK`。**不用 executescript**（其隐式事务控制可提交挂起事务）。测试：预置冲突索引名强制 CREATE INDEX 失败 → 迁移抛错、schema_version 仍 1、无 reminders 表/索引残留、原 v1 表完整
+2. **[A2] 半迁移 v1 拒绝**：schema_meta=1 且已含 reminders（M3-only 结构）→ SchemaRefusedError "half-migrated/partial"，字节不变零变更（不猜测/不修复）
+3. **[B] 完整列契约验证**：`_COMMON_TABLE_COLUMNS` + `_REMINDER_COLUMNS`——v1/v2 manifest 覆盖**全部 ORM 必需列**（非子集）：tasks 含 source_message_id/created_at/updated_at/description 等 15 列；reminders 含 last_run/error/job_id 等 10 列；provider_configs 含 timeout_s/secret_reference 等 13 列。测试：v2 缺 source_message_id/job_id/timeout_s → 拒绝零变更；v1 截断表 → 拒绝零变更
 
 ## 测试
 
-- **370 passed**（+7 M3.3：迁移回填 1/崩溃修复 1/部分对账 1/非 active 无提醒 1/v2 结构 3）；Anti-AstrBot PASS；package isolation PASS（`.venv-m2iso`，370）
-- M3 系列 54 个测试全绿
+- **378 passed**（+8 M3.4：原子回滚 1/干净迁移 1/半迁移 1/完整列 5）；Anti-AstrBot PASS；package isolation PASS（`.venv-m2iso`，378）
+- M3 系列 62 个测试全绿（旧测试 v1/v2 构造器列集完整，未破坏）
 
-## AGENT_DISCOVERED_DELTA（M3.3）
+## AGENT_DISCOVERED_DELTA（M3.4）
 
-- [DESIGN_CHANGE]：resync_all 从"facts→jobs 重建"升级为"Tasks→facts 对账→jobs 重建"（M2→M3 升级/崩溃间隙治愈）
-- [REPO_CONFIRMED]：v1/v2 共享 `_validate_application_schema`（表+关键列+版本前缀）；TaskRepository.list_pending_with_deadline 不分页截断
-- Memory Delta 见 CHATGPT_MEMORY §9R（3 条 M3_FINDING/DESIGN_DECISION/DATA_SAFETY）
+- [REPO_CONFIRMED]：sqlite3 `executescript` 隐式事务控制危险 → 用 `isolation_level=None` + 显式 BEGIN IMMEDIATE/COMMIT/ROLLBACK
+- [REPO_CONFIRMED]：完整列 manifest 从 ORM model 推导（非手写子集）；v1/v2 共享 _COMMON_TABLE_COLUMNS
+- Memory Delta 见 CHATGPT_MEMORY §9S（2 条 DATA_SAFETY + DESIGN_DECISION）
 
 ## REAL ENV
 
@@ -38,10 +30,10 @@
 
 ## 下一步
 
-- 外部 ChatGPT M3 最终复核（含 M3.1+M3.2+M3.3）→ M3 FINAL PASS → M4 授权
+- 外部 ChatGPT M3 最终复核（含全部修复轮）→ M3 FINAL PASS → M4 授权
 
 ## 本轮修改文件
 
-- 修改：services/reminder_service.py（resync 对账）、repositories/repositories.py（list_pending_with_deadline + list_scheduled_for_task）、storage/database.py（_validate_application_schema + v2 前置验证）、docs/v2/17_MILESTONES.md
-- 新增：tests/integration/test_m33_recovery.py（7 tests）
-- 修改：Memory（双）、.ai-handoff/
+- 修改：storage/database.py（原子迁移 + 半迁移拒绝 + 完整列 manifest）
+- 新增：tests/integration/test_m34_storage_seal.py（8 tests）
+- 修改：Memory（双）、.ai-handoff/（HANDOFF/PROJECT_STATE/STATUS/REVIEW_REQUEST/CHANGELOG）

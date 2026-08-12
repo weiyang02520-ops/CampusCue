@@ -180,41 +180,73 @@ class Database:
                     f"{sorted(missing_cols)} (malformed schema v{version})"
                 )
 
-    # v1 (M2) schema: no reminders table
+    # ---- canonical version-specific schema manifests (M3.4-B) --------------
+    # COMPLETE column contract for every owned application table per version —
+    # NOT a subset of "critical" columns: every column the ORM/runtime expects
+    # must exist before the DB is opened as that version. Extra columns are
+    # tolerated; missing ones REFUSE with zero mutation.
+    # (sources/extractions columns are identical across v1/v2)
+
+    _COMMON_TABLE_COLUMNS: dict[str, set[str]] = {
+        "sources": {
+            "id", "platform", "conversation_id", "name", "enabled", "auto_extract",
+            "context_window", "privacy_policy", "created_at", "updated_at",
+        },
+        "tasks": {
+            "id", "title", "description", "category", "course", "deadline",
+            "status", "priority", "confidence", "dedup_key", "source_id",
+            "source_message_id", "source_text_reference", "created_at", "updated_at",
+        },
+        "extractions": {
+            "id", "source_id", "source_message_id", "trace_id", "provider", "model",
+            "status", "confidence", "raw_result", "normalized_result", "audit",
+            "error", "created_at",
+        },
+        "provider_configs": {
+            "id", "name", "provider_type", "base_url", "model", "temperature",
+            "max_tokens", "max_context_tokens", "timeout_s", "secret_reference",
+            "enabled", "created_at", "updated_at",
+        },
+    }
+    _REMINDER_COLUMNS = {
+        "id", "task_id", "trigger_at", "type", "status", "last_run", "error",
+        "job_id", "created_at", "updated_at",
+    }
+
+    # v1 (M2) schema: no reminders table; complete v1 column contract
     _V1_REQUIRED_TABLES = frozenset(
         {"sources", "tasks", "extractions", "provider_configs", "schema_meta"}
     )
-    _V1_REQUIRED_COLUMNS = {
-        "sources": {"id", "platform", "conversation_id", "enabled", "auto_extract"},
-        "tasks": {"id", "title", "category", "status", "priority", "deadline"},
-        "extractions": {"id", "source_message_id", "trace_id", "status"},
-        "provider_configs": {"id", "name", "provider_type", "base_url", "model", "enabled"},
-    }
-    # v2 (M3) schema: + reminders table
+    _V1_REQUIRED_COLUMNS = dict(_COMMON_TABLE_COLUMNS)
+
+    # v2 (M3) schema: + reminders table (complete ORM contract)
     _V2_REQUIRED_TABLES = frozenset(
         {"sources", "tasks", "extractions", "provider_configs", "reminders", "schema_meta"}
     )
-    _V2_REQUIRED_COLUMNS = {
-        "sources": {"id", "platform", "conversation_id", "enabled", "auto_extract"},
-        "tasks": {"id", "title", "category", "status", "priority", "deadline"},
-        "extractions": {"id", "source_message_id", "trace_id", "status"},
-        "provider_configs": {"id", "name", "provider_type", "base_url", "model", "enabled"},
-        "reminders": {
-            "id", "task_id", "trigger_at", "type", "status", "created_at", "updated_at",
-        },
-    }
+    _V2_REQUIRED_COLUMNS = dict(_COMMON_TABLE_COLUMNS)
+    _V2_REQUIRED_COLUMNS["reminders"] = _REMINDER_COLUMNS
 
     @staticmethod
     def _validate_v1_schema(conn: sqlite3.Connection, tables: set[str]) -> None:
-        """M3.1-D: prove a schema_meta=1 database is a VALID CampusCue v1
+        """M3.1-D/3.4: prove a schema_meta=1 database is a VALID CampusCue v1
         schema BEFORE mutation. Distinguishes VALID V1 from MALFORMED/ARBITRARY
         SQLite that merely carries schema_meta=1.
 
-        - required application tables present
+        - required application tables present (COMPLETE v1 column contract)
+        - NO M3-only structures (reminders table) — a schema_meta=1 database
+          that already contains reminders is a HALF-MIGRATED/partial state:
+          REFUSE with ZERO FURTHER MUTATION (never guess/recover)
         - schema_meta has EXACTLY ONE coherent version row
-        - required critical columns exist on each application table
         If malformed -> SchemaRefusedError, ZERO MUTATION (nothing written yet).
         """
+        # M3.4-A2: half-migrated v1 (already contains M3-only structures) ->
+        # refuse; do not guess whether a partially migrated DB is safe
+        if "reminders" in tables:
+            raise SchemaRefusedError(
+                "refusing to migrate: schema_meta=1 database already contains "
+                "M3-only structure 'reminders' (half-migrated/partial state); "
+                "refusing to guess — manual inspection required"
+            )
         Database._validate_application_schema(
             conn, tables,
             version=1,
@@ -230,60 +262,59 @@ class Database:
                 f"refusing to migrate: schema_meta has {len(rows)} version row(s); "
                 "exactly one coherent version required"
             )
-        # required critical columns per application table
-        required_columns = {
-            "sources": {"id", "platform", "conversation_id", "enabled", "auto_extract"},
-            "tasks": {"id", "title", "category", "status", "priority", "deadline"},
-            "extractions": {"id", "source_message_id", "trace_id", "status"},
-            "provider_configs": {"id", "name", "provider_type", "base_url", "model", "enabled"},
-        }
-        for table, cols in required_columns.items():
-            actual = {r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()}
-            missing_cols = cols - actual
-            if missing_cols:
-                raise SchemaRefusedError(
-                    f"refusing to migrate: table {table!r} missing required column(s) "
-                    f"{sorted(missing_cols)} (malformed v1 schema)"
-                )
 
     def _migrate_v1_to_v2(self) -> None:
         """Owned migration v1 -> v2 (M3): add reminders table, bump version.
 
         Runs BEFORE the ORM engine opens, on the raw sqlite file, so the
         migration is explicit and auditable; existing v1 rows are preserved.
-        No changes outside adding the reminders table + version bump.
+
+        M3.4-A ATOMICITY: all migration DDL + the schema-version bump execute
+        inside ONE explicit SQLite transaction (BEGIN IMMEDIATE ... COMMIT),
+        using individual execute() calls — NOT executescript (whose implicit
+        transaction control can commit a pending transaction). On ANY failure
+        ROLLBACK restores the exact pre-migration state: no partial reminders
+        table/indexes, schema_version stays 1. The source schema was already
+        proven valid (and free of M3-only structures) by _validate_v1_schema.
         """
         path = str(self._config.path)
-        conn = sqlite3.connect(path)
+        conn = sqlite3.connect(path, isolation_level=None)  # manual transaction control
         try:
             cur = conn.cursor()
-            # create reminders table with the same shape AND DB-level closed-set
-            # CHECK constraints as the fresh ORM-created v2 table (M3.1-E parity)
-            cur.executescript(
-                """
-                CREATE TABLE reminders (
-                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    task_id INTEGER NOT NULL REFERENCES tasks(id),
-                    trigger_at DATETIME NOT NULL,
-                    type VARCHAR(16) NOT NULL,
-                    status VARCHAR(16) NOT NULL,
-                    last_run DATETIME,
-                    error TEXT,
-                    job_id VARCHAR(64),
-                    created_at DATETIME NOT NULL,
-                    updated_at DATETIME NOT NULL,
-                    CHECK (type IN ('day_before','hours_before','deadline')),
-                    CHECK (status IN ('scheduled','fired','cancelled'))
-                );
-                CREATE INDEX ix_reminder_task_id ON reminders (task_id);
-                CREATE INDEX ix_reminder_status_trigger ON reminders (status, trigger_at);
-                """
-            )
-            cur.execute("UPDATE schema_meta SET schema_version = ?", (SCHEMA_VERSION,))
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
+            cur.execute("BEGIN IMMEDIATE")
+            try:
+                # create reminders table with the same shape AND DB-level
+                # closed-set CHECK constraints as the fresh ORM-created v2
+                # table (M3.1-E parity)
+                cur.execute(
+                    """
+                    CREATE TABLE reminders (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        task_id INTEGER NOT NULL REFERENCES tasks(id),
+                        trigger_at DATETIME NOT NULL,
+                        type VARCHAR(16) NOT NULL,
+                        status VARCHAR(16) NOT NULL,
+                        last_run DATETIME,
+                        error TEXT,
+                        job_id VARCHAR(64),
+                        created_at DATETIME NOT NULL,
+                        updated_at DATETIME NOT NULL,
+                        CHECK (type IN ('day_before','hours_before','deadline')),
+                        CHECK (status IN ('scheduled','fired','cancelled'))
+                    )
+                    """
+                )
+                cur.execute(
+                    "CREATE INDEX ix_reminder_task_id ON reminders (task_id)"
+                )
+                cur.execute(
+                    "CREATE INDEX ix_reminder_status_trigger ON reminders (status, trigger_at)"
+                )
+                cur.execute("UPDATE schema_meta SET schema_version = ?", (SCHEMA_VERSION,))
+                conn.commit()  # DDL + version bump commit TOGETHER or not at all
+            except Exception:
+                conn.rollback()  # atomic: NOTHING from this migration persists
+                raise
         finally:
             conn.close()
 

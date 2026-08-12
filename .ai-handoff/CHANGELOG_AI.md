@@ -215,3 +215,13 @@
 - **测试**：新增 7 → **370 passed**；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无 QQ（M3 本地调度器）；M2b.2 REAL ENV 保留
 - **审核状态**：M3 = FINAL_RECOVERY_FIX_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED
+
+
+## 2026-08-12 · M3.4 STORAGE SAFETY FINAL SEAL
+
+- **任务**：外部 M3.3 复核 PASS；M3 FINAL CHANGES_REQUESTED——2 个存储安全 blocker（原子迁移 / 完整列验证）
+- **Commit**：fix: seal M3 database migration safety（本轮）
+- **主要修改**：v1→v2 迁移单显式事务（BEGIN IMMEDIATE + 逐条 execute + COMMIT/ROLLBACK，弃 executescript）；schema_meta=1 + reminders（半迁移）→ 拒绝零变更；v1/v2 完整 ORM 列契约 manifest（非子集：tasks 15 列/reminders 10 列/provider_configs 13 列）
+- **测试**：新增 8 → **378 passed**；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无 QQ（M3 本地调度器）；M2b.2 REAL ENV 保留
+- **审核状态**：M3 = STORAGE_SAFETY_FINAL_SEAL_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED

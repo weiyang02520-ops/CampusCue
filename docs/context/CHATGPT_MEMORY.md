@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV @ 23083cb）；M3 = FINAL_RECOVERY_FIX_COMPLETE（M3+M3.1+M3.2+M3.3）AWAITING_EXTERNAL_REVIEW；M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV @ 23083cb）；M3 = STORAGE_SAFETY_FINAL_SEAL_COMPLETE（M3..M3.4）AWAITING_EXTERNAL_REVIEW；M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -346,4 +346,11 @@ User
 - **[EXTERNAL_REVIEW][M3_FINDING]**：Reminder 重启恢复有两层：Task facts → reconcile 持久化 Reminder facts → 重建 scheduler 派生 jobs。仅从既有 Reminder 行重建 scheduler jobs 无法治愈：M2→M3 升级任务（reminders 空表）与崩溃间隙（Task commit 成功但 Reminder 规划未完成）。
 - **[DESIGN_DECISION][M3]**：startup resync 必须保留匹配的未来 Reminder fact 身份（同 type+trigger_at 保留原 id），只创建缺失 facts、只取消 stale active facts，然后重建 scheduler jobs——重复重启不得造成 fact churn（无取消历史膨胀、无重复 active facts、事实 ID 稳定）。
 - **[EXTERNAL_REVIEW][DATA_SAFETY]**：当前 schema 版本标记不足以证明 DB 结构有效——既有 current-version DB 必须在 create_all 前只读结构验证（缺表/缺关键列 → SchemaRefusedError 零变更）；不得用 create_all 当隐式修复。
+
+## 9S. MEMORY DELTA（M3.4 Storage Safety Final Seal）
+
+- **[EXTERNAL_REVIEW][DATA_SAFETY]**：schema 迁移不因异常处理调 rollback 就原子——所有迁移 DDL + 版本号更新必须实际在一个显式事务内执行（BEGIN IMMEDIATE + 逐条 execute + COMMIT/ROLLBACK；不用 executescript，其隐式事务控制可能提交挂起事务）。
+- **[EXTERNAL_REVIEW][DATA_SAFETY]**：schema 版本验证必须覆盖该版本的完整 ORM 必需列契约——小部分关键列不能证明既有 DB 与 runtime 兼容（tasks 缺 source_message_id/created_at、reminders 缺 job_id、provider_configs 缺 timeout_s 等都必须拒绝）。
+- **[DESIGN_DECISION][M3]**：canonical v1 schema 不含 reminders。schema_meta=1 且已含 M3-only 结构（reminders）的 DB = 半迁移/部分状态 → 拒绝而非猜测/修复（YAGNI）。
+- **[REPO_CONFIRMED]**：M3.4 落地（378 tests 全绿 + fresh venv + Anti-AstrBot）：原子迁移（强制中途失败回滚：schema_version 仍 1、无 reminders 表/索引残留）、v1/v2 完整列 manifest、半迁移拒绝字节不变。
 - **[REPO_CONFIRMED]**：M3.3 落地（370 tests 全绿 + fresh venv + Anti-AstrBot）：resync_all 真业务对账（Tasks→facts→jobs）、TaskRepository.list_pending_with_deadline 专用查询（不截断）、v1/v2 共享 _validate_application_schema、17_MILESTONES gate 修复。

@@ -15,7 +15,7 @@
 ## current_milestone
 
 - M0-M2 全部 **FINAL PASS**（含 M2b.2 REAL ENV；M2 FINAL PASS @ 23083cb）
-- **M3 = FINAL_RECOVERY_FIX_COMPLETE AWAITING_EXTERNAL_REVIEW**（M3+M3.1+M3.2+M3.3：resync 真业务对账 Tasks→facts→jobs、当前版本结构验证、17_MILESTONES 修复）
+- **M3 = STORAGE_SAFETY_FINAL_SEAL_COMPLETE AWAITING_EXTERNAL_REVIEW**（M3..M3.4：resync Tasks 对账、原子迁移、完整列契约验证、半迁移拒绝）
 - **M3 FINAL = NOT YET DECLARED**（等外部）；**M4+ = NOT_AUTHORIZED**
 - status：**AWAITING_EXTERNAL_M3_FINAL_REVIEW**
 
@@ -34,7 +34,7 @@
 
 ## verified（Workspace Agent 报告；外部审核待复核）
 
-- **370 tests passed**（+28 M3 + 10 M3.1 + 9 M3.2 + 7 M3.3）；package isolation PASS（fresh venv `.venv-m2iso` + apscheduler 3.11.3）；Anti-AstrBot PASS
+- **378 tests passed**（+28 M3 + 10 M3.1 + 9 M3.2 + 7 M3.3 + 8 M3.4）；package isolation PASS（fresh venv `.venv-m2iso` + apscheduler 3.11.3）；Anti-AstrBot PASS
 - **LOCAL REAL SCHEDULER VERIFIED（M3，2026-08-12）**：真实 APScheduler 3.11（非 mock）——facts/jobs 一致性、重启 resync、deadline 变更、complete 取消、无投递
 - REAL ENV（M2b.2，2026-08-10）保留；M3 无 QQ 验收（不需要）
 - 外部审核状态：**awaiting**（M0-M2 PASS；M3 待复核）
