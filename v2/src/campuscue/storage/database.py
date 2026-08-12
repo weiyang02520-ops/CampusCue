@@ -134,9 +134,75 @@ class Database:
                     f"unsupported old schema version(s) {older!r}; no migration chain "
                     f"before v{_V1_SUPPORTED} (requires manual migration)."
                 )
-            return versions[0], user_tables
+            version = versions[0]
+            # M3.3-B: an existing CURRENT-version database must be structurally
+            # validated READ-ONLY before create_all may touch it. A schema_meta
+            # version marker alone does not prove the application structure is
+            # intact (missing tables/columns must REFUSE, not be auto-repaired).
+            if version == SCHEMA_VERSION:
+                Database._validate_application_schema(
+                    conn, user_tables,
+                    version=version,
+                    required_tables=Database._V2_REQUIRED_TABLES,
+                    required_columns=Database._V2_REQUIRED_COLUMNS,
+                    refuse_prefix="refusing to open:",
+                )
+            return version, user_tables
         finally:
             conn.close()
+
+    @staticmethod
+    def _validate_application_schema(
+        conn: sqlite3.Connection,
+        tables: set[str],
+        *,
+        version: int,
+        required_tables: set[str],
+        required_columns: dict[str, set[str]],
+        refuse_prefix: str,
+    ) -> None:
+        """Shared structural validator: required tables + critical columns.
+        Read-only; SchemaRefusedError = ZERO MUTATION."""
+        missing_tables = required_tables - tables
+        if missing_tables:
+            raise SchemaRefusedError(
+                f"{refuse_prefix} malformed schema v{version} database missing "
+                f"table(s) {sorted(missing_tables)}"
+            )
+        for table, cols in required_columns.items():
+            if table not in tables:
+                continue
+            actual = {r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+            missing_cols = cols - actual
+            if missing_cols:
+                raise SchemaRefusedError(
+                    f"{refuse_prefix} table {table!r} missing required column(s) "
+                    f"{sorted(missing_cols)} (malformed schema v{version})"
+                )
+
+    # v1 (M2) schema: no reminders table
+    _V1_REQUIRED_TABLES = frozenset(
+        {"sources", "tasks", "extractions", "provider_configs", "schema_meta"}
+    )
+    _V1_REQUIRED_COLUMNS = {
+        "sources": {"id", "platform", "conversation_id", "enabled", "auto_extract"},
+        "tasks": {"id", "title", "category", "status", "priority", "deadline"},
+        "extractions": {"id", "source_message_id", "trace_id", "status"},
+        "provider_configs": {"id", "name", "provider_type", "base_url", "model", "enabled"},
+    }
+    # v2 (M3) schema: + reminders table
+    _V2_REQUIRED_TABLES = frozenset(
+        {"sources", "tasks", "extractions", "provider_configs", "reminders", "schema_meta"}
+    )
+    _V2_REQUIRED_COLUMNS = {
+        "sources": {"id", "platform", "conversation_id", "enabled", "auto_extract"},
+        "tasks": {"id", "title", "category", "status", "priority", "deadline"},
+        "extractions": {"id", "source_message_id", "trace_id", "status"},
+        "provider_configs": {"id", "name", "provider_type", "base_url", "model", "enabled"},
+        "reminders": {
+            "id", "task_id", "trigger_at", "type", "status", "created_at", "updated_at",
+        },
+    }
 
     @staticmethod
     def _validate_v1_schema(conn: sqlite3.Connection, tables: set[str]) -> None:
@@ -149,19 +215,13 @@ class Database:
         - required critical columns exist on each application table
         If malformed -> SchemaRefusedError, ZERO MUTATION (nothing written yet).
         """
-        required_tables = {
-            "sources",
-            "tasks",
-            "extractions",
-            "provider_configs",
-            "schema_meta",
-        }
-        missing_tables = required_tables - tables
-        if missing_tables:
-            raise SchemaRefusedError(
-                "refusing to migrate: malformed v1 database missing table(s) "
-                f"{sorted(missing_tables)} (schema_meta=1 is insufficient proof)"
-            )
+        Database._validate_application_schema(
+            conn, tables,
+            version=1,
+            required_tables=Database._V1_REQUIRED_TABLES,
+            required_columns=Database._V1_REQUIRED_COLUMNS,
+            refuse_prefix="refusing to migrate:",
+        )
         # schema_meta exactly one coherent row — also enforced globally in
         # _precheck (M3.2-B) before version dispatch; kept here as defense
         rows = conn.execute("SELECT schema_version FROM schema_meta").fetchall()

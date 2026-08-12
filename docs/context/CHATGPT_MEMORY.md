@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV）；M3 Reminder = AUTHORIZED → IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV @ 23083cb）；M3 = FINAL_RECOVERY_FIX_COMPLETE（M3+M3.1+M3.2+M3.3）AWAITING_EXTERNAL_REVIEW；M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -340,3 +340,10 @@ User
 - **[EXTERNAL_REVIEW][TESTING_RULE]**：composition-root 契约必须通过真实 composition root 测试（spy 生产 ReminderService 构造器）；测试中手动重建同一对象 ≠ 验证接线。
 - **[DESIGN_DECISION][M3.2]**：quiet hours 采用 **overnight-only** 契约（start > end 校验 fail-fast；同日/相等窗口显式拒绝）；canonical `is_inside_quiet_hours` 谓词为折叠/校验/测试单一真源；clamp 目标 = quiet_start 前一刻（22:59:59）。
 - **[REPO_CONFIRMED]**：M3.2 落地（363 tests 全绿 + fresh venv + Anti-AstrBot）：_precheck 全局恰一行、composition-root spy 测试、quiet 边界 A-E。
+
+## 9R. MEMORY DELTA（M3.3 Final Recovery Fix）
+
+- **[EXTERNAL_REVIEW][M3_FINDING]**：Reminder 重启恢复有两层：Task facts → reconcile 持久化 Reminder facts → 重建 scheduler 派生 jobs。仅从既有 Reminder 行重建 scheduler jobs 无法治愈：M2→M3 升级任务（reminders 空表）与崩溃间隙（Task commit 成功但 Reminder 规划未完成）。
+- **[DESIGN_DECISION][M3]**：startup resync 必须保留匹配的未来 Reminder fact 身份（同 type+trigger_at 保留原 id），只创建缺失 facts、只取消 stale active facts，然后重建 scheduler jobs——重复重启不得造成 fact churn（无取消历史膨胀、无重复 active facts、事实 ID 稳定）。
+- **[EXTERNAL_REVIEW][DATA_SAFETY]**：当前 schema 版本标记不足以证明 DB 结构有效——既有 current-version DB 必须在 create_all 前只读结构验证（缺表/缺关键列 → SchemaRefusedError 零变更）；不得用 create_all 当隐式修复。
+- **[REPO_CONFIRMED]**：M3.3 落地（370 tests 全绿 + fresh venv + Anti-AstrBot）：resync_all 真业务对账（Tasks→facts→jobs）、TaskRepository.list_pending_with_deadline 专用查询（不截断）、v1/v2 共享 _validate_application_schema、17_MILESTONES gate 修复。

@@ -159,36 +159,99 @@ class ReminderService:
         return await self._reminders.delete_for_task(task_id)
 
     async def resync_all(self) -> int:
-        """TRUE REBUILD (M3.1-C): derived scheduler state is fully replaced
-        from canonical DB facts — never assumed already empty.
+        """TRUE BUSINESS RECONCILIATION (M3.3-A):
 
-        - CLEAR all derived scheduler jobs first (stale same-process state
-          cannot survive)
-        - reads all SCHEDULED reminder facts
-        - skips facts whose trigger is already in the past (missed while down:
-          MUST NOT fire/backfill; close them as cancelled with a safe error note)
-        - skips facts whose task is no longer active (done/dismissed/deleted)
-        - (re)installs deterministic jobs for the survivors
-        - after resync, scheduler state == canonical valid DB-derived state
-        - returns number of jobs installed (for tests/audit)
+            canonical Tasks
+            -> reconcile canonical Reminder facts
+            -> rebuild derived scheduler jobs
+
+        NOT merely "Reminder facts -> scheduler jobs". Rebuilding only from
+        existing Reminder rows cannot heal: M2->M3 upgraded tasks (reminders
+        table empty), or crash gaps where the Task commit succeeded before
+        Reminder planning completed.
+
+        Steps:
+        1. clear all derived scheduler jobs
+        2. enumerate ALL relevant tasks (pending + deadline != None; dedicated
+           query, never silently truncated)
+        3. for each task compute the DesiredReminder set using the SAME
+           Clock/timezone/ReminderPolicy/quiet-hour/min-lead/deadline rules
+        4. reconcile persisted facts for that task:
+             - matching valid future facts (same type + trigger_at): KEEP
+               (stable identity — no recreate on restart)
+             - stale scheduled facts no longer desired: mark cancelled
+             - missing desired facts: create
+        5. tasks that are done/dismissed/pending_confirm/no-deadline must have
+           no scheduled reminders (stale facts cancelled)
+        6. past/missed reminders: never recreated, never backfilled
+        7. schedule ONLY the valid canonical scheduled facts afterwards
+
+        Idempotency (M3.3): unchanged task -> resync -> same active fact IDs,
+        same deterministic jobs, no cancelled-history growth from restart.
+
+        Returns number of derived jobs installed (for tests/audit).
         """
         await self._scheduler.clear_all()  # true rebuild: drop ALL derived state
-        scheduled = await self._reminders.list_scheduled()
         now = self._clock.utcnow()
         installed = 0
-        for r in scheduled:
-            valid = True
-            try:
-                task = await self._tasks.get(r.task_id)
-            except Exception:
-                # task deleted -> close fact, no job
-                valid = False
-                task = None
-            if valid and task is not None:
-                valid = task.status == TaskStatus.PENDING.value
-            if not valid:
-                await self._reminders.mark_cancelled(r.id, now=now)
+
+        # ---- 1) active facts for ALL tasks, keyed by task_id ----------------
+        all_scheduled = await self._reminders.list_scheduled()
+        by_task: dict[int, list[Reminder]] = {}
+        for r in all_scheduled:
+            by_task.setdefault(r.task_id, []).append(r)
+
+        # ---- 2) every task that needs reminder planning ---------------------
+        relevant = await self._tasks.list_pending_with_deadline()
+        relevant_ids = {t.id for t in relevant}
+
+        # ---- 3) reconcile each relevant task's active facts -----------------
+        for task in relevant:
+            desired = plan_desired_reminders(
+                task=task,
+                now=now,
+                tz=self._tz,
+                policy=self._policy,
+            )
+            existing = by_task.get(task.id, [])
+            # match: same logical (type, trigger_at) -> KEEP identity
+            kept: set[int] = set()
+            for d in desired:
+                match = next(
+                    (r for r in existing if r.id not in kept
+                     and r.type == d.type
+                     and r.trigger_at == d.trigger_at_utc),
+                    None,
+                )
+                if match is not None:
+                    kept.add(match.id)
+                    continue
+                # missing desired fact -> create
+                await self._reminders.create(
+                    task_id=task.id, trigger_at=d.trigger_at_utc, type=d.type
+                )
+            # stale scheduled facts no longer desired -> cancel
+            for r in existing:
+                if r.id not in kept:
+                    await self._reminders.mark_cancelled(r.id, now=now)
+
+        # ---- 4) tasks WITHOUT a valid plan must have no active facts --------
+        for task_id, facts in by_task.items():
+            if task_id in relevant_ids:
                 continue
+            try:
+                task = await self._tasks.get(task_id)
+            except Exception:
+                task = None  # deleted task: close facts below
+            active = task is not None and task.status == TaskStatus.PENDING.value
+            has_deadline = task is not None and task.deadline is not None
+            if not (active and has_deadline):
+                for r in facts:
+                    await self._reminders.mark_cancelled(r.id, now=now)
+
+        # ---- 5) schedule ONLY valid canonical scheduled facts ---------------
+        survivors = await self._reminders.list_scheduled()
+        for r in survivors:
             if r.trigger_at <= now:
                 # missed while down: do NOT backfill; close fact safely
                 await self._reminders.mark_cancelled(r.id, now=now)

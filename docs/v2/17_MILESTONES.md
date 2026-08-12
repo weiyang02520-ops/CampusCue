@@ -30,7 +30,9 @@
 
 ## M2：Task Pipeline（含 Provider Foundation）
 
-> **M2a（完成，PASS）**：Data + Provider Foundation。**M2b.1（完成，PASS）**：AI-first Task Extraction Pipeline（ADR-013：本地规则不做语义 gate；LLM 单次 triage+extraction；Mock Provider + SQLite 全链路）。**M2b.2（完成，REAL_ENV PASS，2026-08-10）**：真实 Provider（DeepSeek）+ 真实 QQ/NapCat + 真实 SQLite 验收。**M2 = TECHNICALLY_COMPLETE AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW；M2 FINAL = NOT YET DECLARED；M3 = NOT_AUTHORIZED。**
+> **M2a（完成，FINAL PASS）**：Data + Provider Foundation。**M2b.1（完成，FINAL PASS）**：AI-first Task Extraction Pipeline（ADR-013：本地规则不做语义 gate；LLM 单次 triage+extraction；Mock Provider + SQLite 全链路）。**M2b.2（完成，REAL_ENV PASS，2026-08-10）**：真实 Provider（DeepSeek）+ 真实 QQ/NapCat + 真实 SQLite 验收。**M2 FINAL = PASS（@ 23083cb）。**
+>
+> **M3（完成，FINAL_RECOVERY_FIX_COMPLETE AWAITING_EXTERNAL_REVIEW）**：Reminder 子系统（schema v2）——DB reminder facts（canonical）+ ReminderService（幂等 plan/cancel/resync/fire；startup resync 从 Tasks 对账）+ APScheduler 3.11 派生 jobs（确定性 job_id）+ TaskService 生命周期联动 + quiet-hours 契约。**M3 FINAL = NOT YET DECLARED（等外部）；M4 = NOT_AUTHORIZED。**
 
 **范围**：
 - **M2a Provider Foundation**（原 M4 部分，**I 修正：Provider 前移至 M2**，M4 不重新造）：

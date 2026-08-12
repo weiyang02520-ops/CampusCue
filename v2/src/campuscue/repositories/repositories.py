@@ -313,6 +313,22 @@ class TaskRepository(_BaseRepo[Task]):
             task_updated = task  # noqa: F841 (updated_at bookkeeping not needed on delete)
             await session.commit()
 
+    async def list_pending_with_deadline(self) -> list[Task]:
+        """M3.3-A: ALL tasks that need reminder planning (status=pending AND
+        deadline IS NOT NULL). Dedicated query — never silently truncated:
+        every relevant task is reconciled on startup, regardless of count."""
+        async with self._sf() as session:
+            return list(
+                (
+                    await session.scalars(
+                        select(Task).where(
+                            Task.status == TaskStatus.PENDING.value,
+                            Task.deadline.is_not(None),
+                        )
+                    )
+                ).all()
+            )
+
 
 class ExtractionRepository(_BaseRepo[Extraction]):
     async def create(
@@ -427,6 +443,20 @@ class ReminderRepository(_BaseRepo[Reminder]):
                         select(Reminder)
                         .where(Reminder.status == ReminderStatus.SCHEDULED.value)
                         .order_by(Reminder.trigger_at)
+                    )
+                ).all()
+            )
+
+    async def list_scheduled_for_task(self, task_id: int) -> list[Reminder]:
+        """Active (scheduled) reminder facts of ONE task (M3.3-A reconciliation)."""
+        async with self._sf() as session:
+            return list(
+                (
+                    await session.scalars(
+                        select(Reminder).where(
+                            Reminder.task_id == task_id,
+                            Reminder.status == ReminderStatus.SCHEDULED.value,
+                        )
                     )
                 ).all()
             )

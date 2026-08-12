@@ -205,3 +205,13 @@
 - **测试**：新增 9 → **363 passed**；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无 QQ（M3 本地调度器）；M2b.2 REAL ENV 保留
 - **审核状态**：M3 = FINAL_FIX_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED
+
+
+## 2026-08-12 · M3.3 FINAL RECOVERY FIX
+
+- **任务**：外部 M3.2 复核 PASS；M3 FINAL CHANGES_REQUESTED——resync 对账缺口（A）+ 当前版本结构验证（B）+ 17_MILESTONES（C）
+- **Commit**：fix: complete M3 reminder recovery semantics（本轮）
+- **主要修改**：resync_all 真业务对账（Tasks→facts→jobs；保留匹配 fact 身份/创建缺失/取消 stale/不补发/幂等无 churn）；TaskRepository.list_pending_with_deadline（不截断）；v1/v2 共享 _validate_application_schema（create_all 前只读验证，零变更拒绝）；17_MILESTONES gate 修复
+- **测试**：新增 7 → **370 passed**；package isolation PASS；Anti-AstrBot PASS
+- **REAL ENV**：无 QQ（M3 本地调度器）；M2b.2 REAL ENV 保留
+- **审核状态**：M3 = FINAL_RECOVERY_FIX_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED
