@@ -325,7 +325,7 @@ class TestSchemaZeroMutation:
 
         path = self._setup_future_version(tmp_path, version=0)  # older
         db = Database(DatabaseConfig(path=path, env="test"))
-        with pytest.raises(SchemaRefusedError, match="unsupported schema version"):
+        with pytest.raises(SchemaRefusedError, match="unsupported old schema version"):
             await db.initialize()
 
     @pytest.mark.asyncio

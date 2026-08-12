@@ -3,6 +3,7 @@
 Responsibilities:
 - AsyncEngine + async session factory (SQLAlchemy 2.x + aiosqlite)
 - safe schema bootstrap: compatibility check BEFORE any mutation (M2a.1-D)
+- owned v1 → v2 migration (M3: adds reminders table)
 - dispose
 
 SQLite pragmas: foreign_keys=ON, busy_timeout, WAL for file-backed DB.
@@ -13,11 +14,14 @@ Schema safety contract (M2a.1-D):
   INCOMPATIBLE EXISTING DATABASE -> DETECT -> REFUSE -> ZERO MUTATION
   1. inspect sqlite metadata FIRST (no writes)
   2. schema_meta absent:
-       - no application tables at all -> fresh DB -> bootstrap (create + version 1)
+       - no application tables at all -> fresh DB -> bootstrap (create + version current)
        - existing unknown tables -> REFUSE (do not claim arbitrary DB files)
   3. schema_meta present:
-       - version != supported -> REFUSE without mutation
+       - version > supported -> REFUSE without mutation
        - version == supported -> proceed (reopen / verify current tables)
+       - version == v1 (supported-1) -> OWNED MIGRATION: create reminders table,
+         update version to v2, then proceed (M3; single owned migration path, no Alembic)
+       - other older versions -> REFUSE (no arbitrary multi-version chain yet)
 """
 
 from __future__ import annotations
@@ -33,8 +37,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from campuscue.storage.models import SCHEMA_VERSION, Base, SchemaMeta
 
 _APPLICATION_TABLES = frozenset(
-    {"sources", "tasks", "extractions", "provider_configs", "schema_meta"}
+    {"sources", "tasks", "extractions", "provider_configs", "schema_meta", "reminders"}
 )
+
+# v1 (M2) schema had no reminders table; v2 (M3) adds it.
+_V1_SUPPORTED = 1
 
 
 @dataclass(frozen=True)
@@ -72,12 +79,16 @@ class Database:
             raise RuntimeError(":memory: is not supported for the async engine; use a temp file")
         return f"sqlite+aiosqlite:///{p}"
 
-    def _precheck(self) -> None:
+    def _precheck(self) -> tuple[str | None, set[str]]:
         """READ-ONLY preflight on the raw sqlite file. Raises SchemaRefusedError
-        for incompatible/unknown databases BEFORE any mutation (M2a.1-D)."""
+        for incompatible/unknown databases BEFORE any mutation (M2a.1-D).
+
+        Returns (existing_schema_version | None, user_tables) so initialize()
+        can decide: fresh bootstrap / reopen / owned v1->v2 migration.
+        """
         path = str(self._config.path)
         if not os.path.exists(path):
-            return  # fresh file -> normal bootstrap path
+            return None, set()
         try:
             conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         except sqlite3.Error as e:
@@ -98,25 +109,73 @@ class Database:
                         f"existing database has tables {sorted(user_tables)} but no "
                         "schema_meta; refusing to claim an arbitrary DB file (migration required)"
                     )
-                return  # no user tables, no schema_meta -> effectively fresh
+                return None, user_tables  # effectively fresh
             # schema_meta exists: read version FIRST, no writes
             rows = conn.execute("SELECT schema_version FROM schema_meta").fetchall()
             versions = [r[0] for r in rows]
             if not versions:
                 raise SchemaRefusedError("schema_meta exists but is empty; refusing to guess")
-            unsupported = [v for v in versions if v != SCHEMA_VERSION]
+            unsupported = [v for v in versions if v > SCHEMA_VERSION]
             if unsupported:
                 raise SchemaRefusedError(
                     f"unsupported schema version(s) {unsupported!r}; this build supports "
                     f"version {SCHEMA_VERSION}. Refusing to open a newer/unknown database."
                 )
+            older = [v for v in versions if v < _V1_SUPPORTED]
+            if older:
+                raise SchemaRefusedError(
+                    f"unsupported old schema version(s) {older!r}; no migration chain "
+                    f"before v{_V1_SUPPORTED} (requires manual migration)."
+                )
+            return versions[0], user_tables
+        finally:
+            conn.close()
+
+    def _migrate_v1_to_v2(self) -> None:
+        """Owned migration v1 -> v2 (M3): add reminders table, bump version.
+
+        Runs BEFORE the ORM engine opens, on the raw sqlite file, so the
+        migration is explicit and auditable; existing v1 rows are preserved.
+        No changes outside adding the reminders table + version bump.
+        """
+        path = str(self._config.path)
+        conn = sqlite3.connect(path)
+        try:
+            cur = conn.cursor()
+            # create reminders table with the same shape as the ORM model (v2)
+            cur.executescript(
+                """
+                CREATE TABLE reminders (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    task_id INTEGER NOT NULL REFERENCES tasks(id),
+                    trigger_at DATETIME NOT NULL,
+                    type VARCHAR(16) NOT NULL,
+                    status VARCHAR(16) NOT NULL,
+                    last_run DATETIME,
+                    error TEXT,
+                    job_id VARCHAR(64),
+                    created_at DATETIME NOT NULL,
+                    updated_at DATETIME NOT NULL
+                );
+                CREATE INDEX ix_reminder_task_id ON reminders (task_id);
+                CREATE INDEX ix_reminder_status_trigger ON reminders (status, trigger_at);
+                """
+            )
+            cur.execute("UPDATE schema_meta SET schema_version = ?", (SCHEMA_VERSION,))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
         finally:
             conn.close()
 
     async def initialize(self) -> None:
-        """Precheck (zero mutation) -> create engine -> pragmas -> create_all ->
-        ensure version row. Reopen of a supported DB is idempotent."""
-        self._precheck()
+        """Precheck (zero mutation) -> owned migration if v1 -> engine -> pragmas ->
+        create_all -> ensure version row. Reopen of a supported DB is idempotent."""
+        version, _tables = self._precheck()
+        if version == _V1_SUPPORTED:
+            # owned v1 -> v2 migration (M3): BEFORE opening the ORM engine
+            self._migrate_v1_to_v2()
         url = self._url()
         self._engine = create_async_engine(url, connect_args={"timeout": self._config.busy_timeout_ms / 1000})
 

@@ -36,3 +36,19 @@ class ExtractionStatus(str, Enum):
     SKIPPED = "skipped"
     ERROR = "error"
     DUPLICATE = "duplicate"
+
+
+class ReminderType(str, Enum):
+    """Reminder intent types (M3). Closed set enforced at repository + DB."""
+
+    DAY_BEFORE = "day_before"  # deadline - 1 day
+    HOURS_BEFORE = "hours_before"  # deadline - 2 hours
+    DEADLINE = "deadline"  # at deadline moment
+
+
+class ReminderStatus(str, Enum):
+    """Reminder fact lifecycle (M3). DB rows are canonical facts."""
+
+    SCHEDULED = "scheduled"  # active, has a derived scheduler job
+    FIRED = "fired"  # delivered at least once
+    CANCELLED = "cancelled"  # task lifecycle cancelled the reminder

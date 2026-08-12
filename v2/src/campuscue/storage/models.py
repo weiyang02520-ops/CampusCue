@@ -1,8 +1,12 @@
 """Storage ORM models (SQLAlchemy 2.x, M2a scope).
 
-Tables: sources, tasks, extractions, provider_configs, schema_meta.
-Explicitly NOT implemented: reminders, messages, settings (YAGNI).
+Tables: sources, tasks, extractions, reminders, provider_configs, schema_meta.
+Explicitly NOT implemented: messages, settings (YAGNI).
 All datetimes cross the storage boundary as timezone-aware UTC (ADR-012-G).
+
+Schema version history:
+- v1: sources, tasks, extractions, provider_configs, schema_meta (M2)
+- v2: + reminders (M3) — explicit migration path in database.py
 """
 
 from __future__ import annotations
@@ -28,7 +32,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 class UTCDateTime(TypeDecorator):
@@ -53,7 +57,14 @@ class UTCDateTime(TypeDecorator):
             return None
         return value.replace(tzinfo=timezone.utc)
 
-from campuscue.storage.enums import ExtractionStatus, TaskCategory, TaskPriority, TaskStatus
+from campuscue.storage.enums import (
+    ExtractionStatus,
+    ReminderStatus,
+    ReminderType,
+    TaskCategory,
+    TaskPriority,
+    TaskStatus,
+)
 
 
 class Base(DeclarativeBase):
@@ -105,6 +116,31 @@ class Task(Base):
     source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id"), nullable=True)
     source_message_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     source_text_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
+class Reminder(Base):
+    """Reminder FACT row (M3). DB = canonical business fact; scheduler job =
+    derived runtime state rebuildable from these rows (ADR-006/10_REMINDER)."""
+
+    __tablename__ = "reminders"
+    __table_args__ = (
+        CheckConstraint("type IN ('day_before','hours_before','deadline')", name="ck_reminder_type"),
+        CheckConstraint("status IN ('scheduled','fired','cancelled')", name="ck_reminder_status"),
+        Index("ix_reminder_status_trigger", "status", "trigger_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), nullable=False, index=True)
+    trigger_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)  # aware UTC
+    type: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default=ReminderStatus.SCHEDULED.value)
+    last_run: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)  # safe/redacted error text
+    # APScheduler job id (DERIVED runtime state, rebuildable); stored for
+    # audit/tracing only — never canonical business state
+    job_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
 

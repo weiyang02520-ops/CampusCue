@@ -6,13 +6,14 @@
 
 - **M1**：独立 QQ / NapCat / OneBot Reverse WS runtime（`hello` → `received: hello` Echo）
 - **M2**：数据层 + Provider foundation；AI-first 任务抽取（L0-L7 pipeline）；**真实 QQ → 真实 Provider → SQLite Task 全链路**（2026-08-10 真实验收通过）
+- **M3**：Reminder 提醒子系统（schema v2）——DB reminder facts（canonical）+ ReminderService（三档/quiet-hours/幂等）+ APScheduler 派生 jobs（确定性 job_id，重启 resync 重建）；启用 `CAMPUSCUE_REMINDERS=1`
 
 ## 未实现（Not yet implemented）
 
-- M3 Reminder（提醒调度）
 - M4 Agent / Tool loop
 - M5 API / SSE / Realtime
 - M6 WebUI
+- 端用户提醒投递 UX（M3 为调度/生命周期；delivery 注入边界 + NoopDelivery）
 - 插件系统 / MCP / RAG
 
 > **M2 启用方式**：`CAMPUSCUE_TASK_PIPELINE=1` + `CAMPUSCUE_DB_PATH=<验收 DB>` + `CAMPUSCUE_TIMEZONE=Asia/Shanghai`。真实 Provider 配置见 `scripts/m2_configure_provider.py`（secret 只存 env 变量名）；真实来源配置见 `scripts/m2_configure_source.py`（conversation ID 走 `CAMPUSCUE_SOURCE_CONVERSATION` 环境变量，不写 Git）。

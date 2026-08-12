@@ -33,8 +33,20 @@ class TaskPipelineConfig:
     database_path_explicit: bool = False  # CAMPUSCUE_DB_PATH was actually supplied
     timezone: str = "Asia/Shanghai"
     confidence_threshold: float = 0.6
+    reminders_enabled: bool = False  # CAMPUSCUE_REMINDERS=1 (M3 opt-in)
     # NOTE: no prefilter threshold — LocalSignalAnalyzer score is NOT a gate
     # (ADR-013 AI-first: local signals are hints, never a semantic veto)
+
+
+@dataclass(frozen=True)
+class ReminderConfig:
+    """M3 reminder policy knobs (bounded, fail-fast, configurable)."""
+
+    enabled: bool = False  # CAMPUSCUE_REMINDERS=1
+    timezone: str = "Asia/Shanghai"
+    min_lead_seconds: float = 60.0
+    quiet_start_hour: int = 23
+    quiet_end_hour: int = 8
 
 
 @dataclass(frozen=True)
@@ -42,6 +54,7 @@ class RuntimeConfig:
     onebot: OneBotConfig = field(default_factory=OneBotConfig)
     event_bus: EventBusConfig = field(default_factory=EventBusConfig)
     tasks: TaskPipelineConfig = field(default_factory=TaskPipelineConfig)
+    reminders: ReminderConfig = field(default_factory=ReminderConfig)
     diagnostic: bool = False  # CAMPUSCUE_DIAGNOSTIC=1; default OFF (privacy)
 
     def __post_init__(self) -> None:
@@ -54,6 +67,11 @@ class RuntimeConfig:
         self._require_positive("dedup_capacity", self.onebot.dedup_capacity)
         self._require_positive("dedup_ttl_s", self.onebot.dedup_ttl_s)
         self._require_positive("action_timeout_s", self.onebot.action_timeout_s)
+        self._require_positive("min_lead_seconds", self.reminders.min_lead_seconds)
+        if not (0 <= self.reminders.quiet_start_hour < 24):
+            raise ValueError(f"invalid quiet_start_hour: {self.reminders.quiet_start_hour!r}")
+        if not (0 <= self.reminders.quiet_end_hour < 24):
+            raise ValueError(f"invalid quiet_end_hour: {self.reminders.quiet_end_hour!r}")
         if not (1 <= self.onebot.port <= 65535):
             raise ValueError(f"invalid port: {self.onebot.port!r} (must be 1-65535)")
         if not self.onebot.path.startswith("/"):
@@ -138,5 +156,12 @@ def load_config() -> RuntimeConfig:
             max_in_flight=int(os.environ.get("CAMPUSCUE_MAX_IN_FLIGHT", "32")),
         ),
         tasks=tasks,
+        reminders=ReminderConfig(
+            enabled=_env_bool("CAMPUSCUE_REMINDERS"),
+            timezone=os.environ.get("CAMPUSCUE_REMINDER_TIMEZONE", "Asia/Shanghai"),
+            min_lead_seconds=float(os.environ.get("CAMPUSCUE_REMINDER_MIN_LEAD_S", "60")),
+            quiet_start_hour=int(os.environ.get("CAMPUSCUE_REMINDER_QUIET_START", "23")),
+            quiet_end_hour=int(os.environ.get("CAMPUSCUE_REMINDER_QUIET_END", "8")),
+        ),
         diagnostic=_env_bool("CAMPUSCUE_DIAGNOSTIC"),
     )

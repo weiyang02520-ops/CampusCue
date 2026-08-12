@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-10 · M2b.2 REAL ENV）
+## 1. CURRENT TRUTH（Last Updated 2026-08-12 · M3）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0 = PASS；M1 = PASS；M2a = PASS；M2b.1 = PASS（最终）；M2b.2 = REAL_ENV_ACCEPTANCE_COMPLETE AWAITING_EXTERNAL_M2_FINAL_REVIEW；M2 = AWAITING_EXTERNAL_FINAL_REVIEW；M2 FINAL = NOT PASS（等外部复核）** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV）；M3 Reminder = AUTHORIZED → IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -313,3 +313,14 @@ User
 - **[EXTERNAL_REVIEW][DOCUMENTATION_RULE]**：README 当前能力陈述必须跟踪已实现 milestone 状态——M2 实现后不得残留"当前能力仅 M1 / M2+ 未实现"。用 Implemented / Not-yet-implemented 显式区分。
 - **[EXTERNAL_REVIEW][DOCUMENTATION_RULE]**：不得手动声明与 pyproject.toml 矛盾的依赖集——**pyproject.toml 是 canonical 依赖源**。
 - **[REPO_CONFIRMED]**：M2 Final Continuity Cleanup 落地：AGENT_MEMORY/README/pyproject description 修复；生产源码零修改；测试未重跑（316 为历史证据）。
+
+## 9O. MEMORY DELTA（M3 Reminder）
+
+- **[EXTERNAL_REVIEW][CURRENT]**：M2 FINAL PASS（GitHub baseline 23083cb）。M3 Reminder authorized。M4 remains unauthorized until M3 external final review。
+- **[DESIGN_DECISION][M3]**：Reminder DB rows 是 canonical facts；scheduler jobs 是 fully derived/rebuildable runtime state（resync_all 从 facts 重建；确定性 job_id `reminder:<id>`）。
+- **[DESIGN_DECISION][M3]**：TaskService 拥有 task create/deadline change/complete/dismiss/delete 的 reminder lifecycle 耦合（ADR-006 强制；可选注入——Reminder 子系统禁用时 M2 行为不变）。
+- **[DESIGN_DECISION][M3]**：schema v1→v2 显式迁移（reminders 表）；禁止静默改 schema 而 SCHEMA_VERSION 不变。v0/未知/更新版本拒绝零变更。
+- **[DESIGN_DECISION][M3]**：停机期间错过的提醒**不补发**（resync 显式比较 trigger_at <= now → cancel；不依赖 scheduler misfire 默认）。
+- **[DESIGN_DECISION][M3]**：Reminder 业务时间用注入 Clock + timezone（无隐藏墙钟）；trigger_at 存 aware UTC。
+- **[REAL_ENV_LOCAL][M3]**：本地真实调度器验收 PASS（APScheduler 3.11 真实验证）：任务→3 facts/3 jobs；重启 resync 重建无重复；deadline 变更旧计划取消新计划就位；complete 后全取消 0 jobs 0 投递。
+- **[REPO_CONFIRMED][M3]**：344 tests 全绿（+28 M3）；APScheduler 3.11 实测行为：memory jobstore 的 replace_existing 会**追加**而非替换 → 显式 remove-then-add；shutdown 未启动调度器抛 SchedulerNotRunningError → 容错。misfire_grace_time 必须 >0（3.11 拒绝 0）。

@@ -14,54 +14,53 @@
 
 ## current_milestone
 
-- M0 = **PASS**；M1 = **PASS**（含 REAL ENV）；M2a = **PASS**；**M2b.1 = PASS（最终）**；**M2b.2 = REAL_ENV PASS**
-- **M2 = AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW**（技术实现 + REAL ENV 已通过；仅剩连续性文档复核）
-- **M2 FINAL = NOT YET DECLARED**（等外部）；**M3 = NOT_AUTHORIZED**
-- status：**AWAITING_EXTERNAL_M2_FINAL_CONTINUITY_REVIEW**
+- M0-M2 全部 **FINAL PASS**（含 M2b.2 REAL ENV；M2 FINAL PASS @ 23083cb）
+- **M3 Reminder = IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_REVIEW**（schema v1→v2 + ReminderService + APScheduler 3.11 + TaskService 联动 + 本地真实调度器验收 PASS）
+- **M3 FINAL = NOT YET DECLARED**（等外部）；**M4+ = NOT_AUTHORIZED**
+- status：**AWAITING_EXTERNAL_M3_REVIEW**
 
 ## completed
 
-- M0 / M0.1 / M0.2（PASS）
-- M1 / M1.1 / M1.2 / M1.3（PASS）
-- M2a / M2a.1 / M2a.2（PASS）
-- M2b.1 / M2b.1.1 / M2b.1.2（PASS）
-- **M2b.2（REAL ENV PASS）**：真实 QQ 群消息 → NapCat → Reverse WS → AI-first pipeline → DeepSeek → SQLite 全链路；测试 A-E 全 PASS（hello 共存/明确任务 deadline 精确/普通聊天 skipped/语义重复/重启持久化 + 自动重连）
-- **M2 Final Continuity Cleanup（本轮）**：AGENT_MEMORY/README/pyproject 描述 stale 状态修复（纯文档）
+- M0 / M0.1 / M0.2（PASS）；M1 / M1.1 / M1.2 / M1.3（PASS）；M2a / M2a.1 / M2a.2 / M2b.1 / M2b.1.1 / M2b.1.2（PASS）；M2b.2（REAL ENV PASS）
+- **M3 Reminder（本轮）**：DB reminder facts（canonical）+ ReminderService（plan/cancel/resync/fire 幂等）+ APScheduler 3.11（derived jobs，确定性 job_id）+ TaskService 生命周期联动（create/deadline/complete/dismiss/delete）+ schema v1→v2 迁移（零变更拒绝）+ 本地真实调度器验收（任务→3 facts/3 jobs；重启重建无重复；deadline 变更；complete 全取消 0 投递）
 
 ## in_progress
 
-- 无（M2 技术完成；checkpoint 后停止，等待外部最终连续性复核）
+- 无（M3 实现完成，checkpoint 后停止，等待外部复核）
 
 ## blocked
 
-- **M3 仅阻塞于 M2 外部最终连续性复核**（无其他阻塞）
+- **M4+ 仅阻塞于 M3 外部复核**（无其他阻塞）
 
 ## verified（Workspace Agent 报告；外部审核待复核）
 
-- **REAL ENV VERIFIED（M2b.2，2026-08-10）**：真实 QQ 群消息全链路；structured_mode=json_fallback（DeepSeek）；deadline `2026-08-14 15:59 UTC` 精确；duplicate 不创建第二 Task；重启 DB 持久化 + NapCat 自动重连
-- 最新 Workspace Agent checkpoint：316 tests（2026-08-10，M2b.2 时）——本轮零源码修改未重跑
-- 外部审核状态：**awaiting**（M2a/M2b.1/M2b.2 技术 PASS；M2 最终连续性复核待通过）
+- **344 tests passed**（+28 M3）；package isolation PASS（fresh venv `.venv-m2iso` + apscheduler 3.11.3）；Anti-AstrBot PASS
+- **LOCAL REAL SCHEDULER VERIFIED（M3，2026-08-12）**：真实 APScheduler 3.11（非 mock）——facts/jobs 一致性、重启 resync、deadline 变更、complete 取消、无投递
+- REAL ENV（M2b.2，2026-08-10）保留；M3 无 QQ 验收（不需要）
+- 外部审核状态：**awaiting**（M0-M2 PASS；M3 待复核）
 
 ## unverified / known unknowns
 
-- 无阻塞性未知；真实模型 course 提取依赖消息原文是否含课程名（REAL_MODEL_VARIANCE，非 bug）
-- 无迁移框架；未来 schema 版本需人工迁移
+- 真实端用户投递 UX（M3 仅 delivery 注入边界 + NoopDelivery；QQ/桌面通知为后续里程碑）
+- 无迁移框架（v1→v2 owned migration；未来版本需人工扩迁移链）
 
 ## architecture_decisions
 
-- ADR-001 ~ ADR-013（docs/v2/adr/，含 ADR-013 AI-First Extraction）
+- ADR-001 ~ ADR-013（docs/v2/adr/）；M3 决策见 CHATGPT_MEMORY §9O
 
 ## next_gate
 
-- 外部 ChatGPT M2 最终连续性复核 → PASS 则 **M2 FINAL PASS + M3（Reminder）授权**
+- 外部 ChatGPT M3 源码复核 → PASS 则 **M3 FINAL PASS + M4（Agent）授权**
 
-## external_review_focus（M2 Final Continuity 复核点）
+## external_review_focus（M3 复核点）
 
-1. AGENT_MEMORY 全文件语义一致（无 stale 活动状态：M2b.1 PASS / M2b.2 PASS / M2 TECHNICALLY_COMPLETE / M3 NOT_AUTHORIZED）
-2. README 能力现状 = Implemented（M1+M2）/ Not yet（Reminder/Agent/API/WebUI）无矛盾
-3. README 架构双路径（Echo + TaskPipeline）
-4. README 依赖以 pyproject.toml 为准（不手动断言）
-5. pyproject description milestone-neutral
-6. NapCat EPIPE 措辞 = 本机观察非普适规则
-7. 用户大号保护事实保留（无真实 ID）
-8. 生产源码零修改
+1. schema v1→v2 迁移安全（保留数据/零变更拒绝/幂等重开）
+2. DB reminder fact vs scheduler derived job 不变式
+3. ReminderService 幂等（重复 plan 无重复 facts/jobs）
+4. TaskService 生命周期联动（deadline/complete/dismiss/delete 取消）
+5. resync 重建无重复；停机错过不补发
+6. Clock/timezone 注入（无隐藏墙钟；DST 边界测试）
+7. APScheduler 3.11 隔离（framework 专属代码不泄漏）
+8. runtime 启动/关闭顺序（resync→start；shutdown→dispose；失败逆序清理）
+9. M2 回归（Reminder 禁用时 pipeline 不变）
+10. 无 M4+ 实现；privacy（无 QQ 触碰）

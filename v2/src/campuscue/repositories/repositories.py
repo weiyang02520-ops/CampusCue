@@ -24,8 +24,21 @@ from campuscue.providers.validation import (
     validate_secret_reference,
 )
 from campuscue.storage.clock import Clock, SystemClock
-from campuscue.storage.enums import ExtractionStatus, TaskCategory, TaskPriority, TaskStatus
-from campuscue.storage.models import Extraction, ProviderConfig, Source, Task
+from campuscue.storage.enums import (
+    ExtractionStatus,
+    ReminderStatus,
+    ReminderType,
+    TaskCategory,
+    TaskPriority,
+    TaskStatus,
+)
+from campuscue.storage.models import (
+    Extraction,
+    ProviderConfig,
+    Reminder,
+    Source,
+    Task,
+)
 
 T = TypeVar("T", bound=DeclarativeBase)
 
@@ -254,6 +267,52 @@ class TaskRepository(_BaseRepo[Task]):
                 ).all()
             )
 
+    async def update_deadline(self, task_id: int, deadline: datetime | None) -> Task:
+        """M3: deadline mutation primitive (persistence only; reminder
+        orchestration lives in TaskService)."""
+        if deadline is not None and deadline.tzinfo is None:
+            raise ValueError("naive deadline rejected at storage boundary")
+        now = self._now()
+        async with self._sf() as session:
+            task = await session.get(Task, task_id)
+            if task is None:
+                raise NotFoundError(f"task {task_id} not found")
+            task.deadline = deadline.astimezone(timezone.utc) if deadline else None
+            task.updated_at = now
+            await session.commit()
+            await session.refresh(task)
+            return task
+
+    async def set_status(self, task_id: int, status: str) -> Task:
+        """M3: status mutation primitive (closed-set enforced; reminder
+        orchestration lives in TaskService)."""
+        status_v = _require_enum(TaskStatus, status, "status")
+        now = self._now()
+        async with self._sf() as session:
+            task = await session.get(Task, task_id)
+            if task is None:
+                raise NotFoundError(f"task {task_id} not found")
+            task.status = status_v
+            task.updated_at = now
+            await session.commit()
+            await session.refresh(task)
+            return task
+
+    async def delete(self, task_id: int) -> None:
+        """M3: delete primitive. Caller (TaskService) cancels reminders FIRST
+        (FK-safe ordering); this removes the task row only."""
+        now = self._now()
+        async with self._sf() as session:
+            task = await session.get(Task, task_id)
+            if task is None:
+                raise NotFoundError(f"task {task_id} not found")
+            # FK-safe: reminders for this task must be cancelled/removed by the
+            # service layer before this call; the reminders table has
+            # FK to tasks.id so delete fails if rows remain.
+            await session.delete(task)
+            task_updated = task  # noqa: F841 (updated_at bookkeeping not needed on delete)
+            await session.commit()
+
 
 class ExtractionRepository(_BaseRepo[Extraction]):
     async def create(
@@ -305,6 +364,133 @@ class ExtractionRepository(_BaseRepo[Extraction]):
                     )
                 ).all()
             )
+
+
+class ReminderRepository(_BaseRepo[Reminder]):
+    """Single-table persistence for reminder FACTS (M3). No business rules:
+    no planning offsets, no task mutation, no scheduler ops, no delivery."""
+
+    async def create(
+        self,
+        *,
+        task_id: int,
+        trigger_at: datetime,
+        type: str,
+        status: str = ReminderStatus.SCHEDULED.value,
+        job_id: str | None = None,
+        error: str | None = None,
+    ) -> Reminder:
+        type_v = _require_enum(ReminderType, type, "type")
+        status_v = _require_enum(ReminderStatus, status, "status")
+        if trigger_at.tzinfo is None:
+            raise ValueError("naive trigger_at rejected at storage boundary")
+        now = self._now()
+        async with self._sf() as session:
+            row = Reminder(
+                task_id=task_id,
+                trigger_at=trigger_at.astimezone(timezone.utc),
+                type=type_v,
+                status=status_v,
+                job_id=job_id,
+                error=error,
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(row)
+            await session.commit()
+            await session.refresh(row)
+            return row
+
+    async def get(self, reminder_id: int) -> Reminder:
+        async with self._sf() as session:
+            row = await session.get(Reminder, reminder_id)
+            if row is None:
+                raise NotFoundError(f"reminder {reminder_id} not found")
+            return row
+
+    async def list_for_task(self, task_id: int) -> list[Reminder]:
+        async with self._sf() as session:
+            return list(
+                (
+                    await session.scalars(
+                        select(Reminder).where(Reminder.task_id == task_id).order_by(Reminder.trigger_at)
+                    )
+                ).all()
+            )
+
+    async def list_scheduled(self) -> list[Reminder]:
+        """All active (scheduled) reminder facts — the resync source of truth."""
+        async with self._sf() as session:
+            return list(
+                (
+                    await session.scalars(
+                        select(Reminder)
+                        .where(Reminder.status == ReminderStatus.SCHEDULED.value)
+                        .order_by(Reminder.trigger_at)
+                    )
+                ).all()
+            )
+
+    async def cancel_for_task(self, task_id: int, *, now: datetime | None = None) -> int:
+        """Cancel all scheduled reminders of a task (DB facts). Returns count.
+        Caller supplies `now` (aware UTC) for updated_at; defaults to clock."""
+        async with self._sf() as session:
+            rows = (
+                await session.scalars(
+                    select(Reminder).where(
+                        Reminder.task_id == task_id,
+                        Reminder.status == ReminderStatus.SCHEDULED.value,
+                    )
+                )
+            ).all()
+            ts = now or self._now()
+            for r in rows:
+                r.status = ReminderStatus.CANCELLED.value
+                r.updated_at = ts
+            await session.commit()
+            return len(rows)
+
+    async def delete_for_task(self, task_id: int) -> int:
+        """HARD-delete all reminder rows of a task (FK-safe: called by
+        TaskService.delete BEFORE deleting the task row). Returns count."""
+        async with self._sf() as session:
+            rows = (
+                await session.scalars(
+                    select(Reminder).where(Reminder.task_id == task_id)
+                )
+            ).all()
+            for r in rows:
+                await session.delete(r)
+            await session.commit()
+            return len(rows)
+
+    async def mark_fired(self, reminder_id: int, *, run_at: datetime, error: str | None = None) -> Reminder:
+        async with self._sf() as session:
+            row = await session.get(Reminder, reminder_id)
+            if row is None:
+                raise NotFoundError(f"reminder {reminder_id} not found")
+            row.status = ReminderStatus.FIRED.value
+            row.last_run = run_at.astimezone(timezone.utc)
+            row.error = error
+            row.updated_at = run_at.astimezone(timezone.utc)
+            await session.commit()
+            await session.refresh(row)
+            return row
+
+    async def mark_cancelled(self, reminder_id: int, *, now: datetime) -> Reminder:
+        async with self._sf() as session:
+            row = await session.get(Reminder, reminder_id)
+            if row is None:
+                raise NotFoundError(f"reminder {reminder_id} not found")
+            row.status = ReminderStatus.CANCELLED.value
+            row.updated_at = now.astimezone(timezone.utc)
+            await session.commit()
+            await session.refresh(row)
+            return row
+
+    async def list_all(self) -> list[Reminder]:
+        async with self._sf() as session:
+            return list((await session.scalars(select(Reminder).order_by(Reminder.id))).all())
 
 
 class ProviderConfigRepository(_BaseRepo[ProviderConfig]):

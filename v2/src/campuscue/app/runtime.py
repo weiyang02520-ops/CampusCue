@@ -72,8 +72,8 @@ class CampusRuntime:
             raise
 
     async def _init_task_pipeline(self) -> None:
-        """M2 opt-in wiring: DB + repositories + services + pipeline handler.
-        Pipeline handler is added BEFORE EchoHandler so hello still reaches Echo."""
+        """M2/M3 opt-in wiring: DB + repositories + services + pipeline handler
+        (+ M3 reminder scheduler). Pipeline handler added BEFORE EchoHandler."""
         from zoneinfo import ZoneInfo
 
         import os as _os
@@ -82,9 +82,12 @@ class CampusRuntime:
         from campuscue.repositories.repositories import (
             ExtractionRepository,
             ProviderConfigRepository,
+            ReminderRepository,
             SourceRepository,
             TaskRepository,
         )
+        from campuscue.services.reminder_scheduler import ReminderScheduler
+        from campuscue.services.reminder_service import NoopDelivery, ReminderService
         from campuscue.services.task_service import TaskService
         from campuscue.storage.database import Database, DatabaseConfig
         from campuscue.tasks.pipeline import TaskPipeline
@@ -96,20 +99,54 @@ class CampusRuntime:
                 env=_os.environ.get("CAMPUSCUE_ENV", "production"),
             )
         )
-        await database.initialize()
+        await database.initialize()  # includes v1->v2 migration when needed (M3)
         self._database = database
         sf = database.session
-        task_service = TaskService(TaskRepository(sf))
+        tz = ZoneInfo(self.config.tasks.timezone)
+        task_repo = TaskRepository(sf)
+        reminder_repo = ReminderRepository(sf)
+
+        # M3 reminder subsystem (optional/injected; M2 works without it)
+        reminder_service: ReminderService | None = None
+        reminder_scheduler: ReminderScheduler | None = None
+        if self.config.reminders.enabled:
+            reminder_scheduler = ReminderScheduler(fire_callback=self._fire_reminder)
+            reminder_service = ReminderService(
+                reminder_repo,
+                task_repo,
+                scheduler=reminder_scheduler,
+                timezone=tz,
+            )
+            reminder_service.set_delivery(NoopDelivery())
+            self._reminder_service = reminder_service
+            self._reminder_scheduler = reminder_scheduler
+
+        task_service = TaskService(task_repo, reminder_service=reminder_service)
         pipeline = TaskPipeline(
             sources=SourceRepository(sf),
             extractions=ExtractionRepository(sf),
             task_service=task_service,
             provider_manager=ProviderManager(ProviderConfigRepository(sf)),
-            timezone=ZoneInfo(self.config.tasks.timezone),
+            timezone=tz,
             confidence_threshold=self.config.tasks.confidence_threshold,
         )
         self._pipeline = pipeline
         self.router.add_handler(pipeline.handle)
+
+        # M3 scheduler lifecycle: DB ready -> resync from facts -> start
+        if reminder_scheduler is not None and reminder_service is not None:
+            await reminder_service.resync_all()
+            reminder_scheduler.start()
+
+    async def _fire_reminder(self, reminder_id: int) -> None:
+        """Scheduler fire handler -> ReminderService.fire (re-checks latest
+        DB state; redacted logging; never raises out of the scheduler)."""
+        try:
+            rs = getattr(self, "_reminder_service", None)
+            if rs is not None:
+                await rs.fire(reminder_id)
+        except Exception:
+            logger.exception("reminder fire failed; reminder_id=%s", reminder_id)
 
     async def _route_event(self, event) -> None:
         """Bus handler: route, then send inside the handler so the EventBus
@@ -139,6 +176,13 @@ class CampusRuntime:
                 await self.bus.shutdown(timeout_s=1.0)
             except Exception:
                 pass
+        rs = getattr(self, "_reminder_scheduler", None)
+        if rs is not None:
+            try:
+                await rs.shutdown(wait=False)
+            except Exception:
+                pass
+            self._reminder_scheduler = None
         await self._dispose_database()
 
     async def _dispose_database(self) -> None:
@@ -159,6 +203,15 @@ class CampusRuntime:
         # 2) bounded drain of in-flight handlers
         if self.bus is not None:
             await self.bus.shutdown(timeout_s=3.0)
+        # 2b) stop ReminderScheduler cleanly (wait in-flight fire handlers;
+        #     no orphan background work — M3 §17)
+        rs = getattr(self, "_reminder_scheduler", None)
+        if rs is not None:
+            try:
+                await rs.shutdown(wait=True)
+            except Exception:
+                logger.exception("reminder scheduler shutdown failed")
+            self._reminder_scheduler = None
         # 3) dispose owned DB (M2 opt-in)
         await self._dispose_database()
         self.state = RuntimeState.STOPPED

@@ -176,3 +176,12 @@
   - CHATGPT_MEMORY §9N：CONTINUITY_CORRECTION / DOCUMENTATION_RULE ×2
 - **测试**：**未重跑**（零生产源码修改）；316 passed 为 M2b.2 历史证据
 - **审核状态**：M2 = AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW；M2 FINAL = NOT YET DECLARED；M3 NOT_AUTHORIZED
+
+## 2026-08-12 · M3 REMINDER
+
+- **任务**：M3 Reminder 里程碑（DB facts + ReminderService + APScheduler + TaskService 联动 + schema v2 + 本地真实调度器验收）
+- **Commit**：feat: implement M3 reminder lifecycle（本轮）
+- **主要修改**：schema v1→v2（reminders 表，owned migration 零变更拒绝）；Reminder enums/ORM/Repository；reminder_policy（三档/quiet-hours/去重/60s）；ReminderService（幂等 plan/cancel/resync/fire）；ReminderScheduler（APScheduler 3.11，确定性 job_id，remove-then-add，SchedulerNotRunningError 容错）；TaskService 生命周期联动（可选注入）；runtime 接线（CAMPUSCUE_REMINDERS=1）；config ReminderConfig；pyproject +apscheduler
+- **测试**：新增 28 → **344 passed**；本地真实调度器验收 PASS（facts/jobs 一致性、重启 resync、deadline 变更、complete 取消、0 投递）；package isolation PASS（apscheduler 3.11.3）；Anti-AstrBot PASS
+- **REAL ENV**：M3 无 QQ/NapCat（LOCAL REAL SCHEDULER）；M2b.2 REAL ENV 保留
+- **审核状态**：M3 = IMPLEMENTATION_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED
