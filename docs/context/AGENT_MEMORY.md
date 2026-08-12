@@ -164,7 +164,7 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 17. STOP RULE
 
-- 远程验证成功后 **STOP**；报告：PASS/FAIL、完成项、验证项、仓库、commit、remote verified、当前门（按真实状态：如 M1 = PASS, M2 = READY_NOT_STARTED / NOT_AUTHORIZED）。
+- 远程验证成功后 **STOP**；报告：PASS/FAIL、完成项、验证项、仓库、commit、remote verified、当前门（**按真实当前状态报告**，如 M2 = AWAITING_EXTERNAL_REVIEW / M3 = NOT_AUTHORIZED）。
 - 等待外部 ChatGPT 读取 GitHub 后再继续；未经审核不自动进入下一 Milestone。
 
 ## 18. CURRENT NEXT TASK

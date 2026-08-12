@@ -125,5 +125,5 @@ python scripts/check_no_astrbot.py   # Anti-AstrBot Gate
 ## 环境要求
 
 - Python ≥ 3.12
-- 运行时依赖仅 `websockets`（M1 实测版本 16.0 / Python 3.14）
+- 运行时依赖以 `pyproject.toml` 为准（历史注：M1 实测 websockets 16.0 / Python 3.14 为当时的单一依赖证据，不代表当前完整依赖集）
 - NapCat（官方 Release）：M1.2 实测 `v4.18.18` Framework 版注入式

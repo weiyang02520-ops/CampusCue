@@ -2,10 +2,16 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY / Git history。
 
-## 当前（M2 Final Continuity Cleanup）
+## 当前（M2 Final Continuity Cleanup v2）
 
-- **本轮**：外部 ChatGPT 对 M2b.2 技术审核 = PASS（真实链路接受）。M2 FINAL 暂为 CHANGES_REQUESTED——仅因连续性/文档仍含 pre-M2b.2 stale 状态。本轮纯文档修复
+- **本轮**：外部 ChatGPT 复核 v1 清理后发现**恰两个**残留 stale 矛盾（README 底部"仅 websockets"依赖行 + 17_MILESTONES M2b.2"未开始"），本 v2 轮仅修这两个
 - **状态**：M2 技术实现 + REAL ENV 验收完成；**M2 = AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW；M2 FINAL = NOT YET DECLARED；M3 = NOT_AUTHORIZED**
+
+## 本轮完成（v2 清理）
+
+1. **[A] README 行 128 stale 依赖行**：`运行时依赖仅 websockets（M1 实测 16.0/Python 3.14）` → `运行时依赖以 pyproject.toml 为准`（历史 websockets 证据标注为"当时单一依赖证据，不代表当前完整依赖集"）
+2. **[B] 17_MILESTONES 行 33 M2 状态**：`M2b.2（未开始）/ M2 最终未 PASS` → `M2b.2（完成，REAL_ENV PASS 2026-08-10）/ M2 TECHNICALLY_COMPLETE AWAITING_EXTERNAL_FINAL_CONTINUITY_REVIEW / M2 FINAL NOT YET DECLARED / M3 NOT_AUTHORIZED`
+3. **[额外] AGENT_MEMORY §17 STOP RULE 示例**：`如 M1=PASS, M2=READY_NOT_STARTED` 旧示例 → 改为当前门示例（消除歧义）
 
 ## 本轮完成（连续性清理）
 
