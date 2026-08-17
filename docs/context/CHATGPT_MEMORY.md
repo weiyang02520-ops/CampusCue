@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-12 · M3）
+## 1. CURRENT TRUTH（Last Updated 2026-08-17 · M4 checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0-M2 全部 FINAL PASS（含 M2b.2 REAL ENV @ 23083cb）；M3 = STORAGE_SAFETY_FINAL_SEAL_COMPLETE（M3..M3.4）AWAITING_EXTERNAL_REVIEW；M3 FINAL = NOT YET DECLARED；M4+ = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0-M3 FINAL PASS；M4 = IMPLEMENTATION_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -354,3 +354,11 @@ User
 - **[DESIGN_DECISION][M3]**：canonical v1 schema 不含 reminders。schema_meta=1 且已含 M3-only 结构（reminders）的 DB = 半迁移/部分状态 → 拒绝而非猜测/修复（YAGNI）。
 - **[REPO_CONFIRMED]**：M3.4 落地（378 tests 全绿 + fresh venv + Anti-AstrBot）：原子迁移（强制中途失败回滚：schema_version 仍 1、无 reminders 表/索引残留）、v1/v2 完整列 manifest、半迁移拒绝字节不变。
 - **[REPO_CONFIRMED]**：M3.3 落地（370 tests 全绿 + fresh venv + Anti-AstrBot）：resync_all 真业务对账（Tasks→facts→jobs）、TaskRepository.list_pending_with_deadline 专用查询（不截断）、v1/v2 共享 _validate_application_schema、17_MILESTONES gate 修复。
+
+## 9T. MEMORY DELTA（M4 checkpoint，2026-08-17）
+
+- [EXTERNAL_REVIEW][CURRENT]：M3 FINAL = PASS at baseline 7d22a61b45a3c0110a5ae359e4636b52c3fd2f05；M4 implementation checkpoint is complete locally, but M4 = IMPLEMENTATION_COMPLETE_REAL_ENV_PENDING；M4 FINAL not declared；M5 not authorized。
+- [REPO_CONFIRMED]：M4 includes provider-neutral Tool Calling, ToolRegistry, trusted source-scoped Task Tools, CampusAgentRuntime bounded loop, explicit Agent routing, per-thread lock, bounded/LRU conversation threads, conservative CJK ContextBudget, event-timestamp system prompt, configuration/package wiring and peer-review regression tests。
+- [REPO_CONFIRMED]：Workspace Agent local evidence = 453 passed; M4 Provider/Agent/Router focused = 44 passed; compileall PASS; Anti-AstrBot PASS; git diff --check PASS。This is not independent External ChatGPT execution。
+- [UNCERTAIN][NOT_RUN]：Real Provider Tool Call and Real QQ Agent E2E were not run in this checkpoint。QQ processes and protected primary account were not touched。
+- [KNOWN_LIMITATION][M3][OUT_OF_SCOPE]：Task/Reminder cross-repository atomicity remains an open design risk; startup resync_all self-healing is accepted。This checkpoint does not introduce unit-of-work or modify Reminder architecture。

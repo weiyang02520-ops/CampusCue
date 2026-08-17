@@ -51,11 +51,49 @@ class ReminderConfig:
 
 
 @dataclass(frozen=True)
+class AgentConfig:
+    """M4 Agent knobs (few, bounded, fail-fast; all consumed by CampusRuntime).
+
+    enabled        CAMPUSCUE_AGENT=1 (default OFF)
+    max_steps      tool loop provider-call bound (default 6, hard max 8)
+    tool_timeout_s per-tool execution bound
+    conversation_max_messages in-memory thread bound
+    reserve_output_tokens reserved for the final answer in ContextBudget
+    """
+
+    enabled: bool = False
+    max_steps: int = 6
+    tool_timeout_s: float = 30.0
+    conversation_max_messages: int = 20
+    conversation_max_threads: int = 256
+    reserve_output_tokens: int = 512
+
+    def __post_init__(self) -> None:
+        if not 1 <= self.max_steps <= 8:
+            raise ValueError(f"max_steps must be in [1, 8], got {self.max_steps!r}")
+        if self.tool_timeout_s <= 0:
+            raise ValueError(f"tool_timeout_s must be > 0, got {self.tool_timeout_s!r}")
+        if self.conversation_max_messages <= 0:
+            raise ValueError(
+                f"conversation_max_messages must be > 0, got {self.conversation_max_messages!r}"
+            )
+        if self.conversation_max_threads <= 0:
+            raise ValueError(
+                f"conversation_max_threads must be > 0, got {self.conversation_max_threads!r}"
+            )
+        if not 0 < self.reserve_output_tokens <= 8192:
+            raise ValueError(
+                f"reserve_output_tokens must be in (0, 8192], got {self.reserve_output_tokens!r}"
+            )
+
+
+@dataclass(frozen=True)
 class RuntimeConfig:
     onebot: OneBotConfig = field(default_factory=OneBotConfig)
     event_bus: EventBusConfig = field(default_factory=EventBusConfig)
     tasks: TaskPipelineConfig = field(default_factory=TaskPipelineConfig)
     reminders: ReminderConfig = field(default_factory=ReminderConfig)
+    agent: AgentConfig = field(default_factory=AgentConfig)
     diagnostic: bool = False  # CAMPUSCUE_DIAGNOSTIC=1; default OFF (privacy)
 
     def __post_init__(self) -> None:
@@ -116,6 +154,18 @@ def _validate_task_config(tasks: TaskPipelineConfig, *, env: str) -> None:
         )
 
 
+def _validate_agent_config(agent: AgentConfig, tasks: TaskPipelineConfig) -> None:
+    """M4 §40 fail-fast invariant: the Agent REQUIRES the task pipeline/DB
+    foundation (real TaskService + source context). Agent enabled while the
+    pipeline is disabled is a configuration error — never a fake in-memory
+    TaskService Agent."""
+    if agent.enabled and not tasks.enabled:
+        raise ConfigError(
+            "CAMPUSCUE_AGENT=1 requires CAMPUSCUE_TASK_PIPELINE=1 "
+            "(Agent tools run on real TaskService/DB data)"
+        )
+
+
 _TOKEN_ENV = "CAMPUSCUE_ONEBOT_TOKEN"
 
 
@@ -141,6 +191,21 @@ def load_config() -> RuntimeConfig:
         confidence_threshold=float(os.environ.get("CAMPUSCUE_CONFIDENCE_THRESHOLD", "0.6")),
     )
     _validate_task_config(tasks, env=env)
+    agent = AgentConfig(
+        enabled=_env_bool("CAMPUSCUE_AGENT"),
+        max_steps=int(os.environ.get("CAMPUSCUE_AGENT_MAX_STEPS", "6")),
+        tool_timeout_s=float(os.environ.get("CAMPUSCUE_AGENT_TOOL_TIMEOUT_S", "30")),
+        conversation_max_messages=int(
+            os.environ.get("CAMPUSCUE_AGENT_CONVERSATION_MAX", "20")
+        ),
+        conversation_max_threads=int(
+            os.environ.get("CAMPUSCUE_AGENT_CONVERSATION_MAX_THREADS", "256")
+        ),
+        reserve_output_tokens=int(
+            os.environ.get("CAMPUSCUE_AGENT_RESERVE_OUTPUT", "512")
+        ),
+    )
+    _validate_agent_config(agent, tasks)
     return RuntimeConfig(
         onebot=OneBotConfig(
             host=os.environ.get("CAMPUSCUE_ONEBOT_HOST", "127.0.0.1"),
@@ -164,5 +229,6 @@ def load_config() -> RuntimeConfig:
             quiet_start_hour=int(os.environ.get("CAMPUSCUE_REMINDER_QUIET_START", "23")),
             quiet_end_hour=int(os.environ.get("CAMPUSCUE_REMINDER_QUIET_END", "8")),
         ),
+        agent=agent,
         diagnostic=_env_bool("CAMPUSCUE_DIAGNOSTIC"),
     )

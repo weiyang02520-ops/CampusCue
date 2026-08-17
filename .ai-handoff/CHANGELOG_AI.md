@@ -225,3 +225,14 @@
 - **测试**：新增 8 → **378 passed**；package isolation PASS；Anti-AstrBot PASS
 - **REAL ENV**：无 QQ（M3 本地调度器）；M2b.2 REAL ENV 保留
 - **审核状态**：M3 = STORAGE_SAFETY_FINAL_SEAL_COMPLETE AWAITING_EXTERNAL_REVIEW；M3 FINAL NOT YET DECLARED；M4 NOT_AUTHORIZED
+
+
+## 2026-08-17 · M4 AGENT TOOL LOOP CHECKPOINT
+
+- **任务**：提交 M4 Agent implementation + peer-review hardening，停止继续开发，等待 External ChatGPT 独立审核。
+- **Commit**：（本 checkpoint）
+- **主要修改**：Provider-neutral Tool Calling、ToolRegistry、trusted source-scoped Task Tools、CampusAgentRuntime bounded loop、explicit routing、per-thread lock、LRU thread cap、CJK ContextBudget、event-timestamp prompt、configuration/package wiring、peer-review regression tests。
+- **Workspace Agent local verification**：full V2 **453 passed**；M4 Provider/Agent/Router focused **44 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS。These are not independent External ChatGPT results。
+- **Real environment**：Real Provider Tool Call **NOT RUN**；Real QQ Agent E2E **NOT RUN**；QQ processes/protected primary account **NOT TOUCHED**。
+- **Known limitation / out of scope**：M3 Task/Reminder cross-repository atomicity remains an open design risk; startup `resync_all()` recovery is accepted。No unit-of-work or Reminder architecture redesign in this checkpoint。
+- **Gate**：M3 FINAL = PASS；M4 = IMPLEMENTATION_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。

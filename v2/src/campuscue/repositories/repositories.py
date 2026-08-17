@@ -77,6 +77,16 @@ def _require_enum(enum_cls, value: str, field: str) -> str:
         raise ValueError(f"invalid {field}: {value!r} (allowed: {[e.value for e in enum_cls]})") from None
 
 
+class _Unset:
+    def __repr__(self) -> str:  # pragma: no cover - debug only
+        return "<UNSET>"
+
+
+# Sentinel distinguishing "field not provided" (leave unchanged) from an
+# explicit None (clear the value) — used by M4 update primitives.
+_UNSET = _Unset()
+
+
 class SourceRepository(_BaseRepo[Source]):
     async def create(
         self,
@@ -267,6 +277,21 @@ class TaskRepository(_BaseRepo[Task]):
                 ).all()
             )
 
+    async def list_for_source(self, source_id: int, limit: int = 200) -> list[Task]:
+        """M4: source-scoped list. Agent tools use THIS query — the global
+        list_all is never exposed to tools (M4 §15 no global task leak)."""
+        async with self._sf() as session:
+            return list(
+                (
+                    await session.scalars(
+                        select(Task)
+                        .where(Task.source_id == source_id)
+                        .order_by(Task.created_at.desc())
+                        .limit(limit)
+                    )
+                ).all()
+            )
+
     async def update_deadline(self, task_id: int, deadline: datetime | None) -> Task:
         """M3: deadline mutation primitive (persistence only; reminder
         orchestration lives in TaskService)."""
@@ -312,6 +337,39 @@ class TaskRepository(_BaseRepo[Task]):
             await session.delete(task)
             task_updated = task  # noqa: F841 (updated_at bookkeeping not needed on delete)
             await session.commit()
+
+    async def update_fields(
+        self,
+        task_id: int,
+        *,
+        title: str | None = None,
+        course: str | None = None,
+        deadline: datetime | object = _UNSET,
+    ) -> Task:
+        """M4: combined field update primitive (persistence only; reminder
+        orchestration lives in TaskService). None = leave unchanged.
+        deadline=_UNSET leaves it unchanged; deadline=None CLEARS it; naive
+        deadlines rejected at the storage boundary."""
+        if deadline is not _UNSET and deadline is not None and deadline.tzinfo is None:
+            raise ValueError("naive deadline rejected at storage boundary")
+        now = self._now()
+        async with self._sf() as session:
+            task = await session.get(Task, task_id)
+            if task is None:
+                raise NotFoundError(f"task {task_id} not found")
+            if title is not None:
+                title = title.strip()
+                if not title:
+                    raise ValueError("title must not be empty")
+                task.title = title
+            if course is not None:
+                task.course = course.strip() or None
+            if deadline is not _UNSET:
+                task.deadline = deadline.astimezone(timezone.utc) if deadline else None
+            task.updated_at = now
+            await session.commit()
+            await session.refresh(task)
+            return task
 
     async def list_pending_with_deadline(self) -> list[Task]:
         """M3.3-A: ALL tasks that need reminder planning (status=pending AND
@@ -430,6 +488,22 @@ class ReminderRepository(_BaseRepo[Reminder]):
                 (
                     await session.scalars(
                         select(Reminder).where(Reminder.task_id == task_id).order_by(Reminder.trigger_at)
+                    )
+                ).all()
+            )
+
+    async def list_for_source(self, source_id: int) -> list[Reminder]:
+        """M4: reminders of tasks visible in ONE source (reminder_list tool).
+        JOIN through tasks — the global reminder view is never exposed to
+        Agent tools (M4 §23 source authorization stays in front)."""
+        async with self._sf() as session:
+            return list(
+                (
+                    await session.scalars(
+                        select(Reminder)
+                        .join(Task, Task.id == Reminder.task_id)
+                        .where(Task.source_id == source_id)
+                        .order_by(Reminder.trigger_at)
                     )
                 ).all()
             )

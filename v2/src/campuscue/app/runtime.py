@@ -72,8 +72,9 @@ class CampusRuntime:
             raise
 
     async def _init_task_pipeline(self) -> None:
-        """M2/M3 opt-in wiring: DB + repositories + services + pipeline handler
-        (+ M3 reminder scheduler). Pipeline handler added BEFORE EchoHandler."""
+        """M2/M3/M4 opt-in wiring: DB + repositories + services + pipeline
+        handler (+ M3 reminder scheduler + M4 Agent). Pipeline handler added
+        AFTER the Agent handler, BEFORE EchoHandler."""
         from zoneinfo import ZoneInfo
 
         import os as _os
@@ -131,22 +132,83 @@ class CampusRuntime:
             self._reminder_service = reminder_service
             self._reminder_scheduler = reminder_scheduler
 
+        # ONE shared TaskService — the business gate (M4 §39): Agent tools use
+        # the SAME correctly-wired TaskService as the application business layer.
         task_service = TaskService(task_repo, reminder_service=reminder_service)
+        self._task_service = task_service
+        self._provider_manager = ProviderManager(ProviderConfigRepository(sf))
         pipeline = TaskPipeline(
             sources=SourceRepository(sf),
             extractions=ExtractionRepository(sf),
             task_service=task_service,
-            provider_manager=ProviderManager(ProviderConfigRepository(sf)),
+            provider_manager=self._provider_manager,
             timezone=tz,
             confidence_threshold=self.config.tasks.confidence_threshold,
         )
         self._pipeline = pipeline
+
+        # M4 Agent: registered BEFORE the pipeline handler so an explicitly
+        # Agent-directed message never ALSO runs automatic Task Extraction
+        # (M4 §36/§37: one query -> one LLM call chain).
+        if self.config.agent.enabled:
+            await self._init_agent(tz=tz, sf=sf, task_service=task_service, reminder_service=reminder_service)
         self.router.add_handler(pipeline.handle)
 
         # M3 scheduler lifecycle: DB ready -> resync from facts -> start
         if reminder_scheduler is not None and reminder_service is not None:
             await reminder_service.resync_all()
             reminder_scheduler.start()
+
+    async def _init_agent(
+        self,
+        *,
+        tz,
+        sf,
+        task_service,
+        reminder_service,
+    ) -> None:
+        """M4 composition: ToolRegistry + Task Tools + CampusAgentRuntime +
+        AgentChatHandler. Provider may be None (graceful "未配置模型服务")."""
+        from campuscue.agents.runtime import CampusAgentRuntime
+        from campuscue.handlers.agent import AgentChatHandler
+        from campuscue.providers.errors import NoProviderConfiguredError
+        from campuscue.repositories.repositories import SourceRepository
+        from campuscue.storage.clock import SystemClock
+        from campuscue.tools.registry import ToolRegistry
+        from campuscue.tools.task_tools import register_task_tools
+
+        assert self.router is not None
+        try:
+            provider = await self._provider_manager.get_default()
+        except NoProviderConfiguredError:
+            provider = None
+        registry = ToolRegistry(default_timeout_s=self.config.agent.tool_timeout_s)
+        register_task_tools(
+            registry,
+            task_service=task_service,
+            reminder_service=reminder_service,
+            tz=tz,
+            clock=SystemClock(),
+        )
+        agent_runtime = CampusAgentRuntime(
+            tools=registry,
+            provider=provider,
+            timezone=tz,
+            max_context_tokens=provider.max_context_tokens if provider is not None else None,
+            reserve_output_tokens=self.config.agent.reserve_output_tokens,
+            max_steps=self.config.agent.max_steps,
+            tool_timeout_s=self.config.agent.tool_timeout_s,
+            conversation_max_messages=self.config.agent.conversation_max_messages,
+            conversation_max_threads=self.config.agent.conversation_max_threads,
+        )
+        handler = AgentChatHandler(
+            runtime=agent_runtime,
+            sources=SourceRepository(sf),
+            timezone=tz,
+        )
+        self.router.add_handler(handler.handle)  # BEFORE pipeline (M4 §37)
+        self._agent_runtime = agent_runtime
+        self._agent_handler = handler
 
     async def _fire_reminder(self, reminder_id: int) -> None:
         """Scheduler fire handler -> ReminderService.fire (re-checks latest

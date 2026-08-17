@@ -24,7 +24,12 @@ import asyncio
 from dataclasses import dataclass
 from datetime import datetime
 
-from campuscue.repositories.repositories import DuplicateError, TaskRepository
+from campuscue.repositories.repositories import (
+    DuplicateError,
+    NotFoundError,
+    TaskRepository,
+    _UNSET,
+)
 from campuscue.storage.clock import Clock, SystemClock
 from campuscue.storage.enums import TaskCategory, TaskPriority, TaskStatus
 from campuscue.storage.models import Task
@@ -139,6 +144,113 @@ class TaskService:
                 await self._reminders.cancel_for_task(task_id)
                 await self._reminders.delete_reminders_for_task(task_id)
             await self._tasks.delete(task_id)
+
+    # ------------------------------------------------ M4 source-scoped tools
+
+    async def list_for_source(
+        self,
+        source_id: int,
+        *,
+        scope: str | None = None,
+        now: datetime | None = None,
+        tz=None,
+    ) -> list[Task]:
+        """M4 §17-18: source-scoped read for Agent tools (task_list).
+
+        Scope semantics (explicit + tested):
+          open     pending + pending_confirm (unfinished)      [default]
+          pending  pending only
+          done     done only
+          overdue  unfinished with deadline < now (injected clock)
+          today    unfinished with deadline within the LOCAL calendar day
+          week     unfinished with deadline in [now, now + 7 days)
+        Scoped queries filter in SERVICE code on top of the source-scoped
+        repository query — the global TaskRepository list is never exposed.
+        """
+        tasks = await self._tasks.list_for_source(source_id)
+        if scope is None or scope == "open":
+            wanted = {TaskStatus.PENDING.value, TaskStatus.PENDING_CONFIRM.value}
+            return [t for t in tasks if t.status in wanted]
+        if scope == "pending":
+            wanted = {TaskStatus.PENDING.value}
+            return [t for t in tasks if t.status in wanted]
+        if scope == "done":
+            return [t for t in tasks if t.status == TaskStatus.DONE.value]
+        if scope == "dismissed":
+            return [t for t in tasks if t.status == TaskStatus.DISMISSED.value]
+        if scope in ("overdue", "today", "week"):
+            unfinished = {TaskStatus.PENDING.value, TaskStatus.PENDING_CONFIRM.value}
+            now_local = (now or self._clock.utcnow()).astimezone(tz) if tz is not None else (now or self._clock.utcnow())
+            result: list[Task] = []
+            for t in tasks:
+                if t.status not in unfinished or t.deadline is None:
+                    continue
+                dl_local = t.deadline.astimezone(tz) if tz is not None else t.deadline
+                if scope == "overdue":
+                    if dl_local < now_local:
+                        result.append(t)
+                elif scope == "today":
+                    if dl_local.date() == now_local.date():
+                        result.append(t)
+                elif scope == "week":
+                    from datetime import timedelta
+
+                    if now_local <= dl_local < now_local + timedelta(days=7):
+                        result.append(t)
+            return result
+        raise ValueError(f"unsupported task_list scope: {scope!r}")
+
+    async def get_for_source(self, source_id: int, task_id: int) -> Task:
+        """M4 §19: source-scoped get. A foreign task id MUST NOT reveal whether
+        the task exists (no cross-source existence leak) — NotFoundError."""
+        task = await self._tasks.get(task_id)  # NotFoundError if truly absent
+        if task.source_id != source_id:
+            raise NotFoundError(f"task {task_id} not found")
+        return task
+
+    async def update_task(
+        self,
+        source_id: int,
+        task_id: int,
+        *,
+        title: str | None = None,
+        course: str | None = None,
+        deadline: datetime | None = None,
+    ) -> Task:
+        """M4 §21: source-scoped field update through the single business gate.
+
+        deadline=UNSET sentinel means "leave unchanged"; deadline=None clears
+        the deadline. Any deadline CHANGE rebuilds the reminder plan (M3
+        coupling preserved — no second mutation pathway inside tools)."""
+        has_any = title is not None or course is not None or deadline is not _UNSET
+        if not has_any:
+            raise ValueError("no fields to update")
+        if title is not None and not title.strip():
+            raise ValueError("title must not be empty")
+        if deadline is not _UNSET and deadline is not None and deadline.tzinfo is None:
+            raise ValueError("naive deadline rejected")
+        async with self._lock:
+            task = await self._tasks.get(task_id)
+            if task.source_id != source_id:
+                raise NotFoundError(f"task {task_id} not found")
+            if task.status != TaskStatus.PENDING.value:
+                raise ValueError(
+                    f"only pending tasks can be updated (status {task.status!r})"
+                )
+            deadline_changed = (
+                deadline is not _UNSET and deadline != task.deadline
+            )
+            new_deadline = deadline if deadline is not _UNSET else task.deadline
+            task = await self._tasks.update_fields(
+                task_id,
+                title=title,
+                course=course,
+                deadline=new_deadline,
+            )
+            # M3 lifecycle: any deadline change rebuilds the reminder plan
+            if deadline_changed and self._reminders is not None:
+                await self._reminders.plan_reminders(task)
+            return task
 
 
 def candidate_description(*, submission_method: str | None, reason: str | None) -> str | None:

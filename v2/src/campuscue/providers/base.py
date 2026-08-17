@@ -20,6 +20,13 @@ class BaseProvider(ABC):
         (M2b.1.1 abstraction contract).
         """
 
+    @property
+    def max_context_tokens(self) -> int | None:
+        """Configured context budget for the model, or None when unknown
+        (M4 §27). PUBLIC capability — business code (ContextBudget) must never
+        reach into private `_max_context_tokens` implementation attributes."""
+        return None
+
     @abstractmethod
     async def chat(self, request: LLMRequest) -> LLMResponse:
         """One chat completion call. Raises ProviderError on failure."""

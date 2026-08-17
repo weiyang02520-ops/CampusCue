@@ -23,7 +23,7 @@ import httpx
 
 from campuscue.providers.base import BaseProvider
 from campuscue.providers.errors import ProviderError, ProviderErrorCode
-from campuscue.providers.models import LLMMessage, LLMRequest, LLMResponse
+from campuscue.providers.models import LLMMessage, LLMRequest, LLMResponse, LLMToolCall
 from campuscue.providers.validation import (
     validate_provider_config_numeric,
     validate_request_override,
@@ -69,6 +69,12 @@ class OpenAICompatibleProvider(BaseProvider):
         return self._model
 
     @property
+    def max_context_tokens(self) -> int | None:
+        """Public capability (M4 §27): configured context budget for the model.
+        ContextBudget consumes THIS property — never private attributes."""
+        return self._max_context_tokens
+
+    @property
     def endpoint(self) -> str:
         return urljoin(self._base_url, "chat/completions")
 
@@ -101,7 +107,7 @@ class OpenAICompatibleProvider(BaseProvider):
     def _build_payload(self, request: LLMRequest) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "model": request.model or self._model,
-            "messages": [{"role": m.role, "content": m.content} for m in request.messages],
+            "messages": [self._serialize_message(m) for m in request.messages],
         }
         if request.temperature is not None or self._temperature is not None:
             payload["temperature"] = request.temperature if request.temperature is not None else self._temperature
@@ -116,7 +122,54 @@ class OpenAICompatibleProvider(BaseProvider):
                     "schema": request.response_schema,
                 },
             }
+        # M4 TOOL EXTENSION: tools=None preserves the exact M2 wire behavior
+        # (no tools/tool_choice keys). M2 extraction requests never enter tool
+        # mode accidentally (M4 §9).
+        if request.tools is not None:
+            payload["tools"] = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": t.name,
+                        "description": t.description,
+                        "parameters": t.input_schema,
+                    },
+                }
+                for t in request.tools
+            ]
+            payload["tool_choice"] = request.tool_choice or "auto"
         return payload
+
+    def _serialize_message(self, m: LLMMessage) -> dict[str, Any]:
+        """Provider-neutral LLMMessage -> OpenAI-compatible wire message.
+
+        Only the provider layer knows this layout (M4 §6 hard rule):
+        - assistant tool-call message: content may be null + tool_calls
+        - role=tool result: tool_call_id + content
+        - everything else: exactly the M2 shape {"role", "content"}
+        """
+        if m.role == "tool":
+            if not m.tool_call_id:
+                raise ValueError("tool message requires tool_call_id")
+            return {"role": "tool", "tool_call_id": m.tool_call_id, "content": m.content or ""}
+        if m.role == "assistant" and m.tool_calls:
+            return {
+                "role": "assistant",
+                "content": m.content,  # None is legal for tool-call messages
+                "tool_calls": [
+                    {
+                        "id": c.id,
+                        "type": "function",
+                        "function": {
+                            "name": c.name,
+                            # arguments re-encoded at the provider boundary
+                            "arguments": json.dumps(c.arguments, ensure_ascii=False),
+                        },
+                    }
+                    for c in m.tool_calls
+                ],
+            }
+        return {"role": m.role, "content": m.content}
 
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
@@ -225,7 +278,19 @@ class OpenAICompatibleProvider(BaseProvider):
         return ProviderError(ProviderErrorCode.INVALID_REQUEST, "provider rejected request", status_code=400)
 
     def _parse_ok(self, data: dict[str, Any]) -> LLMResponse:
-        """M2a.1-16 STRICT success parsing: content presence is mandatory."""
+        """M2a.1-16 STRICT success parsing, extended by M4 §8:
+
+        VALID responses:
+        - content = string, tool_calls = empty      (final text answer)
+        - content = null, tool_calls = non-empty    (tool-only response)
+        INVALID:
+        - content absent/null AND tool_calls absent/empty -> MALFORMED_OUTPUT
+        - content present but not a string -> MALFORMED_OUTPUT
+
+        Tool-call arguments are decoded HERE (vendor JSON string -> dict) at
+        the provider boundary (M4 §6/§7): malformed wire arguments -> typed
+        ProviderError(MALFORMED_OUTPUT), never passed to agent business logic.
+        """
         try:
             choices = data["choices"]
             if not choices or not isinstance(choices, list):
@@ -234,15 +299,68 @@ class OpenAICompatibleProvider(BaseProvider):
             if not isinstance(message, dict):
                 raise KeyError("missing message dict")
             content = message.get("content")
-            if not isinstance(content, str):
-                raise KeyError("missing string content")
+            raw_calls = message.get("tool_calls")
+            if not isinstance(raw_calls, list):
+                raw_calls = []
+            if content is None and not raw_calls:
+                raise KeyError("missing content and tool_calls")
+            if content is not None and not isinstance(content, str):
+                raise KeyError("non-string content")
+            # M4 protocol has two unambiguous response shapes: final text OR
+            # tool calls. Do not silently accept a mixed response that the
+            # Agent loop would discard partially.
+            if content is not None and raw_calls:
+                raise KeyError("mixed content and tool_calls")
             role = message.get("role") or "assistant"
             usage = data.get("usage") or {}
+            calls: list[LLMToolCall] = []
+            for tc in raw_calls:
+                if not isinstance(tc, dict):
+                    raise KeyError("non-dict tool_call")
+                fn = tc.get("function")
+                if not isinstance(fn, dict):
+                    raise KeyError("tool_call missing function dict")
+                name = fn.get("name")
+                if not isinstance(name, str) or not name:
+                    raise KeyError("tool_call missing function name")
+                args_raw = fn.get("arguments")
+                if args_raw in (None, ""):
+                    args: dict[str, Any] = {}
+                elif isinstance(args_raw, str):
+                    try:
+                        decoded = json.loads(args_raw)
+                    except json.JSONDecodeError:
+                        raise ProviderError(
+                            ProviderErrorCode.MALFORMED_OUTPUT,
+                            "tool call arguments are not valid JSON",
+                        ) from None
+                    if not isinstance(decoded, dict):
+                        raise ProviderError(
+                            ProviderErrorCode.MALFORMED_OUTPUT,
+                            "tool call arguments must be a JSON object",
+                        ) from None
+                    args = decoded
+                else:
+                    raise ProviderError(
+                        ProviderErrorCode.MALFORMED_OUTPUT,
+                        "tool call arguments must be a JSON string",
+                    ) from None
+                call_id = tc.get("id")
+                if not isinstance(call_id, str) or not call_id:
+                    raise ProviderError(
+                        ProviderErrorCode.MALFORMED_OUTPUT,
+                        "tool call is missing a valid id",
+                    ) from None
+                calls.append(
+                    LLMToolCall(id=call_id, name=name, arguments=args)
+                )
         except (KeyError, IndexError, TypeError):
             raise ProviderError(
                 ProviderErrorCode.MALFORMED_OUTPUT, "provider response missing choices/content"
             ) from None
-        return LLMResponse(role=role, content=content, usage=usage, raw=data)
+        return LLMResponse(
+            role=role, content=content or "", usage=usage, raw=data, tool_calls=tuple(calls)
+        )
 
     async def test(self) -> dict:
         """Real connectivity test path: chat -> transport -> parse -> safe result."""

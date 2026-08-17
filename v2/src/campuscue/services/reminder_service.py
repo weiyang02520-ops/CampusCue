@@ -300,6 +300,12 @@ class ReminderService:
     async def list_for_task(self, task_id: int) -> list[Reminder]:
         return await self._reminders.list_for_task(task_id)
 
+    async def list_for_source(self, source_id: int) -> list[Reminder]:
+        """M4 §23: reminders of tasks visible in ONE source (reminder_list
+        tool). Source authorization lives at the service boundary — the global
+        reminder view is never exposed to Agent tools."""
+        return await self._reminders.list_for_source(source_id)
+
 
 class NoopDelivery:
     """M3 default: no end-user delivery (real notification UX not in M3 scope).

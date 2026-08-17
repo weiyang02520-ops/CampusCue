@@ -17,3 +17,8 @@
 | 011 | V2 代码与 Legacy 物理隔离（v2/ root） | Legacy 冻结为 reference；import 不遮蔽 |
 | 012 | M2 数据/Provider 契约锁定 | TaskStatus 单一枚举/Secret 引用/UTC/L2 上下文/恰好一 Provider |
 | 013 | AI-First Task Extraction | 正常消息都交 LLM；本地规则只做 hygiene/hints/确定性兜底 |
+| M4-001 | Provider-neutral Tool Calling | OpenAI wire serialization/parsing stays inside Provider boundary |
+| M4-002 | Trusted source scope | Tool authorization comes from runtime context, never model arguments |
+| M4-003 | TaskService mutation gate | All Agent mutations preserve M3 reminder lifecycle |
+| M4-004 | Explicit Agent activation | Group @self only; ambient messages remain Task Pipeline |
+| M4-005 | Bounded in-memory conversation | No persistent Agent memory in M4 |
