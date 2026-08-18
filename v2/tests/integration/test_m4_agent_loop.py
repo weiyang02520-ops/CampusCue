@@ -115,7 +115,7 @@ def _agent_context(*, source_id=None, conversation_id="g1", message_id="m1"):
     return AgentContext(
         platform="onebot", source_id=source_id, conversation_id=conversation_id,
         conversation_type=ConversationType.GROUP, message_id=message_id,
-        timestamp=NOW, trace_id="trace-x", timezone=TZ,
+        timestamp=NOW, trace_id="trace-x", timezone=TZ, user_text="用户原始消息",
     )
 
 
@@ -194,6 +194,54 @@ class TestAgentLoop:
         assert second["messages"][-1]["tool_call_id"] == "c1"
 
     @pytest.mark.asyncio
+    async def test_31b_task_create_uses_trusted_user_provenance(self, services, clock):
+        scripted = _ScriptedProvider([
+            _tool_call_body("c1", "task_create", {"title": "模型标题"}),
+            _final_body("已创建。"),
+        ])
+        ctx = _agent_context(source_id=services["source_id"])
+        ctx = AgentContext(
+            platform=ctx.platform, source_id=ctx.source_id,
+            conversation_id=ctx.conversation_id, conversation_type=ctx.conversation_type,
+            message_id=ctx.message_id, timestamp=ctx.timestamp, trace_id=ctx.trace_id,
+            timezone=ctx.timezone, user_text="请创建一个任务",
+        )
+        rt = _runtime(services, clock, scripted)
+        await rt.chat(context=ctx, user_text="请创建一个任务")
+        task = (await services["tasks"].list_for_source(services["source_id"]))[0]
+        assert task.source_text_reference == "请创建一个任务"
+
+    @pytest.mark.asyncio
+    async def test_31c_second_create_same_source_message_is_rejected(self, services, clock):
+        """M2 UNIQUE(source_id, source_message_id) is an explicit first-version
+        limit: one Agent user message can create at most one Task. The second
+        tool call returns a failure to the model and is never reported created.
+        """
+        scripted = _ScriptedProvider([
+            {"role": "assistant", "content": None, "tool_calls": [
+                {"id": "create-1", "type": "function", "function": {
+                    "name": "task_create", "arguments": '{"title":"英语作文"}',
+                }},
+                {"id": "create-2", "type": "function", "function": {
+                    "name": "task_create", "arguments": '{"title":"高数作业"}',
+                }},
+            ]},
+            _final_body("第一个已创建，第二个未创建。"),
+        ])
+        rt = _runtime(services, clock, scripted)
+        ctx = _agent_context(source_id=services["source_id"], message_id="one-user-message")
+        reply = await rt.chat(context=ctx, user_text="帮我添加英语作文和高数作业两个任务")
+        assert reply == "第一个已创建，第二个未创建。"
+        tasks = await services["tasks"].list_for_source(services["source_id"])
+        assert len(tasks) == 1
+        tool_messages = scripted.seen[1]["messages"][-2:]
+        assert tool_messages[0]["tool_call_id"] == "create-1"
+        assert '已创建任务' in tool_messages[0]["content"]
+        assert tool_messages[1]["tool_call_id"] == "create-2"
+        assert "任务未创建" in tool_messages[1]["content"]
+        assert '英语作文' in tasks[0].title
+
+    @pytest.mark.asyncio
     async def test_32_multiple_tool_calls_in_one_response(self, services, clock):
         """Sequential execution (M4 §31) preserves call-id mapping."""
         from campuscue.tasks.models import TaskCandidate
@@ -263,6 +311,33 @@ class TestAgentLoop:
         assert reply == "模型响应超时，请稍后重试。"
 
     @pytest.mark.asyncio
+    async def test_35b_agent_does_not_derive_provider_timeout(self, services, clock):
+        """Agent must not override LLMRequest.timeout_s; the Provider's own
+        configured timeout remains canonical. tool_timeout_s stays independent."""
+        seen = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json={"choices": [{"message": _final_body("ok")}], "usage": {}})
+
+        provider = OpenAICompatibleProvider(
+            base_url="https://api.example.com/v1/", model="test-model", timeout_s=4.25,
+            client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+        )
+        orig = provider.chat
+
+        async def spy(request):
+            seen["timeout_s"] = request.timeout_s
+            return await orig(request)
+
+        provider.chat = spy  # type: ignore[method-assign]
+        rt = CampusAgentRuntime(
+            tools=_registry(services, clock), provider=provider, timezone=TZ, clock=clock,
+            max_context_tokens=8192, reserve_output_tokens=100, tool_timeout_s=0.05,
+        )
+        assert await rt.chat(context=_agent_context(source_id=services["source_id"]), user_text="hi") == "ok"
+        assert seen["timeout_s"] is None  # Agent does not derive/override Provider timeout
+
+    @pytest.mark.asyncio
     async def test_36_no_provider_configured(self, services, clock):
         rt = _runtime(services, clock, None)  # provider=None
         reply = await rt.chat(context=_agent_context(source_id=services["source_id"]), user_text="hi")
@@ -328,6 +403,28 @@ class TestAgentLoop:
         reply = await rt.chat(context=_agent_context(source_id=services["source_id"]), user_text="测试")
         assert reply == UX_CONTEXT_OVERFLOW
         assert scripted.seen == []  # ZERO provider calls
+
+    def test_40c_current_user_counted_once(self):
+        """A budget that fits system+reserve+one user message must not overflow.
+        Double-counting the current user (fixed user_tokens AND the live turn)
+        would incorrectly stop before any provider call."""
+        from campuscue.agents.budget import ContextBudget, _message_tokens, estimate_tokens
+        from campuscue.agents.conversation import Conversation
+        from campuscue.providers.models import LLMMessage
+
+        user = "当前用户输入"
+        system = "system"
+        conv = Conversation(20)
+        conv.begin_turn(LLMMessage(role="user", content=user))
+        reserve = 10
+        max_ctx = reserve + estimate_tokens(system) + _message_tokens(
+            LLMMessage(role="user", content=user)
+        )
+        messages, overflow = ContextBudget(
+            reserve_output_tokens=reserve, max_context_tokens=max_ctx
+        ).plan(conversation=conv, system_prompt=system, current_user_text=user)
+        assert overflow is False
+        assert [m.content for m in messages if m.role == "user"] == [user]
 
     @pytest.mark.asyncio
     async def test_40b_loop_budget_recheck_after_tools(self, services, clock):

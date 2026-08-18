@@ -23,18 +23,23 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Final
 
 from campuscue.repositories.repositories import (
     DuplicateError,
     NotFoundError,
     TaskRepository,
-    _UNSET,
 )
 from campuscue.storage.clock import Clock, SystemClock
 from campuscue.storage.enums import TaskCategory, TaskPriority, TaskStatus
 from campuscue.storage.models import Task
 from campuscue.tasks.dedup import Deduplicator
 from campuscue.tasks.models import TaskCandidate
+
+
+# Public service-boundary sentinel: omitted deadline is distinct from an
+# explicit ``None`` which clears the deadline.
+DEADLINE_UNSET: Final = object()
 
 
 @dataclass(frozen=True)
@@ -215,19 +220,19 @@ class TaskService:
         *,
         title: str | None = None,
         course: str | None = None,
-        deadline: datetime | None = None,
+        deadline: datetime | None | object = DEADLINE_UNSET,
     ) -> Task:
         """M4 §21: source-scoped field update through the single business gate.
 
-        deadline=UNSET sentinel means "leave unchanged"; deadline=None clears
+        deadline=DEADLINE_UNSET means "leave unchanged"; deadline=None clears
         the deadline. Any deadline CHANGE rebuilds the reminder plan (M3
         coupling preserved — no second mutation pathway inside tools)."""
-        has_any = title is not None or course is not None or deadline is not _UNSET
+        has_any = title is not None or course is not None or deadline is not DEADLINE_UNSET
         if not has_any:
             raise ValueError("no fields to update")
         if title is not None and not title.strip():
             raise ValueError("title must not be empty")
-        if deadline is not _UNSET and deadline is not None and deadline.tzinfo is None:
+        if deadline is not DEADLINE_UNSET and deadline is not None and deadline.tzinfo is None:
             raise ValueError("naive deadline rejected")
         async with self._lock:
             task = await self._tasks.get(task_id)
@@ -238,9 +243,9 @@ class TaskService:
                     f"only pending tasks can be updated (status {task.status!r})"
                 )
             deadline_changed = (
-                deadline is not _UNSET and deadline != task.deadline
+                deadline is not DEADLINE_UNSET and deadline != task.deadline
             )
-            new_deadline = deadline if deadline is not _UNSET else task.deadline
+            new_deadline = deadline if deadline is not DEADLINE_UNSET else task.deadline
             task = await self._tasks.update_fields(
                 task_id,
                 title=title,

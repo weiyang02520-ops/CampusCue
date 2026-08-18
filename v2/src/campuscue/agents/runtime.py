@@ -160,7 +160,7 @@ class CampusAgentRuntime:
             timezone=str(self._tz), current_time_iso=now_local.isoformat()
         )
 
-    def _to_tool_context(self, ctx: AgentContext) -> ToolContext:
+    def _to_tool_context(self, ctx: AgentContext, user_text: str = "") -> ToolContext:
         return ToolContext(
             platform=ctx.platform,
             source_id=ctx.source_id,
@@ -170,6 +170,7 @@ class CampusAgentRuntime:
             timestamp=ctx.timestamp,
             trace_id=ctx.trace_id,
             timezone=ctx.timezone,
+            user_text=user_text or ctx.user_text,
         )
 
     async def chat(self, *, context: AgentContext, user_text: str) -> str:
@@ -238,7 +239,7 @@ class CampusAgentRuntime:
                     model=self._provider.model,
                     tools=self._tool_schemas or None,
                     tool_choice="auto" if self._tool_schemas else None,
-                    timeout_s=self._tool_timeout_s + 10.0,  # generous LLM bound
+                    timeout_s=None,
                 )
             )
             if not response.tool_calls:
@@ -250,7 +251,7 @@ class CampusAgentRuntime:
                 role="assistant", content=None, tool_calls=response.tool_calls
             )
             tool_results: list[LLMMessage] = []
-            tool_ctx = self._to_tool_context(context)
+            tool_ctx = self._to_tool_context(context, user_text)
             for call in response.tool_calls:
                 identity = canonical_call_identity(call.name, call.arguments)
                 if identity == last_identity:

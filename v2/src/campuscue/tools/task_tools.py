@@ -21,9 +21,9 @@ from datetime import datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from campuscue.repositories.repositories import NotFoundError, _UNSET
+from campuscue.repositories.repositories import NotFoundError
 from campuscue.services.reminder_service import ReminderService
-from campuscue.services.task_service import TaskService
+from campuscue.services.task_service import DEADLINE_UNSET, TaskService
 from campuscue.storage.clock import Clock, SystemClock
 from campuscue.storage.enums import ReminderStatus, TaskCategory, TaskStatus
 from campuscue.storage.models import Task
@@ -181,8 +181,12 @@ class TaskCreateTool(ToolDefinition):
     description = (
         "用户口述创建任务（当前会话）。title 必填；category 取值：homework（作业）/exam（考试）"
         "/competition（比赛）/activity（活动）/notice（通知）/other（其他）；"
-        "deadline_phrase 用自然语言描述截止时间，如“周五晚上12点前”“8月20日”"
+        "deadline_phrase 用自然语言描述截止时间，如“周五晚上12点前”“8月20日”。"
+        "同一条用户消息最多只能创建一个任务；第二次调用会失败，请如实告知用户"
     )
+    # M4 first-version limitation: M2 UNIQUE(source_id, source_message_id) means
+    # one Agent user message can create at most one Task. A second task_create in
+    # the same turn returns a safe failure (never falsely created). No schema v3.
     input_schema = {
         "type": "object",
         "properties": {
@@ -224,7 +228,7 @@ class TaskCreateTool(ToolDefinition):
             source_id=sid,
             # trusted values from runtime context — the model cannot control them
             source_message_id=context.message_id,
-            source_text_reference="",
+            source_text_reference=context.user_text,
             pending_confirm=False,
         )
         result = await self._tasks.create_task(candidate)
@@ -283,8 +287,8 @@ class TaskUpdateTool(ToolDefinition):
                 task_id,
                 title=kwargs.get("title"),
                 course=kwargs.get("course"),
-                # _UNSET = deadline not provided -> leave unchanged
-                deadline=deadline if "deadline_phrase" in kwargs else _UNSET,
+                # DEADLINE_UNSET = deadline not provided -> leave unchanged
+                deadline=deadline if "deadline_phrase" in kwargs else DEADLINE_UNSET,
             )
         except NotFoundError:
             return ToolResult(ok=False, content="", error="task_not_found", data={"task_id": task_id})

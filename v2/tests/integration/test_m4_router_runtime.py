@@ -128,6 +128,10 @@ class TestActivation:
 
     @pytest.mark.asyncio
     async def test_45d_private_message_triggers_directly(self, sources):
+        await sources.create(
+            platform="onebot", conversation_id="u20002", name="private",
+            enabled=True, auto_extract=False,
+        )
         fake = _FakeRuntime()
         h = _handler(sources, fake=fake)
         result = await h.handle(_event(
@@ -136,6 +140,33 @@ class TestActivation:
         ))
         assert result is not None
         assert fake.calls and fake.calls[0][1] == "我这周有什么事情？"
+
+    @pytest.mark.asyncio
+    async def test_45e_disabled_private_source_does_not_trigger_agent(self, sources):
+        await sources.create(
+            platform="onebot", conversation_id="u20002", name="private",
+            enabled=False,
+        )
+        fake = _FakeRuntime()
+        h = _handler(sources, fake=fake)
+        result = await h.handle(_event(
+            text="我这周有什么事情？",
+            conversation_type=ConversationType.PRIVATE, conversation_id="u20002",
+        ))
+        assert result is not None and "未启用助手" in result.text
+        assert fake.calls == []
+
+    @pytest.mark.asyncio
+    async def test_45f_missing_private_source_returns_local_reply_without_agent(self, sources):
+        fake = _FakeRuntime()
+        h = _handler(sources, fake=fake)
+        result = await h.handle(_event(
+            text="我这周有什么事情？",
+            conversation_type=ConversationType.PRIVATE, conversation_id="u-unknown",
+        ))
+        assert result is not None
+        assert "尚未接入任务数据" in result.text
+        assert fake.calls == []  # ZERO Agent/Provider/Tool calls
 
     @pytest.mark.asyncio
     async def test_46_source_id_injected_from_event_source(self, sources):
@@ -154,12 +185,37 @@ class TestActivation:
         assert context.trace_id == "tr1"
 
     @pytest.mark.asyncio
-    async def test_46b_no_source_row_source_id_none(self, sources):
+    async def test_46b_no_source_row_returns_local_reply_without_agent(self, sources):
         fake = _FakeRuntime()
         h = _handler(sources, fake=fake)
-        await h.handle(_event(text="查任务", at_self=True, conversation_id="unknown-g"))
-        context, _ = fake.calls[0]
-        assert context.source_id is None  # graceful, not a crash
+        result = await h.handle(_event(text="查任务", at_self=True, conversation_id="unknown-g"))
+        assert result is not None
+        assert "尚未接入任务数据" in result.text
+        assert fake.calls == []  # ZERO Agent/Provider/Tool calls
+
+    @pytest.mark.asyncio
+    async def test_46c_disabled_source_returns_local_reply_without_agent(self, sources):
+        await sources.create(
+            platform="onebot", conversation_id="g1", name="G1", enabled=False,
+        )
+        fake = _FakeRuntime()
+        h = _handler(sources, fake=fake)
+        result = await h.handle(_event(text="查任务", at_self=True))
+        assert result is not None
+        assert "未启用助手" in result.text
+        assert fake.calls == []  # ZERO Agent/Provider/Tool calls
+
+    @pytest.mark.asyncio
+    async def test_46d_enabled_source_allows_agent_when_auto_extract_disabled(self, sources):
+        await sources.create(
+            platform="onebot", conversation_id="g1", name="G1",
+            enabled=True, auto_extract=False,
+        )
+        fake = _FakeRuntime()
+        h = _handler(sources, fake=fake)
+        result = await h.handle(_event(text="查任务", at_self=True))
+        assert result is not None
+        assert fake.calls and fake.calls[0][1] == "查任务"
 
 
 # ----------------------------------------------------------------- 47-48: router order
@@ -354,9 +410,13 @@ class TestCompositionRoot:
         try:
             before = {t for t in asyncio.all_tasks()}
             # real handler + real runtime with NO provider -> safe reply,
-            # no LLM/tool background work
+            # no LLM/tool background work. Source must exist and be enabled or
+            # the M4.1 gate returns locally without entering CampusAgentRuntime.
             from campuscue.handlers.agent import AgentChatHandler
 
+            await rt._agent_handler._sources.create(
+                platform="onebot", conversation_id="g1", name="G1", enabled=True,
+            )
             h = AgentChatHandler(runtime=rt._agent_runtime, sources=rt._agent_handler._sources, timezone=TZ)
             result = await h.handle(_event(text="你好", at_self=True))
             assert result is not None and "未配置模型服务" in result.text

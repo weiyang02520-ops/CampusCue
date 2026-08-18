@@ -27,3 +27,4 @@ class ToolContext:
     timestamp: datetime  # timezone-aware UTC (current event time)
     trace_id: str
     timezone: ZoneInfo
+    user_text: str = ""  # trusted current user message; never tool-controlled

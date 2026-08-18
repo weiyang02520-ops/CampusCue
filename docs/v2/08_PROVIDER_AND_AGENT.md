@@ -8,7 +8,7 @@
 | 组件 | 激活于 |
 |---|---|
 | BaseProvider / LLMRequest / LLMResponse / ProviderError taxonomy / OpenAICompatibleProvider / 最小 ProviderManager / structured output / secret_reference | **M2**（Task Extraction 的 LLM 调用走它） |
-| ToolDefinition / ToolResult / ToolRegistry / Task Tools / CampusAgentRuntime / ContextBudget / Tool Loop / conversation 最小实现 | **M4** |
+| ToolDefinition / ToolResult / ToolRegistry / Task Tools / CampusAgentRuntime / ContextBudget / Tool Loop / conversation 最小实现 | **M4（已实现；Real Provider Tool Call 与 safe independent-test-bot QQ E2E 尚待运行）** |
 | 流式 / fallback provider 链 / 多 provider 偏好 | FUTURE |
 
 ## Provider（M2 激活）
@@ -80,6 +80,7 @@ class ToolRegistry:
 - 执行前：jsonschema 校验参数；失败返回 ToolResult(ok=False, error=校验错误)
 - 执行中：超时（如 30s）；异常 → error 回填（不让 LLM 看到堆栈）
 - 作用域：默认按来源会话（V1：工具只能看/改本群任务——保留该边界）
+- **M4 第一版创建限制**：M2 的唯一约束 `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task。第二次 `task_create` 返回安全失败结果，由 Agent 如实告知用户；M4.1 不引入 schema v3。
 
 ## Agent Runtime（M4 激活，最小 Tool Loop）
 

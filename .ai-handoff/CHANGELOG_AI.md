@@ -236,3 +236,19 @@
 - **Real environment**：Real Provider Tool Call **NOT RUN**；Real QQ Agent E2E **NOT RUN**；QQ processes/protected primary account **NOT TOUCHED**。
 - **Known limitation / out of scope**：M3 Task/Reminder cross-repository atomicity remains an open design risk; startup `resync_all()` recovery is accepted。No unit-of-work or Reminder architecture redesign in this checkpoint。
 - **Gate**：M3 FINAL = PASS；M4 = IMPLEMENTATION_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。
+
+## 2026-08-18 · M4.1 STATIC HARDENING + FRESH PACKAGE ISOLATION
+
+- **任务**：M4.1 静态加固 + 全新安装包隔离验证（不跑 Real Provider / QQ / M5；不改业务逻辑，除非隔离暴露真实 packaging/import bug）。
+- **Commit**：fix: harden M4 agent service boundaries（本 checkpoint）
+- **主要修改**：
+  - TaskService 公开 `DEADLINE_UNSET` sentinel（省略=不变 / 显式 None=清除 / naive 拒绝；替换内部 `_UNSET`）
+  - handlers/agent.py：missing-source / disabled-source gate（安全本地回复，不触发 Agent、不拼接 LLM 结果）
+  - Trusted provenance：AgentContext/ToolContext 新增 `user_text`（runtime 信任值）；`task_create.source_text_reference` 不再由模型注入
+  - ContextBudget：当前用户输入只计一次（live turn 不再重复合成）
+  - Provider timeout 独立性：Agent LLM 请求 `timeout_s=None`（不派生 tool 超时）
+  - M4 第一版多创建限制契约化（M2 唯一约束，无 schema v3）
+- **Workspace Agent local verification（FRESH installed-package isolation）**：[TEST_CONFIRMED] 全新隔离环境创建、working-tree V2 以真实安装包（non-editable）+ test extras 安装成功；imports resolved from fresh environment installed V2 package（campuscue.agents / campuscue.tools / jsonschema 均正确解析，无 Legacy/AstrBot/旧 venv/PYTHONPATH 泄漏）；M4.1 focused **88 passed**；full V2 **466 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret/PII scan PASS。These are not independent External ChatGPT results。
+- **Real environment**：Real Provider Tool Call **NOT RUN**；Real QQ Agent E2E **NOT RUN**；QQ processes/protected primary account **NOT TOUCHED**。
+- **Known limitation / out of scope**：[DESIGN_LIMITATION][M4] One source message can create at most one Task in the first version because the M2 `(source_id, source_message_id)` uniqueness contract remains unchanged；second `task_create` safely fails；no schema v3。M3 Task/Reminder cross-repository atomicity remains an open design risk; startup `resync_all()` recovery is accepted。
+- **Gate**：M3 FINAL = PASS；M4 = STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。

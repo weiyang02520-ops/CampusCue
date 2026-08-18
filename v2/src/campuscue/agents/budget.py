@@ -98,16 +98,22 @@ class ContextBudget:
         must stop gracefully. messages is [] in that case.
         """
         system_tokens = estimate_tokens(system_prompt)
-        user_tokens = estimate_tokens(current_user_text)
-        fixed = self._reserve + system_tokens + user_tokens + tools_tokens
+        fixed = self._reserve + system_tokens + tools_tokens
         available = self._max_context - fixed
         if available <= 0:
             return [], True
 
         turns = conversation.turns  # turn model is internal by design
+        # The current user message is already part of the live current turn.
+        # Count it through _turn_tokens exactly once; only synthesize it for
+        # direct callers that have not started a turn yet.
+        if turns:
+            current_turn = turns[-1]
+        else:
+            current_turn = [LLMMessage(role="user", content=current_user_text)]
         # always keep the current (last) turn — live exchange
-        keep: list[list[LLMMessage]] = [turns[-1]] if turns else []
-        running = _turn_tokens(keep[0]) if keep else 0
+        keep: list[list[LLMMessage]] = [current_turn]
+        running = _turn_tokens(current_turn)
         if running > available:
             return [], True
         # oldest first — drop whole turns until it fits

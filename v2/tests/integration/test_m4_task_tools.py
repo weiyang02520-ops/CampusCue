@@ -17,6 +17,7 @@ import pytest
 from campuscue.core.events import ConversationType
 from campuscue.storage.clock import FixedClock
 from campuscue.storage.enums import ReminderStatus, ReminderType, TaskStatus
+from campuscue.services.task_service import DEADLINE_UNSET
 from campuscue.tools.context import ToolContext
 from campuscue.tools.registry import ToolRegistry
 from campuscue.tools.task_tools import register_task_tools
@@ -100,7 +101,7 @@ def _tool_context(services, *, source_id, message_id="m1", ts=NOW):
     return ToolContext(
         platform="onebot", source_id=source_id, conversation_id="gA" if source_id == services["source_a"] else "gB",
         conversation_type=ConversationType.GROUP, message_id=message_id,
-        timestamp=ts, trace_id="trace1", timezone=TZ,
+        timestamp=ts, trace_id="trace1", timezone=TZ, user_text="用户原始创建消息",
     )
 
 
@@ -257,6 +258,7 @@ class TestTaskCreate:
         assert task.course == "大学英语"
         assert task.source_id == services["source_a"]
         assert task.source_message_id == "m-create"  # trusted runtime value
+        assert task.source_text_reference == "用户原始创建消息"  # trusted provenance
         # deadline resolved deterministically: 明晚 = NOW+1d 23:59 +08 -> 2026-08-13 15:59 UTC
         assert task.deadline == _dl(1, 0).replace(hour=15, minute=59)
         assert task.status == TaskStatus.PENDING.value  # explicit user task, no confirm
@@ -272,6 +274,25 @@ class TestTaskCreate:
         assert result.ok is False
         assert "无法解析截止时间" in result.error
         # nothing created
+        assert await services["tasks"].list_for_source(services["source_a"]) == []
+
+    @pytest.mark.asyncio
+    async def test_23c_model_cannot_inject_provenance_or_source_scope(self, services, clock):
+        """JSON Schema additionalProperties=False rejects model-supplied
+        source_id / source_text_reference; trusted provenance stays runtime-owned."""
+        r = _registry(services, clock)
+        result = await r.execute(
+            "task_create",
+            arguments={
+                "title": "注入任务",
+                "source_id": 999,
+                "source_text_reference": "伪造来源",
+                "source_message_id": "forged",
+            },
+            context=_tool_context(services, source_id=services["source_a"], message_id="m-inject"),
+        )
+        assert result.ok is False
+        assert "invalid arguments" in (result.error or "")
         assert await services["tasks"].list_for_source(services["source_a"]) == []
 
     @pytest.mark.asyncio
@@ -295,6 +316,61 @@ class TestTaskCreate:
 
 
 class TestTaskUpdate:
+    @pytest.mark.asyncio
+    async def test_25a_title_only_update_preserves_deadline(self, services, clock):
+        original = _dl(3, 0)
+        t = await _create(services, services["source_a"], title="旧标题", deadline=original)
+        result = await _registry(services, clock).execute(
+            "task_update", arguments={"task_id": t.id, "title": "新标题"},
+            context=_tool_context(services, source_id=services["source_a"]),
+        )
+        assert result.ok is True
+        assert (await services["tasks"].get(t.id)).deadline == original
+
+    @pytest.mark.asyncio
+    async def test_25aa_course_only_update_preserves_deadline(self, services, clock):
+        original = _dl(3, 0)
+        t = await _create(services, services["source_a"], title="任务", deadline=original)
+        result = await _registry(services, clock).execute(
+            "task_update", arguments={"task_id": t.id, "course": "新课"},
+            context=_tool_context(services, source_id=services["source_a"]),
+        )
+        assert result.ok is True
+        assert (await services["tasks"].get(t.id)).deadline == original
+
+    @pytest.mark.asyncio
+    async def test_25ab_explicit_empty_deadline_clears(self, services, clock):
+        t = await _create(services, services["source_a"], title="任务", deadline=_dl(3, 0))
+        result = await _registry(services, clock).execute(
+            "task_update", arguments={"task_id": t.id, "deadline_phrase": ""},
+            context=_tool_context(services, source_id=services["source_a"]),
+        )
+        assert result.ok is True
+        assert (await services["tasks"].get(t.id)).deadline is None
+
+    @pytest.mark.asyncio
+    async def test_25ac_service_sentinel_replace_and_reject_naive(self, services, clock):
+        original = _dl(2, 0)
+        replacement = _dl(4, 0)
+        t = await _create(services, services["source_a"], title="任务", deadline=original)
+        svc = services["task_service"]
+        unchanged = await svc.update_task(
+            services["source_a"], t.id, title="标题更新", deadline=DEADLINE_UNSET
+        )
+        assert unchanged.deadline == original
+        replaced = await svc.update_task(
+            services["source_a"], t.id, deadline=replacement
+        )
+        assert replaced.deadline == replacement
+        cleared = await svc.update_task(
+            services["source_a"], t.id, deadline=None
+        )
+        assert cleared.deadline is None
+        with pytest.raises(ValueError, match="naive deadline"):
+            await svc.update_task(
+                services["source_a"], t.id, deadline=datetime(2026, 8, 20)
+            )
+
     @pytest.mark.asyncio
     async def test_25_update_title_course(self, services, clock):
         t = await _create(services, services["source_a"], title="旧标题", course="旧课")

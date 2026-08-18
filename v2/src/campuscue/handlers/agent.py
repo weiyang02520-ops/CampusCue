@@ -66,7 +66,19 @@ class AgentChatHandler:
             return None  # bare @bot or empty private message
 
         source = await self._sources.get_by_identity(event.platform, event.conversation_id)
-        source_id = source.id if source is not None else None
+        if source is None:
+            return OutgoingMessage(
+                conversation_id=event.conversation_id,
+                conversation_type=event.conversation_type,
+                text=UNKNOWN_SOURCE_REPLY,
+            )
+        if not source.enabled:
+            return OutgoingMessage(
+                conversation_id=event.conversation_id,
+                conversation_type=event.conversation_type,
+                text="当前会话未启用助手。",
+            )
+        source_id = source.id
 
         context = AgentContext(
             platform=event.platform,
@@ -77,6 +89,7 @@ class AgentChatHandler:
             timestamp=event.timestamp,
             trace_id=event.trace_id,
             timezone=self._tz,
+            user_text=text,
         )
         try:
             reply = await self._runtime.chat(context=context, user_text=text)
@@ -84,11 +97,6 @@ class AgentChatHandler:
             # never let an agent failure escape into the router; safe reply
             logger.exception("agent handler failed; trace=%s", event.trace_id[:8])
             reply = "抱歉，助手暂时不可用，请稍后再试。"
-        if source_id is None:
-            reply = f"{UNKNOWN_SOURCE_REPLY}\n{reply}"
-        logger.info(
-            "agent answered; trace=%s source=%s", event.trace_id[:8], source_id
-        )
         return OutgoingMessage(
             conversation_id=event.conversation_id,
             conversation_type=event.conversation_type,

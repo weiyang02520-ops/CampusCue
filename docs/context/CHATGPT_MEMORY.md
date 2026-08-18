@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-17 · M4 checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-18 · M4.1 static hardening checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0-M3 FINAL PASS；M4 = IMPLEMENTATION_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0-M3 FINAL PASS；M4 = STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -362,3 +362,14 @@ User
 - [REPO_CONFIRMED]：Workspace Agent local evidence = 453 passed; M4 Provider/Agent/Router focused = 44 passed; compileall PASS; Anti-AstrBot PASS; git diff --check PASS。This is not independent External ChatGPT execution。
 - [UNCERTAIN][NOT_RUN]：Real Provider Tool Call and Real QQ Agent E2E were not run in this checkpoint。QQ processes and protected primary account were not touched。
 - [KNOWN_LIMITATION][M3][OUT_OF_SCOPE]：Task/Reminder cross-repository atomicity remains an open design risk; startup resync_all self-healing is accepted。This checkpoint does not introduce unit-of-work or modify Reminder architecture。
+
+## 9U. MEMORY DELTA（M4.1 static hardening + fresh package isolation，2026-08-18）
+
+- [EXTERNAL_REVIEW][CURRENT]：M3 FINAL = PASS at baseline 7d22a61b45a3c0110a5ae359e4636b52c3fd2f05；M4 = STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING；M4 FINAL NOT declared；M5 NOT authorized。M4.1 静态加固不自动通过 M4 FINAL——Real Provider Tool Call 与 safe independent-test-bot QQ E2E 仍未运行。
+- [TEST_CONFIRMED]：M4.1 focused tests（deadline sentinel / explicit clear / Reminder coupling / missing & disabled Source gate / auto_extract=false explicit Agent / ContextBudget single-count / Provider timeout independence / trusted provenance / multi-create limitation / M4 Provider/Agent/Router regressions）passed in a fresh installed-package environment（**88 passed**）。
+- [TEST_CONFIRMED]：Full V2 suite passed in a fresh installed-package environment（**466 passed**）。
+- [TEST_CONFIRMED]：campuscue.agents / campuscue.tools / jsonschema resolve correctly from fresh V2 package isolation（imports resolved from fresh environment installed V2 package；无 Legacy root / AstrBot / 旧 venv / PYTHONPATH 泄漏）。
+- [REPO_CONFIRMED]：M4.1 hardening content——TaskService 公开 `DEADLINE_UNSET` sentinel（省略=不变 / 显式 None=清除 / naive 拒绝）；Agent handler missing/disabled source gate（安全本地回复，不触发 Agent）；AgentContext/ToolContext 新增 runtime-trusted `user_text`（`task_create.source_text_reference` 非模型注入）；ContextBudget 当前输入只计一次；Agent LLM 请求不派生 tool 超时（Provider timeout 独立性）。
+- [DESIGN_LIMITATION][M4]：One source message can create at most one Task in the first version because the M2 `(source_id, source_message_id)` uniqueness contract remains unchanged。A second task_create from the same user message is safely returned as failure。No schema v3 was introduced。
+- [UNCERTAIN][NOT_RUN]：Real Provider Tool Call and Real QQ Agent E2E were not run in this checkpoint。QQ processes and protected primary account were not touched。
+- [REPO_CONFIRMED]：fresh 验证为 Workspace Agent local evidence，非独立 External ChatGPT 执行；compileall PASS / Anti-AstrBot PASS / git diff --check PASS / Secret+PII scan PASS；fresh venv 文件未提交。
