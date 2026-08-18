@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-18 · M4.1 static hardening checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-18 · M4.2 real provider checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0-M3 FINAL PASS；M4 = STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0-M3 FINAL PASS；M4.1 STATIC HARDENING = PASS；M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -373,3 +373,12 @@ User
 - [DESIGN_LIMITATION][M4]：One source message can create at most one Task in the first version because the M2 `(source_id, source_message_id)` uniqueness contract remains unchanged。A second task_create from the same user message is safely returned as failure。No schema v3 was introduced。
 - [UNCERTAIN][NOT_RUN]：Real Provider Tool Call and Real QQ Agent E2E were not run in this checkpoint。QQ processes and protected primary account were not touched。
 - [REPO_CONFIRMED]：fresh 验证为 Workspace Agent local evidence，非独立 External ChatGPT 执行；compileall PASS / Anti-AstrBot PASS / git diff --check PASS / Secret+PII scan PASS；fresh venv 文件未提交。
+
+## 9V. MEMORY DELTA（M4.2 Real Provider Tool Call，2026-08-18）
+
+- [EXTERNAL_REVIEW][CURRENT]：M3 FINAL = PASS at baseline 7d22a61b45a3c0110a5ae359e4636b52c3fd2f05；M4.1 STATIC HARDENING = PASS at baseline 6e02289d56a0a05bae5db80dd694b05918853959；M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING；M4 FINAL NOT declared；M5 NOT authorized。Real QQ Agent E2E 是下一门，本 checkpoint 未授权运行。
+- [TEST_CONFIRMED][REAL_PROVIDER]：**Real Provider Tool Call = PASS**（2026-08-18）——openai_compatible / deepseek-chat / 真实 httpx transport（api.deepseek.com；secret_reference=CAMPUSCUE_LLM_API_KEY，secret 值不落盘）。真实 Provider 自主发出 `task_list`（模型选择 scope=week/today）+ 自主追加 `task_get` → ToolRegistry → TaskService → 临时真实 SQLite → tool result 回传 → 第二次真实 Provider 调用 → 最终回答反映合成 DB 任务；通过 TaskService 改 title 后回答随之变化（数据驱动，非硬编码）；Source A/B 作用域隔离双向验证通过。
+- [REPO_CONFIRMED][REAL_GATE_FIX]：真实 OpenAI 兼容端点（DeepSeek）在 tool-call 轮次同时返回辅助 content 文本 + tool_calls；原 `_parse_ok`（M4 §8 双形状设计）硬判 MALFORMED_OUTPUT → 最小聚焦修复：tool_calls 权威、辅助文本丢弃（Agent loop 保持 final-text / tool-call 两种明确形状）；`test_6b_mixed_content_and_tool_calls_keeps_tool_calls` 覆盖新契约；docs/v2/08 同步真实兼容说明。
+- [TEST_CONFIRMED]：源码变更后按要求重做 fresh installed-package isolation（`.venv-m42fresh`）；M4 focused **88 passed**；full V2 **466 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret+PII scan PASS；imports resolved from fresh environment installed V2 package。Workspace Agent local evidence，非独立 External ChatGPT 执行。
+- [UNCERTAIN][NOT_RUN]：Real QQ Agent E2E not run in this checkpoint；QQ processes and protected primary account not touched。
+- [DESIGN_LIMITATION][M4]：One source message can create at most one Task in the first version（M2 `(source_id, source_message_id)` 唯一约束不变；second task_create safely fails；no schema v3）。

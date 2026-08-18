@@ -166,19 +166,26 @@ class TestToolResponseParsing:
         assert ei.value.code == ProviderErrorCode.MALFORMED_OUTPUT
 
     @pytest.mark.asyncio
-    async def test_6b_mixed_content_and_tool_calls_rejected(self):
+    async def test_6b_mixed_content_and_tool_calls_keeps_tool_calls(self):
+        """Real OpenAI-compatible endpoints (observed on DeepSeek, M4.2 real
+        gate) may return auxiliary content text alongside tool_calls in the
+        same message. tool_calls is authoritative; the auxiliary text is
+        dropped (never treated as the turn's final answer)."""
         p = _make_provider(handler=lambda r: httpx.Response(200, json={
             "choices": [{"message": {
-                "role": "assistant", "content": "ignored",
+                "role": "assistant", "content": "让我帮你查询一下本周的任务。",
                 "tool_calls": [{
                     "id": "call_1", "type": "function",
                     "function": {"name": "task_list", "arguments": "{}"},
                 }],
             }}],
         }))
-        with pytest.raises(ProviderError) as ei:
-            await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
-        assert ei.value.code == ProviderErrorCode.MALFORMED_OUTPUT
+        resp = await p.chat(LLMRequest(messages=[LLMMessage(role="user", content="hi")], model="gpt-4o"))
+        assert resp.content == ""
+        assert len(resp.tool_calls) == 1
+        assert resp.tool_calls[0].id == "call_1"
+        assert resp.tool_calls[0].name == "task_list"
+        assert resp.tool_calls[0].arguments == {}
 
     @pytest.mark.asyncio
     async def test_6c_missing_tool_call_id_rejected(self):

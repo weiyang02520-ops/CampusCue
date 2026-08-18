@@ -252,3 +252,14 @@
 - **Real environment**：Real Provider Tool Call **NOT RUN**；Real QQ Agent E2E **NOT RUN**；QQ processes/protected primary account **NOT TOUCHED**。
 - **Known limitation / out of scope**：[DESIGN_LIMITATION][M4] One source message can create at most one Task in the first version because the M2 `(source_id, source_message_id)` uniqueness contract remains unchanged；second `task_create` safely fails；no schema v3。M3 Task/Reminder cross-repository atomicity remains an open design risk; startup `resync_all()` recovery is accepted。
 - **Gate**：M3 FINAL = PASS；M4 = STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。
+
+## 2026-08-18 · M4.2 REAL PROVIDER TOOL CALL
+
+- **任务**：真实 Provider M4 Tool Calling 验收（不碰 QQ/NapCat；不开始 M5；不改 M3；无 mock/硬编码）。
+- **Commit**：fix: support real M4 provider tool call（本 checkpoint）
+- **验收结果**：[TEST_CONFIRMED] **REAL PROVIDER TOOL CALL = PASS**——provider_type=openai_compatible，model=deepseek-chat，真实 httpx transport（api.deepseek.com；secret_reference=CAMPUSCUE_LLM_API_KEY；secret 值不落盘）。真实 Provider 自主发出 `task_list`（scope=week/today，模型选择）→ ToolRegistry → TaskService → 临时真实 SQLite → tool result 回传 → 第二次真实 Provider 调用 → 最终回答反映合成 DB 任务；模型还自主追加 `task_get`。通过 TaskService 改 title 后第二次查询回答随之变化（数据驱动，非硬编码）；Source A/B 作用域隔离双向验证通过。
+- **暴露并修复的真实兼容性 bug（最小聚焦修复）**：真实 DeepSeek 在 tool-call 轮次同时返回辅助 content 文本 + tool_calls，原 `_parse_ok` 硬判 `MALFORMED_OUTPUT`（M4 §8 双形状设计未覆盖真实端点行为）。修复：tool_calls 权威、辅助文本丢弃（Agent loop 保持 final-text / tool-call 两种明确形状）；`test_6b_mixed_content_and_tool_calls_keeps_tool_calls` 覆盖新契约；docs/v2/08 补充真实兼容说明。
+- **回归（修复后）**：[TEST_CONFIRMED] 新建 fresh installed-package 环境 `.venv-m42fresh`（源码变更后按要求重做隔离）；M4 focused **88 passed**；full V2 **466 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret/PII scan PASS；imports resolved from fresh environment installed V2 package。These are not independent External ChatGPT results。
+- **Real environment**：Real Provider Tool Call **PASS（2026-08-18）**；Real QQ Agent E2E **NOT RUN（下一门，本 checkpoint 未授权）**；QQ processes/protected primary account **NOT TOUCHED**。
+- **Known limitation / out of scope**：[DESIGN_LIMITATION][M4] One source message can create at most one Task in the first version（M2 `(source_id, source_message_id)` 唯一约束不变；无 schema v3）。M3 Task/Reminder cross-repository atomicity remains open design risk; startup `resync_all()` recovery accepted。
+- **Gate**：M3 FINAL = PASS；M4.1 STATIC HARDENING = PASS；M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。

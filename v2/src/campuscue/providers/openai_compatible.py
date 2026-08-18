@@ -278,11 +278,14 @@ class OpenAICompatibleProvider(BaseProvider):
         return ProviderError(ProviderErrorCode.INVALID_REQUEST, "provider rejected request", status_code=400)
 
     def _parse_ok(self, data: dict[str, Any]) -> LLMResponse:
-        """M2a.1-16 STRICT success parsing, extended by M4 §8:
+        """M2a.1-16 STRICT success parsing, extended by M4 §8 + M4.2 §real-gate:
 
         VALID responses:
         - content = string, tool_calls = empty      (final text answer)
         - content = null, tool_calls = non-empty    (tool-only response)
+        - content = string AND tool_calls non-empty (real-provider mixed
+          response, observed on DeepSeek): tool_calls is authoritative, the
+          auxiliary content text is NOT the turn's answer and is dropped.
         INVALID:
         - content absent/null AND tool_calls absent/empty -> MALFORMED_OUTPUT
         - content present but not a string -> MALFORMED_OUTPUT
@@ -306,11 +309,13 @@ class OpenAICompatibleProvider(BaseProvider):
                 raise KeyError("missing content and tool_calls")
             if content is not None and not isinstance(content, str):
                 raise KeyError("non-string content")
-            # M4 protocol has two unambiguous response shapes: final text OR
-            # tool calls. Do not silently accept a mixed response that the
-            # Agent loop would discard partially.
-            if content is not None and raw_calls:
-                raise KeyError("mixed content and tool_calls")
+            # Real OpenAI-compatible endpoints (DeepSeek observed) may emit
+            # auxiliary content text alongside tool_calls in the SAME message.
+            # tool_calls is authoritative; the auxiliary text is a preamble,
+            # never the final answer — drop it so the Agent loop keeps exactly
+            # two unambiguous shapes (final text OR tool calls).
+            if raw_calls:
+                content = None
             role = message.get("role") or "assistant"
             usage = data.get("usage") or {}
             calls: list[LLMToolCall] = []

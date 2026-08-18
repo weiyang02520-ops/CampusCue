@@ -18,25 +18,26 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-18 · M4.1 static hardening checkpoint）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-18 · M4.2 real provider checkpoint）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M0-M3 FINAL PASS；M4 = STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** |
+| 当前门 | **M0-M3 FINAL PASS；M4.1 STATIC HARDENING = PASS；M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
-| 代码 | **v2/ 独立 implementation root**：M1 QQ runtime、M2 storage/provider + AI-first pipeline、M3 reminder lifecycle、M4 Agent tool loop implementation + M4.1 static hardening；Legacy frozen。最新本地 checkpoint 证据（FRESH installed-package isolation）：466 tests passed（2026-08-18） |
-| REAL ENV | 已验证（M1.2 + M2b.2）：NapCat Framework + 真实 QQ；hello Echo + 真实任务抽取全链路。M3 为 LOCAL REAL SCHEDULER（无 QQ）。M4 Real Provider Tool Call / Real QQ Agent E2E 仍未运行 |
+| 代码 | **v2/ 独立 implementation root**：M1 QQ runtime、M2 storage/provider + AI-first pipeline、M3 reminder lifecycle、M4 Agent tool loop + M4.1 static hardening + M4.2 real provider fix；Legacy frozen。最新本地 checkpoint 证据：466 tests passed（2026-08-18，fresh `.venv-m42fresh`） |
+| REAL ENV | 已验证：M1.2 + M2b.2 QQ 全链路；**M4.2 Real Provider Tool Call（DeepSeek deepseek-chat）PASS（2026-08-18）**；Real QQ Agent E2E 仍未运行（下一门） |
 
-## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-18 · M4.1 static hardening checkpoint）
+## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-18 · M4.2 real provider checkpoint）
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M0-M3 FINAL PASS。M4 = STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。
-- **下一步**：External ChatGPT 独立审核本 checkpoint；Real Provider Tool Call 与 safe independent-test-bot QQ E2E 仍未运行；M4 FINAL 不因本 checkpoint 自动通过。
+- **当前状态**：M0-M3 FINAL PASS；M4.1 STATIC HARDENING = PASS。M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。
+- **下一步**：External ChatGPT 独立审核本 checkpoint；safe independent-test-bot QQ Agent E2E 是下一门，**未授权在本 checkpoint 运行**；M4 FINAL 不因本 checkpoint 自动通过。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
+- **M4.2 real provider fact**：真实 OpenAI 兼容端点（DeepSeek）tool-call 轮次可能同时返回辅助 content + tool_calls——tool_calls 权威、辅助文本丢弃（`_parse_ok` 最小修复，M4.2）。
 
 ## 4. ARCHITECTURE RULES（违反 = FAIL）
 
@@ -170,13 +171,15 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：**M0-M3 FINAL PASS**；**M4 = STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING**；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。
+- **当前状态**：**M0-M3 FINAL PASS**；**M4.1 STATIC HARDENING = PASS**；**M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING**；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。
 - **M4 implementation**：[REPO_CONFIRMED] Provider-neutral Tool Calling、ToolRegistry、trusted source-scoped Task Tools、AgentRuntime、router/runtime wiring、per-thread lock、LRU thread cap、CJK ContextBudget、event timestamp prompt、peer-review regression tests、config/package changes。
-- **M4.1 static hardening**：[TEST_CONFIRMED]（fresh installed-package isolation）TaskService `DEADLINE_UNSET` sentinel（省略=不变/None=清除/naive 拒绝）；Agent handler missing/disabled source gate；trusted `user_text` provenance（`source_text_reference` 非模型注入）；ContextBudget current-input single count；Provider timeout 独立性（LLM 请求不派生 tool 超时）；multi-create first-version limitation documented。
-- **验证（FRESH installed-package isolation）**：[TEST_CONFIRMED] 全新隔离环境安装 working-tree V2（non-editable）+ test extras；imports resolved from fresh environment installed V2 package（campuscue.agents / campuscue.tools / jsonschema 正确解析，无 Legacy/AstrBot/旧 venv/PYTHONPATH 泄漏）；M4.1 focused **88 passed**；full V2 **466 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret/PII scan PASS。Real Provider Tool Call and Real QQ Agent E2E NOT RUN; QQ processes and protected primary account NOT TOUCHED。
+- **M4.1 static hardening**：[TEST_CONFIRMED]（fresh installed-package isolation）TaskService `DEADLINE_UNSET` sentinel（省略=不变/None=清除/naive 拒绝）；Agent handler missing/disabled source gate；trusted `user_text` provenance（`source_text_reference` 非模型注入）；ContextBudget current-input single count；Provider timeout 独立性；multi-create first-version limitation documented。
+- **M4.2 Real Provider Tool Call**：[TEST_CONFIRMED] **PASS**（2026-08-18）——openai_compatible / deepseek-chat / 真实 httpx transport；真实 Provider 自主发出 `task_list`（模型选择 scope=week/today）+ 自主 `task_get` → ToolRegistry → TaskService → 临时真实 SQLite → tool result 回传 → 第二次真实 Provider 调用 → 最终回答反映合成 DB 任务；改 title 后回答变化（数据驱动）；Source A/B 作用域隔离双向验证。
+- **M4.2 真实兼容性修复**：[REPO_CONFIRMED] 真实 OpenAI 兼容端点（DeepSeek）tool-call 轮次同时返回辅助 content + tool_calls——原 `_parse_ok` 硬判 MALFORMED_OUTPUT；最小修复：tool_calls 权威、辅助文本丢弃（Agent loop 保持 final-text / tool-call 两种明确形状）；`test_6b_mixed_content_and_tool_calls_keeps_tool_calls` 覆盖新契约。
+- **验证（fresh installed-package isolation，源码变更后重做）**：[TEST_CONFIRMED] `.venv-m42fresh` 全新安装 working-tree V2（non-editable）+ test extras；imports resolved from fresh environment installed V2 package；M4 focused **88 passed**；full V2 **466 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret/PII scan PASS。Real QQ Agent E2E NOT RUN; QQ processes and protected primary account NOT TOUCHED。
 - **M4 limitation**：[DESIGN_LIMITATION] One source message can create at most one Task in the first version because the M2 `(source_id, source_message_id)` uniqueness contract remains unchanged；second `task_create` safely fails；no schema v3。
 - **M3 limitation**：[KNOWN_LIMITATION] Cross-repository Task/Reminder atomicity remains open design risk; startup `resync_all()` recovery accepted; no unit-of-work or Reminder architecture redesign in this checkpoint。
-- **下一步**：External ChatGPT independently reviews pushed checkpoint; then real Provider and safe independent-test-bot QQ gates remain pending。M4 FINAL must not be declared by this checkpoint。
+- **下一步**：External ChatGPT independently reviews pushed checkpoint（重点：`_parse_ok` mixed 修复 + 验收证据）；then safe independent-test-bot QQ Agent E2E is the next gate — **not authorized in this checkpoint**。M4 FINAL must not be declared by this checkpoint。
 - **M3 关键事实**：DB reminder facts canonical / scheduler jobs derived（resync_all 重建）；确定性 job_id `reminder:<id>`；APScheduler 3.11 实测：replace_existing 会追加→用显式 remove-then-add；shutdown 未启动调度器抛 SchedulerNotRunningError→容错；misfire_grace_time 必须 >0；quiet-hours 23-08 折叠 + 同分钟去重 + MIN_LEAD_SECONDS=60；停机错过不补发。
 - **REAL ENV 关键事实**：NapCat Framework 启动建议 **stdout/stderr 重定向**（2026-08-10 本机实测前台启动触发 EPIPE，重定向后成功——本地观察，非普适规则）；`napimain.exe <QQ> <dll> <cjs>` 注入；WS client 配置在账号专用 `onebot11_<id>.json`；**用户大号受保护不可动**；测试 bot 独立小号。
 - **运行 V2 必须用独立 venv**（`v2/.venv-m1-real` 真实环境 / `.venv-m2iso` 隔离验证）。

@@ -97,6 +97,7 @@ User Input
 ```
 
 - **max_steps：默认 6，上限 8**（V1/AstrBot 默认 30 对校园问答过重）
+- **Provider 响应形状（M4.2 真实 Provider 兼容）**：`content=string + tool_calls 空` = 最终回答；`content=null + tool_calls 非空` = 工具调用；**真实 OpenAI 兼容端点（DeepSeek 实测）可能在 tool-call 轮次同时返回辅助 content 文本**——tool_calls 权威，辅助文本丢弃（不当作最终回答），保证 Agent loop 只有两种明确形状。
 - **防呆**：
   - 无限循环：step 上限
   - 重复完全相同 tool call：连续 ≥3 次相同 → 强制中止并提示模型（V1 的 streak 检测保留）

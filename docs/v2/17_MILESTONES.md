@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M3 FINAL = **PASS**；M4 = **STATIC_HARDENING_COMPLETE_REAL_ENV_PENDING**；M4 FINAL = **NOT YET DECLARED**；M5 = **NOT_AUTHORIZED**。M4.1 静态加固已在 fresh installed-package 隔离环境验证通过（[TEST_CONFIRMED]，见 .ai-handoff/HANDOFF.md）；Real Provider Tool Call 与 safe independent-test-bot QQ E2E 仍未运行，M4 FINAL 不因本 checkpoint 自动通过。
+> **当前 active gate**：M3 FINAL = **PASS**；M4.1 STATIC HARDENING = **PASS**；M4 = **REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING**；M4 FINAL = **NOT YET DECLARED**；M5 = **NOT_AUTHORIZED**。真实 Provider（DeepSeek `deepseek-chat`）M4 Tool Calling 验收已通过（[TEST_CONFIRMED]，见 .ai-handoff/HANDOFF.md）；safe independent-test-bot QQ E2E 是下一门但**本 checkpoint 不运行**；M4 FINAL 不因本 checkpoint 自动通过。
 
 ## M1：Independent QQ Runtime
 
