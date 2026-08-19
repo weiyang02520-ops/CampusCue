@@ -8,7 +8,7 @@
 | 组件 | 激活于 |
 |---|---|
 | BaseProvider / LLMRequest / LLMResponse / ProviderError taxonomy / OpenAICompatibleProvider / 最小 ProviderManager / structured output / secret_reference | **M2**（Task Extraction 的 LLM 调用走它） |
-| ToolDefinition / ToolResult / ToolRegistry / Task Tools / CampusAgentRuntime / ContextBudget / Tool Loop / conversation 最小实现 | **M4（已实现；Real Provider Tool Call 与 safe independent-test-bot QQ E2E 尚待运行）** |
+| ToolDefinition / ToolResult / ToolRegistry / Task Tools / CampusAgentRuntime / ContextBudget / Tool Loop / conversation 最小实现 | **M4（已实现；Real Provider Tool Call 与 Real QQ Agent E2E 已通过 Workspace Agent local evidence 验收，2026-08-18/19）** |
 | 流式 / fallback provider 链 / 多 provider 偏好 | FUTURE |
 
 ## Provider（M2 激活）

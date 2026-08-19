@@ -1,55 +1,48 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M4.2 Real Provider Tool Call Checkpoint — External Review Request
+# CampusCue M4.3 Real QQ Agent E2E Checkpoint — External Review Request
 
 ## Gate state
 
 - M3 FINAL = **PASS** (baseline `7d22a61b45a3c0110a5ae359e4636b52c3fd2f05`)
 - M4.1 STATIC HARDENING = **PASS** (baseline `6e02289d56a0a05bae5db80dd694b05918853959`)
-- M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING
+- M4.2 REAL PROVIDER TOOL CALL = **PASS** (Workspace Agent local evidence, baseline `3c1b5ab55843a4fb01020e07d785e1eedf4ea9f7`)
+- M4.3 REAL QQ AGENT E2E = **PASS** (Workspace Agent local evidence, 2026-08-19)
+- M4 = IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW
 - M4 FINAL = NOT YET DECLARED
 - M5 = NOT_AUTHORIZED
 
-## What was proven (Real Provider Tool Call — PASS)
+## What was proven (Real QQ Agent E2E — PASS)
 
-A REAL configured Provider performed the M4 Tool Calling protocol end-to-end against real CampusCue services and a real temporary SQLite DB:
+A REAL QQ group message reached CampusCue through an independent NapCat Shell Windows Node environment and completed the full M4 Agent loop:
 
-1. Provider: openai_compatible, model=deepseek-chat, real httpx transport to api.deepseek.com (secret via `secret_reference` env mechanism; secret value never stored/printed)。
-2. The model **autonomously emitted** `task_list` tool calls（scope=week / today，由模型选择）; no hardcoded dispatch, no mock transport, no scripted LLMResponse。
-3. ToolRegistry executed `task_list` → TaskService → real SQLite returned the seeded synthetic task → tool result returned to the provider → **second real Provider call** produced a natural-language final answer reflecting the DB task。
-4. Data-driven proof: title changed through TaskService → second query → answer changed accordingly。
-5. Source scope: Source A answer excluded Source B's task and vice versa (each query returned exactly its own source's data)。
-6. The model additionally autonomously called `task_get` — further evidence of non-hardcoded model-driven tool use。
-
-## Source fix included (smallest focused fix)
-
-Real OpenAI-compatible endpoints（DeepSeek observed）may return auxiliary `content` text alongside `tool_calls` in the same message。CampusCue's `_parse_ok` previously classified this as `MALFORMED_OUTPUT`。Fixed: `tool_calls` is authoritative; the auxiliary text is dropped（the Agent loop keeps exactly two unambiguous shapes: final text OR tool calls）。Test `test_6b_mixed_content_and_tool_calls_keeps_tool_calls` covers the new contract。
-
-Please review: `v2/src/campuscue/providers/openai_compatible.py`（`_parse_ok`）、`v2/tests/unit/test_m4_provider_tools.py`（test_6b）、`docs/v2/08_PROVIDER_AND_AGENT.md`。
+1. NapCat: official **v4.18.19** `NapCat.Shell.Windows.Node.zip` (SHA256 verified), fresh directory `C:\Tools\NapCat\m43-clean`; `NAPCAT_DISABLE_MULTI_PROCESS=1`; missing `crypto.dll`/`ssl.dll` copied from official local QQ install; native wrapper load PASS; TEST_BOT login via QR (quick login required hand-Q verification).
+2. Real group message `@TEST_BOT 我这周有什么事情？` → OneBot Reverse WS `ws://127.0.0.1:6199/ws` → CampusCue (task pipeline + Agent enabled, real SQLite `m4-qq-accept.db`, DeepSeek key from Windows Credential Manager, never printed).
+3. @self Agent activation → real DeepSeek autonomously emitted `task_list` → ToolRegistry → TaskService → real SQLite → tool result returned → second real Provider call → `send_group_msg` retcode 0 → real QQ received the task list.
+4. Data-driven proof: via production TaskService, a synthetic task was changed from “高等数学第三章作业/高等数学” to “线性代数第四章作业/线性代数”; the second real QQ query response showed the updated title — answer follows SQLite data.
+5. Non-@ normal group message did **not** activate Agent: no Agent tool loop, no reply; only the M2 AI-first TaskPipeline LLM extraction ran and recorded `has_task=false` / `status=skipped` (this is not an Agent Provider call).
 
 ## Local evidence (Workspace Agent only)
 
-- Real Provider transport: PASS（HTTP 200; provider emitted tool_calls; tool id present; arguments parsed）
-- Temporary SQLite: YES；Synthetic Source/Task: YES（seeded through TaskService; no raw SQL）
-- Focused M4 tests: **88 passed**; Full V2: **466 passed**（fresh installed-package `.venv-m42fresh`）
+- Real NapCat + TEST_BOT + Reverse WS + CampusCue + real DeepSeek + real SQLite: PASS
+- Data-change verification: PASS
+- Non-@ no-Agent verification: PASS
+- M4 focused tests: **88 passed**; Full V2: **466 passed** (fresh installed-package `.venv-m42fresh`, M4.2 historical evidence)
 - compileall: PASS; Anti-AstrBot: PASS; git diff --check: PASS; Secret/PII scan: PASS
 - These results are local Workspace Agent evidence, not independent External ChatGPT execution。
 
 ## Not run / not touched
 
-- Real QQ Agent E2E: **NOT RUN（next gate；not authorized in this checkpoint）**
-- QQ processes / protected primary account: **NOT TOUCHED**
-- No QQ/NapCat claim of any kind is made。
+- M4 FINAL: NOT DECLARED
+- M5: NOT_AUTHORIZED
+- No main-account QQ data was modified; NapCat independent environment did not inject system QQ.
+- No real QQ IDs, group IDs, chat content, tokens, Provider secrets, or local private paths are included in this request.
 
 ## Known limitation / design risk
 
 - **[DESIGN_LIMITATION][M4]**：One source message can create at most one Task in the first version because the M2 `(source_id, source_message_id)` uniqueness contract remains unchanged。A second `task_create` from the same user message is safely returned as failure。No schema v3 was introduced。
 - M3 Task/Reminder mutations still cross separate repository commits; startup `resync_all()` recovery accepted。Not redesigned in this checkpoint。
 
-## Privacy
-
-No real QQ IDs, group IDs, chat content, tokens, Provider secrets, local private paths, or protected-account process actions are included。Acceptance used only synthetic data in a temporary DB（deleted）; no acceptance DB committed。Fresh virtual environment files are not committed。
-
 ## Visual review
 
-No UI/visual output in M4。
+No UI/visual output in M4.

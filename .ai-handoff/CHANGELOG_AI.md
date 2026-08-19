@@ -263,3 +263,13 @@
 - **Real environment**：Real Provider Tool Call **PASS（2026-08-18）**；Real QQ Agent E2E **NOT RUN（下一门，本 checkpoint 未授权）**；QQ processes/protected primary account **NOT TOUCHED**。
 - **Known limitation / out of scope**：[DESIGN_LIMITATION][M4] One source message can create at most one Task in the first version（M2 `(source_id, source_message_id)` 唯一约束不变；无 schema v3）。M3 Task/Reminder cross-repository atomicity remains open design risk; startup `resync_all()` recovery accepted。
 - **Gate**：M3 FINAL = PASS；M4.1 STATIC HARDENING = PASS；M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。
+
+## 2026-08-19 · M4.3 REAL QQ AGENT E2E
+
+- **任务**：真实 QQ Agent E2E 验收（M4 最后真实环境 Gate）；先重建独立 NapCat 测试环境，再完成真实 QQ → Agent Tool Loop → SQLite → QQ 回复闭环。
+- **Commit**：（本 checkpoint）
+- **主要修改**：**v2/src 零修改**（纯验收 + 文档）；.ai-handoff/ 6 文件；docs/context 双 Memory；docs/v2/17_MILESTONES（gate 更新）；docs/v2/08（M4 激活状态更新）。
+- **NapCat 环境**：官方 NapCat.Shell.Windows.Node v4.18.19（GitHub NapNeko/NapCatQQ Release，SHA256 校验）；目录 `C:\Tools\NapCat\m43-clean`；补齐 `crypto.dll`/`ssl.dll`；`NAPCAT_DISABLE_MULTI_PROCESS=1` 避免 worker `--no-sandbox` bad-option；TEST_BOT 登录（quick login 需手Q 验证 → 二维码人工扫码）。
+- **REAL ENV**：**VERIFIED**——真实 QQ `@TEST_BOT 我这周有什么事情？` → Reverse WS → CampusCue → 真实 DeepSeek `task_list` → TaskService → SQLite → 第二次 Provider 调用 → `send_group_msg` retcode 0 回复任务列表；生产 TaskService 改任务标题后第二次回答随数据变化；普通不 @ 消息不触发 Agent（仅 M2 extraction skipped）。
+- **测试**：M4 focused **88 passed**；full V2 **466 passed**（M4.2 fresh `.venv-m42fresh` 历史证据）；git diff --check PASS；Secret/PII scan PASS。
+- **Gate**：M3 FINAL = PASS；M4.1 STATIC HARDENING = PASS；M4.2 REAL PROVIDER TOOL CALL = PASS；M4.3 REAL QQ AGENT E2E = PASS；M4 = IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。

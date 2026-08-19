@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M3 FINAL = **PASS**；M4.1 STATIC HARDENING = **PASS**；M4 = **REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING**；M4 FINAL = **NOT YET DECLARED**；M5 = **NOT_AUTHORIZED**。真实 Provider（DeepSeek `deepseek-chat`）M4 Tool Calling 验收已通过（[TEST_CONFIRMED]，见 .ai-handoff/HANDOFF.md）；safe independent-test-bot QQ E2E 是下一门但**本 checkpoint 不运行**；M4 FINAL 不因本 checkpoint 自动通过。
+> **当前 active gate**：M3 FINAL = **PASS**；M4.1 STATIC HARDENING = **PASS**；M4.2 REAL PROVIDER TOOL CALL = **PASS**；M4.3 REAL QQ AGENT E2E = **PASS**；M4 = **IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M4 FINAL = **NOT YET DECLARED**；M5 = **NOT_AUTHORIZED**。真实 Provider（DeepSeek `deepseek-chat`）M4 Tool Calling 与真实 QQ Agent E2E 均已由 Workspace Agent local evidence 验收（2026-08-18/19，见 .ai-handoff/HANDOFF.md）；M4 FINAL 不因本 checkpoint 自动通过。
 
 ## M1：Independent QQ Runtime
 
@@ -34,7 +34,7 @@
 
 > **M2a（完成，FINAL PASS）**：Data + Provider Foundation。**M2b.1（完成，FINAL PASS）**：AI-first Task Extraction Pipeline（ADR-013：本地规则不做语义 gate；LLM 单次 triage+extraction；Mock Provider + SQLite 全链路）。**M2b.2（完成，REAL_ENV PASS，2026-08-10）**：真实 Provider（DeepSeek）+ 真实 QQ/NapCat + 真实 SQLite 验收。**M2 FINAL = PASS（@ 23083cb）。**
 >
-> **M3（完成，FINAL PASS）**：Reminder 子系统（schema v2）——DB reminder facts（canonical）+ ReminderService（幂等 plan/cancel/resync/fire；startup resync 从 Tasks 对账）+ APScheduler 3.11 派生 jobs（确定性 job_id）+ TaskService 生命周期联动 + quiet-hours 契约。**M4（实现完成，真实环境待验收）**：Agent tool loop 已实现；Real Provider Tool Call 与 safe independent-test-bot QQ E2E 仍待运行。**M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。**
+> **M3（完成，FINAL PASS）**：Reminder 子系统（schema v2）——DB reminder facts（canonical）+ ReminderService（幂等 plan/cancel/resync/fire；startup resync 从 Tasks 对账）+ APScheduler 3.11 派生 jobs（确定性 job_id）+ TaskService 生命周期联动 + quiet-hours 契约。**M4（实现完成，真实环境验收完成）**：Agent tool loop 已实现；Real Provider Tool Call 与 Real QQ Agent E2E 均已通过 Workspace Agent local evidence 验收。**M4 = IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。**
 
 **范围**：
 - **M2a Provider Foundation**（原 M4 部分，**I 修正：Provider 前移至 M2**，M4 不重新造）：
@@ -88,7 +88,7 @@
 **M4 第一版创建限制**：M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task。第二次 `task_create` 返回安全失败结果，由 Agent 如实告知用户。M4.1 不引入 schema v3。
 
 **验收（REAL ENV VERIFIED）**：
-- 真实 QQ 提问"我这周有什么事情？" → Agent 真实 Tool Call（task_list）→ TaskService → 真实数据 → 回答（非硬编码）
+- 真实 QQ 提问"我这周有什么事情？" → Agent 真实 Tool Call（task_list）→ TaskService → 真实数据 → 回答（非硬编码）——**PASS（2026-08-19，Workspace Agent local evidence）**
 - max_steps 防呆；重复 tool call 中止；超时/错误分类文案
 - 无 Provider 配置时优雅报错（"未配置模型服务"）
 

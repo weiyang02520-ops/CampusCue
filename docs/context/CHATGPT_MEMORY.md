@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-18 · M4.2 real provider checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-19 · M4.3 real QQ E2E checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0-M3 FINAL PASS；M4.1 STATIC HARDENING = PASS；M4 = REAL_PROVIDER_TOOL_CALL_PASS_QQ_E2E_PENDING；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M0-M3 FINAL PASS；M4.1 STATIC HARDENING = PASS；M4.2 REAL PROVIDER TOOL CALL = PASS；M4.3 REAL QQ AGENT E2E = PASS；M4 = IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -381,4 +381,15 @@ User
 - [REPO_CONFIRMED][REAL_GATE_FIX]：真实 OpenAI 兼容端点（DeepSeek）在 tool-call 轮次同时返回辅助 content 文本 + tool_calls；原 `_parse_ok`（M4 §8 双形状设计）硬判 MALFORMED_OUTPUT → 最小聚焦修复：tool_calls 权威、辅助文本丢弃（Agent loop 保持 final-text / tool-call 两种明确形状）；`test_6b_mixed_content_and_tool_calls_keeps_tool_calls` 覆盖新契约；docs/v2/08 同步真实兼容说明。
 - [TEST_CONFIRMED]：源码变更后按要求重做 fresh installed-package isolation（`.venv-m42fresh`）；M4 focused **88 passed**；full V2 **466 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret+PII scan PASS；imports resolved from fresh environment installed V2 package。Workspace Agent local evidence，非独立 External ChatGPT 执行。
 - [UNCERTAIN][NOT_RUN]：Real QQ Agent E2E not run in this checkpoint；QQ processes and protected primary account not touched。
+- [DESIGN_LIMITATION][M4]：One source message can create at most one Task in the first version（M2 `(source_id, source_message_id)` 唯一约束不变；second task_create safely fails；no schema v3）。
+
+## 9W. MEMORY DELTA（M4.3 Real QQ Agent E2E，2026-08-19）
+
+- [EXTERNAL_REVIEW][CURRENT]：M3 FINAL = PASS at baseline `7d22a61b45a3c0110a5ae359e4636b52c3fd2f05`；M4.1 STATIC HARDENING = PASS at baseline `6e02289d56a0a05bae5db80dd694b05918853959`；M4.2 REAL PROVIDER TOOL CALL = PASS at baseline `3c1b5ab55843a4fb01020e07d785e1eedf4ea9f7`；**M4.3 REAL QQ AGENT E2E = PASS（2026-08-19）**；M4 = IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW；M4 FINAL NOT declared；M5 NOT authorized。
+- [REAL_ENV_CONFIRMED][M4.3]：**Real QQ Agent E2E = PASS**——独立 NapCat Shell Windows Node v4.18.19（官方 Release `NapCat.Shell.Windows.Node.zip`，SHA256 已校验）目录 `C:\Tools\NapCat\m43-clean`，`NAPCAT_DISABLE_MULTI_PROCESS=1` 避免 worker `--no-sandbox` bad-option；TEST_BOT 登录（quick login 因手Q 验证回退二维码）→ Reverse WS `ws://127.0.0.1:6199/ws` → CampusCue（`CAMPUSCUE_TASK_PIPELINE=1` + `CAMPUSCUE_AGENT=1` + 真实 SQLite `m4-qq-accept.db` + DeepSeek key 从 Windows Credential Manager 读取，不落盘）。
+- [REAL_ENV_CONFIRMED][E2E_CHAIN]：真实 QQ 群消息 `@TEST_BOT 我这周有什么事情？` → @self Agent 激活 → 真实 DeepSeek 自主发出 `task_list` → ToolRegistry → TaskService → 真实 SQLite → tool result 回传 → 第二次真实 Provider 调用 → `send_group_msg` retcode 0 回复任务列表（真实 QQ 收到）。
+- [REAL_ENV_CONFIRMED][DATA_DRIVEN]：通过生产 TaskService 将任务标题从“高等数学第三章作业/高等数学”改为“线性代数第四章作业/线性代数”；第二次真实 QQ 查询回复随之显示“线性代数第四章作业”且截止/剩余时间更新——回答随 SQLite 数据变化，非硬编码。
+- [REAL_ENV_CONFIRMED][NO_AGENT_ON_NORMAL]：普通不 @ 群消息（日常闲聊）不触发 Agent——无 Agent tool loop、无回复；仅 M2 AI-first TaskPipeline 调用 Provider 判定 `has_task=false` / `status=skipped`（符合 ADR-013 AI-first 设计，不是 Agent Provider 调用）。
+- [REPO_CONFIRMED][NAPCAT_ENV]：M4.3 使用官方 NapCat.Shell.Windows.Node v4.18.19；wrapper.node 官方包缺 `crypto.dll`/`ssl.dll`（PE 导入依赖），从本机官方 QQ 安装目录 `C:\Program Files\Tencent\versions\9.9.33-52230\resources\app` 补齐后 native module load PASS；`--no-sandbox` 问题通过 `NAPCAT_DISABLE_MULTI_PROCESS=1` 官方环境变量解决。
+- [TEST_CONFIRMED]：M4 focused **88 passed**；full V2 **466 passed**（M4.2 fresh `.venv-m42fresh` 历史证据）；M4.3 真实验收为 Workspace Agent local evidence，非独立 External ChatGPT 执行；CampusCue Git 仓库本轮仅文档更新，无生产源码改动。
 - [DESIGN_LIMITATION][M4]：One source message can create at most one Task in the first version（M2 `(source_id, source_message_id)` 唯一约束不变；second task_create safely fails；no schema v3）。
