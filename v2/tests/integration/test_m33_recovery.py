@@ -177,7 +177,7 @@ class TestMigrationBackfill:
 
         # schema version now v2
         conn = sqlite3.connect(str(p))
-        assert conn.execute("SELECT schema_version FROM schema_meta").fetchone()[0] == 2
+        assert conn.execute("SELECT schema_version FROM schema_meta").fetchone()[0] == 3
         conn.close()
 
         # simulate restart: fresh service + scheduler, same DB
@@ -388,7 +388,7 @@ class TestCurrentV2StructuralPrecheck:
         db = Database(DatabaseConfig(path=p, env="test"))
         asyncio.run(db.initialize())  # must not raise
         conn = sqlite3.connect(str(p))
-        assert conn.execute("SELECT schema_version FROM schema_meta").fetchone()[0] == 2
+        assert conn.execute("SELECT schema_version FROM schema_meta").fetchone()[0] == 3
         tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         assert "reminders" in tables
         conn.close()

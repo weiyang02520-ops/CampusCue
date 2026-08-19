@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+from campuscue.core.realtime import RealtimeNotifier
 from campuscue.repositories.repositories import ReminderRepository, TaskRepository
 from campuscue.storage.clock import Clock, SystemClock
 from campuscue.storage.enums import ReminderStatus, TaskStatus
@@ -98,6 +99,7 @@ class ReminderService:
         clock: Clock | None = None,
         timezone: ZoneInfo | None = None,
         policy: object | None = None,
+        notifier: RealtimeNotifier | None = None,
     ) -> None:
         self._reminders = reminders
         self._tasks = tasks
@@ -105,6 +107,7 @@ class ReminderService:
         self._clock = clock or SystemClock()
         self._tz = timezone or ZoneInfo("Asia/Shanghai")
         self._policy = policy or DEFAULT_POLICY
+        self._notifier = notifier
         # M3.1-F: safe by default — direct construction + fire() must never
         # fail because _delivery is unset. NoopDelivery = no end-user UX claim.
         self._delivery: object = NoopDelivery()
@@ -151,6 +154,26 @@ class ReminderService:
             if r.status == ReminderStatus.CANCELLED.value:
                 await self._scheduler.unschedule(reminder_job_id(r.id))
         return cancelled
+
+    async def cancel_reminder(self, reminder_id: int) -> Reminder:
+        """Cancel ONE reminder fact + its derived scheduler job (M5 API)."""
+        reminder = await self._reminders.get(reminder_id)
+        if reminder.status != ReminderStatus.SCHEDULED.value:
+            raise ValueError(f"reminder {reminder_id} is not scheduled")
+        now = self._clock.utcnow()
+        reminder = await self._reminders.mark_cancelled(reminder_id, now=now)
+        await self._scheduler.unschedule(reminder_job_id(reminder.id))
+        if self._notifier is not None:
+            await self._notifier.publish(
+                "reminder.cancelled",
+                {
+                    "id": reminder.id,
+                    "task_id": reminder.task_id,
+                    "status": reminder.status,
+                    "updated_at": reminder.updated_at.isoformat(),
+                },
+            )
+        return reminder
 
     async def delete_reminders_for_task(self, task_id: int) -> int:
         """HARD-delete reminder facts + drop derived jobs (FK-safe task delete)."""
@@ -282,7 +305,17 @@ class ReminderService:
             # done/dismissed -> close fact, no delivery
             await self._reminders.mark_cancelled(reminder_id, now=self._clock.utcnow())
             return False
-        await self._reminders.mark_fired(reminder_id, run_at=self._clock.utcnow())
+        reminder = await self._reminders.mark_fired(reminder_id, run_at=self._clock.utcnow())
+        if self._notifier is not None:
+            await self._notifier.publish(
+                "reminder.fired",
+                {
+                    "id": reminder.id,
+                    "task_id": reminder.task_id,
+                    "status": reminder.status,
+                    "trigger_at": reminder.trigger_at.isoformat(),
+                },
+            )
         # platform-neutral delivery boundary (injected; M3 tests use fake sink)
         await self._deliver(reminder, task)
         return True

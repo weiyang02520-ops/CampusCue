@@ -273,3 +273,16 @@
 - **REAL ENV**：**VERIFIED**——真实 QQ `@TEST_BOT 我这周有什么事情？` → Reverse WS → CampusCue → 真实 DeepSeek `task_list` → TaskService → SQLite → 第二次 Provider 调用 → `send_group_msg` retcode 0 回复任务列表；生产 TaskService 改任务标题后第二次回答随数据变化；普通不 @ 消息不触发 Agent（仅 M2 extraction skipped）。
 - **测试**：M4 focused **88 passed**；full V2 **466 passed**（M4.2 fresh `.venv-m42fresh` 历史证据）；git diff --check PASS；Secret/PII scan PASS。
 - **Gate**：M3 FINAL = PASS；M4.1 STATIC HARDENING = PASS；M4.2 REAL PROVIDER TOOL CALL = PASS；M4.3 REAL QQ AGENT E2E = PASS；M4 = IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED。
+
+## 2026-08-19 · M5 API + REALTIME
+
+- **任务**：完整实现 M5 FastAPI REST + SSE；schema v3；Backup/Restore/Import/Export；Auth；Runtime API lifecycle。
+- **Commit**：feat: implement M5 API and realtime（本 checkpoint）
+- **主要修改**：
+  - 新增 `campuscue/api/`（app/dependencies/auth/errors/schemas/realtime/routes/*）+ `core/realtime.py` + services（provider/settings/system）
+  - TaskService/ReminderService/TaskPipeline 增加 optional RealtimeNotifier
+  - Runtime 增加 ApiConfig + API server lifecycle；`CAMPUSCUE_API=1` 启用，默认 127.0.0.1:6200
+  - Schema v3：settings 表、sources.deleted_at 软删除、M5 indexes；v1→v2→v3 atomic migration
+  - pyproject 增加 fastapi/uvicorn/pydantic，packages 含 campuscue.api
+- **测试**：新增 M5 14 tests；full V2 **480 passed**（fresh `.venv-m5fresh` non-editable）；compileall PASS；Anti-AstrBot PASS；uvicorn local HTTP smoke PASS。
+- **Gate**：M4 FINAL = PASS；M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED。

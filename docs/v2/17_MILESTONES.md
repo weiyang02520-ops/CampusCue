@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M3 FINAL = **PASS**；M4.1 STATIC HARDENING = **PASS**；M4.2 REAL PROVIDER TOOL CALL = **PASS**；M4.3 REAL QQ AGENT E2E = **PASS**；M4 = **IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M4 FINAL = **NOT YET DECLARED**；M5 = **NOT_AUTHORIZED**。真实 Provider（DeepSeek `deepseek-chat`）M4 Tool Calling 与真实 QQ Agent E2E 均已由 Workspace Agent local evidence 验收（2026-08-18/19，见 .ai-handoff/HANDOFF.md）；M4 FINAL 不因本 checkpoint 自动通过。
+> **当前 active gate**：M4 FINAL = **PASS**；M5 = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M5 FINAL = **NOT YET DECLARED**；M6 = **NOT_AUTHORIZED**。M4 已由 External ChatGPT 独立审核通过；M5 API + Realtime 已由 Workspace Agent local evidence 完成（2026-08-19，见 .ai-handoff/HANDOFF.md）；M5 FINAL 不因本 checkpoint 自动通过。
 
 ## M1：Independent QQ Runtime
 
@@ -96,9 +96,14 @@
 
 **范围**：FastAPI（Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System）+ SSE。
 
-**实现**：按 11_API_SPEC。
+**实现**：按 11_API_SPEC（M5 implemented contract）。
 
-**验收**：contract + integration 测试全绿；错误路径（409/422/404）；SSE 生命周期（断连/重连/补拉）测试；默认 loopback。
+**状态**：**IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**（2026-08-19，Workspace Agent local evidence）。
+- REST contract PASS；Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System PASS
+- Backup/Restore/Import/Export PASS；SSE Realtime PASS
+- Auth PASS；Runtime lifecycle PASS；Schema v3 + migration PASS
+- Contract/integration tests 新增 14；full V2 **480 passed**（fresh `.venv-m5fresh` non-editable）；compileall PASS；Anti-AstrBot PASS
+- M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED
 
 ## M6：WebUI
 

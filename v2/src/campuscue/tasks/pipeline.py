@@ -29,6 +29,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from campuscue.core.events import CampusEvent
+from campuscue.core.realtime import RealtimeNotifier
 from campuscue.providers.errors import NoProviderConfiguredError, ProviderError
 from campuscue.repositories.repositories import ExtractionRepository, SourceRepository
 from campuscue.services.task_service import (
@@ -70,6 +71,7 @@ class TaskPipeline:
         timezone: ZoneInfo,
         clock: Clock | None = None,
         confidence_threshold: float = CONFIDENCE_THRESHOLD,
+        notifier: RealtimeNotifier | None = None,
     ) -> None:
         self._sources = sources
         self._extractions = extractions
@@ -78,6 +80,7 @@ class TaskPipeline:
         self._tz = timezone
         self._clock = clock or SystemClock()
         self._confidence_threshold = confidence_threshold
+        self._notifier = notifier
         self._policy = SourcePolicy(sources)
         self._context = ContextCollector()
 
@@ -243,7 +246,7 @@ class TaskPipeline:
     ) -> Extraction:
         audit.setdefault("outcome", {"status": status})
         audit["outcome"].update({"status": status})
-        return await self._extractions.create(
+        row = await self._extractions.create(
             source_id=source_id,
             source_message_id=event.message_id,
             trace_id=event.trace_id,
@@ -256,3 +259,16 @@ class TaskPipeline:
             audit=json.dumps(audit, ensure_ascii=False, sort_keys=True),
             error=error,
         )
+        if self._notifier is not None:
+            await self._notifier.publish(
+                "extraction.updated",
+                {
+                    "id": row.id,
+                    "source_id": row.source_id,
+                    "source_message_id": row.source_message_id,
+                    "status": row.status,
+                    "confidence": row.confidence,
+                    "created_at": row.created_at.isoformat(),
+                },
+            )
+        return row

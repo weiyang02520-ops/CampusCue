@@ -88,11 +88,11 @@ User Input → AgentContext(conversation + budget)
   → Final Response
 ```
 
-## Web 流（M6 范围）
+## Web 流（M5 API 已实现，M6 UI 待实现）
 
 ```
-WebUI → FastAPI (REST) → Service → Repository → SQLite
-WebUI → SSE (notification only) → 断线重连 → REST refresh canonical state
+WebUI(M6) → FastAPI (REST) → Service → Repository → SQLite
+WebUI(M6) → SSE (notification only) → 断线重连 → REST refresh canonical state
 ```
 
 ## 关键约束（设计红线）

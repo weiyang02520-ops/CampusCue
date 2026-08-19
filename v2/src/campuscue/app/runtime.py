@@ -41,6 +41,26 @@ class CampusRuntime:
         self.router: Router | None = None
         self.adapter: OneBotAdapter | None = None
         self._database = None  # owned DB (M2 opt-in); disposed on shutdown
+        self._task_repo = None
+        self._reminder_repo = None
+        self._source_repo = None
+        self._extraction_repo = None
+        self._provider_repo = None
+        self._realtime = None
+        self._api_server = None
+        self._api_task = None
+        self._api_log_handler = None
+        self._started_at = None
+        self._api_deps = None
+        self._api_app = None
+
+    @property
+    def uptime_seconds(self) -> float:
+        import time as _time
+        if self._started_at is None:
+            return 0.0
+        return _time.monotonic() - self._started_at
+
 
     async def start(self) -> None:
         self.state = RuntimeState.STARTING
@@ -63,6 +83,10 @@ class CampusRuntime:
                 on_event=self.bus.publish,
             )
             await self.adapter.start()
+            if self.config.api.enabled:
+                await self._init_api()
+            import time as _time
+            self._started_at = _time.monotonic()
             self.state = RuntimeState.RUNNING
             logger.info("campus runtime RUNNING")
         except Exception as e:
@@ -106,6 +130,22 @@ class CampusRuntime:
         tz = ZoneInfo(self.config.tasks.timezone)
         task_repo = TaskRepository(sf)
         reminder_repo = ReminderRepository(sf)
+        source_repo = SourceRepository(sf)
+        extraction_repo = ExtractionRepository(sf)
+        provider_repo = ProviderConfigRepository(sf)
+        self._task_repo = task_repo
+        self._reminder_repo = reminder_repo
+        self._source_repo = source_repo
+        self._extraction_repo = extraction_repo
+        self._provider_repo = provider_repo
+
+        # M5 RealtimeHub is created up-front when API is enabled; it is injected
+        # into services so mutations from ANY path publish SSE notifications.
+        realtime_hub = None
+        if self.config.api.enabled:
+            from campuscue.api.realtime import RealtimeHub
+            realtime_hub = RealtimeHub(queue_size=self.config.api.sse_queue_size)
+            self._realtime = realtime_hub
 
         # M3 reminder subsystem (optional/injected; M2 works without it)
         reminder_service: ReminderService | None = None
@@ -127,6 +167,7 @@ class CampusRuntime:
                     quiet_start_hour=self.config.reminders.quiet_start_hour,
                     quiet_end_hour=self.config.reminders.quiet_end_hour,
                 ),
+                notifier=realtime_hub,
             )
             reminder_service.set_delivery(NoopDelivery())
             self._reminder_service = reminder_service
@@ -134,16 +175,21 @@ class CampusRuntime:
 
         # ONE shared TaskService — the business gate (M4 §39): Agent tools use
         # the SAME correctly-wired TaskService as the application business layer.
-        task_service = TaskService(task_repo, reminder_service=reminder_service)
+        task_service = TaskService(
+            task_repo,
+            reminder_service=reminder_service,
+            notifier=realtime_hub,
+        )
         self._task_service = task_service
-        self._provider_manager = ProviderManager(ProviderConfigRepository(sf))
+        self._provider_manager = ProviderManager(provider_repo)
         pipeline = TaskPipeline(
-            sources=SourceRepository(sf),
-            extractions=ExtractionRepository(sf),
+            sources=source_repo,
+            extractions=extraction_repo,
             task_service=task_service,
             provider_manager=self._provider_manager,
             timezone=tz,
             confidence_threshold=self.config.tasks.confidence_threshold,
+            notifier=realtime_hub,
         )
         self._pipeline = pipeline
 
@@ -210,6 +256,66 @@ class CampusRuntime:
         self._agent_runtime = agent_runtime
         self._agent_handler = handler
 
+    async def _init_api(self) -> None:
+        """M5: start FastAPI as the LAST runtime component. Owned task is kept
+        and cancelled on shutdown; startup failure rolls back via start()."""
+        import logging
+
+        import uvicorn
+
+        from campuscue.api.app import create_app
+        from campuscue.api.dependencies import APIDependencies
+        from campuscue.api.logbuffer import LogBufferHandler
+        from campuscue.repositories.repositories import SettingRepository
+        from campuscue.services.provider_service import ProviderService
+        from campuscue.services.settings_service import SettingsService
+        from campuscue.services.source_service import SourceService
+        from campuscue.services.system_service import SystemService
+
+        assert self._database is not None and self._task_service is not None
+        deps = APIDependencies(
+            config=self.config.api,
+            runtime=self,
+            database=self._database,
+            source_service=SourceService(self._source_repo),
+            task_service=self._task_service,
+            reminder_service=getattr(self, "_reminder_service", None),
+            provider_service=ProviderService(self._provider_repo, self._provider_manager),
+            settings_service=SettingsService(
+                SettingRepository(self._database.session),
+                default_timezone=self.config.tasks.timezone,
+            ),
+            system_service=SystemService(
+                self._database.session,
+                self._task_service,
+                reminder_service=getattr(self, "_reminder_service", None),
+                provider_manager=self._provider_manager,
+            ),
+            agent_runtime=getattr(self, "_agent_runtime", None),
+            agent_handler=getattr(self, "_agent_handler", None),
+            realtime=getattr(self, "_realtime", None),
+        )
+        self._api_deps = deps
+        app = create_app(deps)
+        self._api_app = app
+        # attach redacted in-memory diagnostic log capture
+        handler = LogBufferHandler(deps.log_buffer)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        logging.getLogger("campuscue").addHandler(handler)
+        self._api_log_handler = handler
+
+        config = uvicorn.Config(
+            app,
+            host=self.config.api.host,
+            port=self.config.api.port,
+            log_level="warning",
+            access_log=False,
+        )
+        server = uvicorn.Server(config)
+        self._api_server = server
+        self._api_task = asyncio.create_task(server.serve(), name="campuscue.api")
+        logger.info("campuscue api listening on http://%s:%s", self.config.api.host, self.config.api.port)
+
     async def _fire_reminder(self, reminder_id: int) -> None:
         """Scheduler fire handler -> ReminderService.fire (re-checks latest
         DB state; redacted logging; never raises out of the scheduler)."""
@@ -238,6 +344,19 @@ class CampusRuntime:
             logger.exception("event pipeline failed; trace=%s", event.trace_id[:8])
 
     async def _cleanup_after_failure(self) -> None:
+        if self._api_server is not None:
+            try:
+                self._api_server.should_exit = True
+                if self._api_task is not None:
+                    await asyncio.wait_for(self._api_task, 3.0)
+            except Exception:
+                if self._api_task is not None:
+                    self._api_task.cancel()
+            self._api_server = None
+            self._api_task = None
+        if self._api_log_handler is not None:
+            logging.getLogger("campuscue").removeHandler(self._api_log_handler)
+            self._api_log_handler = None
         if self.adapter is not None:
             try:
                 await self.adapter.stop()
@@ -269,6 +388,20 @@ class CampusRuntime:
         if self.state in (RuntimeState.STOPPED, RuntimeState.FAILED, RuntimeState.CREATED):
             return
         self.state = RuntimeState.STOPPING
+        # 0) stop API first (no new HTTP/SSE; close owned API task)
+        if self._api_server is not None:
+            try:
+                self._api_server.should_exit = True
+                if self._api_task is not None:
+                    await asyncio.wait_for(self._api_task, 5.0)
+            except (asyncio.TimeoutError, Exception):
+                if self._api_task is not None:
+                    self._api_task.cancel()
+            self._api_server = None
+            self._api_task = None
+        if self._api_log_handler is not None:
+            logging.getLogger("campuscue").removeHandler(self._api_log_handler)
+            self._api_log_handler = None
         # 1) stop accepting new ingress (close WS server + active connection)
         if self.adapter is not None:
             await self.adapter.stop()

@@ -123,6 +123,16 @@ class CampusAgentRuntime:
     def conversations(self) -> dict[str, Conversation]:
         return self._conversations
 
+    def thread_summary(self) -> list[dict]:
+        return [
+            {
+                "conversation_id": thread,
+                "message_count": conv.message_count(),
+                "last_activity": self._conversation_last_used.get(thread),
+            }
+            for thread, conv in self._conversations.items()
+        ]
+
     def _conversation_for_thread(self, thread: str) -> tuple[Conversation, asyncio.Lock]:
         """Return a bounded thread state and its turn-serialization lock.
 

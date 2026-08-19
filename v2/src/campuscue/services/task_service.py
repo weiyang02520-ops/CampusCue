@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Final
 
+from campuscue.core.realtime import RealtimeNotifier
 from campuscue.repositories.repositories import (
     DuplicateError,
     NotFoundError,
@@ -56,12 +57,28 @@ class TaskService:
         *,
         clock: Clock | None = None,
         reminder_service=None,  # optional injected M3 coupling
+        notifier: RealtimeNotifier | None = None,  # optional M5 SSE publisher
     ) -> None:
         self._tasks = tasks
         self._clock = clock or SystemClock()
         self._lock = asyncio.Lock()
         self._dedup = Deduplicator(tasks, clock=self._clock)
         self._reminders = reminder_service  # None -> reminder subsystem disabled
+        self._notifier = notifier  # None -> M1-M4 behavior unchanged
+
+    async def _publish(self, event: str, task: Task | None) -> None:
+        if self._notifier is None or task is None:
+            return
+        await self._notifier.publish(
+            event,
+            {
+                "id": task.id,
+                "title": task.title,
+                "status": task.status,
+                "deadline": task.deadline.isoformat() if task.deadline else None,
+                "updated_at": task.updated_at.isoformat(),
+            },
+        )
 
     async def create_task(self, candidate: TaskCandidate) -> TaskCreationResult:
         """Authoritative create. Serialized by the process-local lock:
@@ -107,7 +124,95 @@ class TaskService:
             # M3: plan reminders for active pending tasks with deadline
             if self._reminders is not None and task.status == TaskStatus.PENDING.value:
                 await self._reminders.plan_reminders(task)
+            await self._publish("task.created", task)
             return TaskCreationResult(created=True, task=task, reason="created")
+
+    async def create_manual_task(
+        self,
+        *,
+        title: str,
+        description: str | None = None,
+        category: str = "other",
+        course: str | None = None,
+        deadline: datetime | None = None,
+        priority: str = "normal",
+        source_id: int | None = None,
+    ) -> Task:
+        """M5 manual task creation through the single business gate.
+
+        Manual tasks may have source_id=None. If source_id is provided, the
+        caller must ensure the source exists (API route validates it). The
+        M2/M4 ``(source_id, source_message_id)`` uniqueness contract does not
+        apply to manual tasks because source_message_id is None.
+        """
+        if not title or not title.strip():
+            raise ValueError("title must not be empty")
+        if deadline is not None and deadline.tzinfo is None:
+            raise ValueError("naive deadline rejected")
+        from campuscue.storage.enums import TaskCategory, TaskPriority
+
+        category_v = TaskCategory(category).value
+        priority_v = TaskPriority(priority).value
+        async with self._lock:
+            task = await self._tasks.create(
+                title=title.strip(),
+                description=description,
+                category=category_v,
+                course=course,
+                deadline=deadline,
+                status=TaskStatus.PENDING.value,
+                priority=priority_v,
+                confidence=None,
+                dedup_key=None,
+                source_id=source_id,
+                source_message_id=None,
+                source_text_reference=None,
+            )
+            if self._reminders is not None:
+                await self._reminders.plan_reminders(task)
+            await self._publish("task.created", task)
+            return task
+
+    async def list_filtered(
+        self,
+        *,
+        status: str | None = None,
+        category: str | None = None,
+        course: str | None = None,
+        source_id: int | None = None,
+        deadline_from: datetime | None = None,
+        deadline_to: datetime | None = None,
+        q: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Task]:
+        return await self._tasks.list_filtered(
+            status=status, category=category, course=course, source_id=source_id,
+            deadline_from=deadline_from, deadline_to=deadline_to, q=q,
+            limit=limit, offset=offset,
+        )
+
+    async def count_filtered(
+        self,
+        *,
+        status: str | None = None,
+        category: str | None = None,
+        course: str | None = None,
+        source_id: int | None = None,
+        deadline_from: datetime | None = None,
+        deadline_to: datetime | None = None,
+        q: str | None = None,
+    ) -> int:
+        return await self._tasks.count_filtered(
+            status=status, category=category, course=course, source_id=source_id,
+            deadline_from=deadline_from, deadline_to=deadline_to, q=q,
+        )
+
+    async def get_task(self, task_id: int) -> Task:
+        return await self._tasks.get(task_id)
+
+    async def find_by_source_message(self, source_id: int, source_message_id: str) -> Task | None:
+        return await self._tasks.find_by_source_message(source_id, source_message_id)
 
     # ------------------------------------------------------------ M3 mutations
 
@@ -131,6 +236,7 @@ class TaskService:
             task = await self._tasks.set_status(task_id, TaskStatus.DONE.value)
             if self._reminders is not None:
                 await self._reminders.cancel_for_task(task_id)
+            await self._publish("task.completed", task)
             return task
 
     async def dismiss(self, task_id: int) -> Task:
@@ -139,16 +245,19 @@ class TaskService:
             task = await self._tasks.set_status(task_id, TaskStatus.DISMISSED.value)
             if self._reminders is not None:
                 await self._reminders.cancel_for_task(task_id)
+            await self._publish("task.dismissed", task)
             return task
 
     async def delete(self, task_id: int) -> None:
         """Delete task (FK-safe: reminder rows hard-deleted first)."""
         async with self._lock:
+            task = await self._tasks.get(task_id)
             if self._reminders is not None:
                 # hard-delete reminder facts + drop derived jobs before task row
                 await self._reminders.cancel_for_task(task_id)
                 await self._reminders.delete_reminders_for_task(task_id)
             await self._tasks.delete(task_id)
+            await self._publish("task.deleted", task)
 
     # ------------------------------------------------ M4 source-scoped tools
 
@@ -255,6 +364,68 @@ class TaskService:
             # M3 lifecycle: any deadline change rebuilds the reminder plan
             if deadline_changed and self._reminders is not None:
                 await self._reminders.plan_reminders(task)
+            await self._publish("task.updated", task)
+            return task
+
+    async def update_manual_task(
+        self,
+        task_id: int,
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        category: str | None = None,
+        course: str | None = None,
+        deadline: datetime | None | object = DEADLINE_UNSET,
+        priority: str | None = None,
+        status: str | None = None,
+    ) -> Task:
+        """M5 global API update through TaskService (no source scope).
+
+        ``deadline`` follows the M4.1 sentinel contract: omitted = unchanged,
+        explicit None = clear, aware datetime = replace. Status transitions
+        cancel/replan reminders via ReminderService (never bypassed).
+        """
+        has_any = any(
+            v is not None for v in (title, description, category, course, priority, status)
+        ) or deadline is not DEADLINE_UNSET
+        if not has_any:
+            raise ValueError("no fields to update")
+        if title is not None and not title.strip():
+            raise ValueError("title must not be empty")
+        if deadline is not DEADLINE_UNSET and deadline is not None and deadline.tzinfo is None:
+            raise ValueError("naive deadline rejected")
+        if status is not None:
+            # closed-set validation happens in repository; fail fast here with
+            # a domain-friendly error before any mutation.
+            TaskStatus(status)
+
+        async with self._lock:
+            task = await self._tasks.get(task_id)
+            deadline_changed = deadline is not DEADLINE_UNSET and deadline != task.deadline
+            new_deadline = deadline if deadline is not DEADLINE_UNSET else task.deadline
+            task = await self._tasks.update_fields(
+                task_id,
+                title=title,
+                description=description,
+                category=category,
+                course=course,
+                deadline=new_deadline,
+                priority=priority,
+                status=status,
+            )
+            if self._reminders is not None:
+                if task.status in (TaskStatus.DONE.value, TaskStatus.DISMISSED.value):
+                    await self._reminders.cancel_for_task(task.id)
+                elif task.status == TaskStatus.PENDING.value and task.deadline is not None:
+                    await self._reminders.plan_reminders(task)
+                elif deadline_changed and task.status == TaskStatus.PENDING.value:
+                    await self._reminders.plan_reminders(task)
+            event = "task.updated"
+            if status == TaskStatus.DONE.value:
+                event = "task.completed"
+            elif status == TaskStatus.DISMISSED.value:
+                event = "task.dismissed"
+            await self._publish(event, task)
             return task
 
 

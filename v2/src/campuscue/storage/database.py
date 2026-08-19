@@ -37,11 +37,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from campuscue.storage.models import SCHEMA_VERSION, Base, SchemaMeta
 
 _APPLICATION_TABLES = frozenset(
-    {"sources", "tasks", "extractions", "provider_configs", "schema_meta", "reminders"}
+    {"sources", "tasks", "extractions", "provider_configs", "schema_meta", "reminders", "settings"}
 )
 
-# v1 (M2) schema had no reminders table; v2 (M3) adds it.
+# v1 (M2) schema had no reminders table; v2 (M3) adds it; v3 (M5) adds settings
+# + sources.deleted_at + M5 indexes.
 _V1_SUPPORTED = 1
+_V2_SUPPORTED = 2
 
 
 @dataclass(frozen=True)
@@ -143,8 +145,8 @@ class Database:
                 Database._validate_application_schema(
                     conn, user_tables,
                     version=version,
-                    required_tables=Database._V2_REQUIRED_TABLES,
-                    required_columns=Database._V2_REQUIRED_COLUMNS,
+                    required_tables=Database._V3_REQUIRED_TABLES,
+                    required_columns=Database._V3_REQUIRED_COLUMNS,
                     refuse_prefix="refusing to open:",
                 )
             return version, user_tables
@@ -226,6 +228,13 @@ class Database:
     _V2_REQUIRED_COLUMNS = dict(_COMMON_TABLE_COLUMNS)
     _V2_REQUIRED_COLUMNS["reminders"] = _REMINDER_COLUMNS
 
+    _SETTINGS_COLUMNS = {"key", "value", "updated_at"}
+    _V3_REQUIRED_TABLES = frozenset(_V2_REQUIRED_TABLES | {"settings"})
+    _V3_REQUIRED_COLUMNS = dict(_COMMON_TABLE_COLUMNS)
+    _V3_REQUIRED_COLUMNS["sources"] = set(_COMMON_TABLE_COLUMNS["sources"]) | {"deleted_at"}
+    _V3_REQUIRED_COLUMNS["reminders"] = _REMINDER_COLUMNS
+    _V3_REQUIRED_COLUMNS["settings"] = _SETTINGS_COLUMNS
+
     @staticmethod
     def _validate_v1_schema(conn: sqlite3.Connection, tables: set[str]) -> None:
         """M3.1-D/3.4: prove a schema_meta=1 database is a VALID CampusCue v1
@@ -262,6 +271,32 @@ class Database:
                 f"refusing to migrate: schema_meta has {len(rows)} version row(s); "
                 "exactly one coherent version required"
             )
+
+    @staticmethod
+    def _validate_v2_schema(conn: sqlite3.Connection, tables: set[str]) -> None:
+        """Prove a schema_meta=2 database is a VALID CampusCue v2 schema BEFORE
+        migration. Refuse if it already contains M5-only structures (settings or
+        sources.deleted_at) — that is a half-migrated/partial state."""
+        if "settings" in tables:
+            raise SchemaRefusedError(
+                "refusing to migrate: schema_meta=2 database already contains "
+                "M5-only structure 'settings' (half-migrated/partial state); "
+                "refusing to guess — manual inspection required"
+            )
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(sources)").fetchall()}
+        if "deleted_at" in cols:
+            raise SchemaRefusedError(
+                "refusing to migrate: schema_meta=2 database already contains "
+                "M5-only column 'sources.deleted_at' (half-migrated/partial state); "
+                "refusing to guess — manual inspection required"
+            )
+        Database._validate_application_schema(
+            conn, tables,
+            version=2,
+            required_tables=Database._V2_REQUIRED_TABLES,
+            required_columns=Database._V2_REQUIRED_COLUMNS,
+            refuse_prefix="refusing to migrate:",
+        )
 
     def _migrate_v1_to_v2(self) -> None:
         """Owned migration v1 -> v2 (M3): add reminders table, bump version.
@@ -310,13 +345,44 @@ class Database:
                 cur.execute(
                     "CREATE INDEX ix_reminder_status_trigger ON reminders (status, trigger_at)"
                 )
-                cur.execute("UPDATE schema_meta SET schema_version = ?", (SCHEMA_VERSION,))
+                cur.execute("UPDATE schema_meta SET schema_version = ?", (_V2_SUPPORTED,))
                 conn.commit()  # DDL + version bump commit TOGETHER or not at all
             except Exception:
                 conn.rollback()  # atomic: NOTHING from this migration persists
                 raise
         finally:
             conn.close()
+
+    def _migrate_v2_to_v3(self) -> None:
+        """Owned migration v2 -> v3 (M5): add settings table, sources.deleted_at,
+        M5 query indexes, bump version. Atomic (BEGIN IMMEDIATE ... COMMIT)."""
+        path = str(self._config.path)
+        conn = sqlite3.connect(path, isolation_level=None)
+        try:
+            cur = conn.cursor()
+            cur.execute("BEGIN IMMEDIATE")
+            try:
+                cur.execute(
+                    """
+                    CREATE TABLE settings (
+                        key VARCHAR(64) NOT NULL PRIMARY KEY,
+                        value JSON NOT NULL,
+                        updated_at DATETIME NOT NULL
+                    )
+                    """
+                )
+                cur.execute("ALTER TABLE sources ADD COLUMN deleted_at DATETIME")
+                cur.execute("CREATE INDEX ix_task_status_source ON tasks (status, source_id)")
+                cur.execute("CREATE INDEX ix_task_deadline ON tasks (deadline)")
+                cur.execute("CREATE INDEX ix_extraction_source_created ON extractions (source_id, created_at)")
+                cur.execute("UPDATE schema_meta SET schema_version = ?", (SCHEMA_VERSION,))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        finally:
+            conn.close()
+
 
     async def initialize(self) -> None:
         """Precheck (zero mutation) -> owned migration if v1 -> engine -> pragmas ->
@@ -331,6 +397,16 @@ class Database:
             finally:
                 conn.close()
             self._migrate_v1_to_v2()
+            # v1 -> v2 is an internal stepping stone; continue to current v3.
+            self._migrate_v2_to_v3()
+        elif version == _V2_SUPPORTED:
+            # owned v2 -> v3 migration (M5): validate source schema FIRST
+            conn = sqlite3.connect(str(self._config.path))
+            try:
+                self._validate_v2_schema(conn, tables)
+            finally:
+                conn.close()
+            self._migrate_v2_to_v3()
         url = self._url()
         self._engine = create_async_engine(url, connect_args={"timeout": self._config.busy_timeout_ms / 1000})
 

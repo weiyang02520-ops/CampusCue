@@ -1,51 +1,43 @@
 # HANDOFF.md
 
-> 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md HISTORY / Git history。
+> 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M4.3 Real QQ Agent E2E Checkpoint）
+## 当前（M5 API + Realtime Checkpoint）
 
-- **M3 FINAL = PASS**（External ChatGPT decision at baseline `7d22a61b45a3c0110a5ae359e4636b52c3fd2f05`）
-- **M4.1 STATIC HARDENING = PASS**（External ChatGPT decision at baseline `6e02289d56a0a05bae5db80dd694b05918853959`）
-- **M4.2 REAL PROVIDER TOOL CALL = PASS**（Workspace Agent local evidence at baseline `3c1b5ab55843a4fb01020e07d785e1eedf4ea9f7`）
-- **M4.3 REAL QQ AGENT E2E = PASS**（Workspace Agent local evidence，2026-08-19）
-- **M4 = IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW**
-- **M4 FINAL = NOT YET DECLARED**
-- **M5 = NOT_AUTHORIZED**
-- 本 checkpoint：真实 QQ Agent E2E 完成；M4 FINAL 不声明；等待 External ChatGPT 独立审核。
+- **M4 FINAL = PASS**（External ChatGPT）
+- **M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+- **M5 FINAL = NOT YET DECLARED**
+- **M6 = NOT_AUTHORIZED**
+- 本 checkpoint：M5 API + Realtime 完整实现、测试、fresh installed package、本地 uvicorn smoke 完成。
 
-## 本轮验收（REAL QQ AGENT E2E — PASS）
+## 本轮验收（M5 API — PASS）
 
-- **独立 NapCat 环境**：官方 NapCat.Shell.Windows.Node v4.18.19（GitHub NapNeko/NapCatQQ Release，SHA256 校验通过），目录 `C:\Tools\NapCat\m43-clean`；`NAPCAT_DISABLE_MULTI_PROCESS=1` 启动，避免 worker `--no-sandbox` bad-option；补齐 `crypto.dll`/`ssl.dll` 后 native module load PASS；TEST_BOT 登录（quick login 因手Q 验证回退二维码，人类扫码）。
-- **真实链路**：真实 QQ 群消息 `@TEST_BOT 我这周有什么事情？` → NapCat → Reverse WS `ws://127.0.0.1:6199/ws` → CampusCue → @self Agent 激活 → 真实 DeepSeek 自主发出 `task_list` → ToolRegistry → TaskService → 真实 SQLite（`v2/data/m4-qq-accept.db`）→ tool result 回传 → 第二次真实 Provider 调用 → `send_group_msg` retcode 0 → QQ 收到任务列表。
-- **数据驱动证明**：通过生产 TaskService 将合成任务“高等数学第三章作业/高等数学”改为“线性代数第四章作业/线性代数”；第二次真实 QQ 查询回复显示“线性代数第四章作业”，回答随 SQLite 数据变化。
-- **普通消息不触发 Agent**：不 @ 的日常群消息无 Agent tool loop、无回复；仅 M2 AI-first TaskPipeline 调用 Provider 判定 `has_task=false` / `status=skipped`（符合 ADR-013，不是 Agent Provider 调用）。
+- FastAPI REST `/api/v1`：Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System + Health/Status/Logs。
+- SSE `/api/v1/stream`：RealtimeHub bounded queue；notifier 注入 TaskService/ReminderService/TaskPipeline；无 replay。
+- Schema v3：settings 表、sources.deleted_at 软删除、M5 索引；v1→v2→v3 atomic migration。
+- Backup/Restore/Import/Export：逻辑 JSON backup、单事务 restore、V1 `campuscue.tasks` import。
+- Auth：loopback 默认无认证；`CAMPUSCUE_REQUIRE_AUTH=1` / 非 loopback 强制 Bearer token。
+- Runtime lifecycle：API 最后启动，shutdown 先停 API；API startup failure 进入 rollback。
 
 ## Verification（Workspace Agent local evidence）
 
-- M4.3 真实验收为 Workspace Agent local evidence，非独立 External ChatGPT 执行。
-- M4 focused **88 passed**；full V2 **466 passed**（fresh installed-package `.venv-m42fresh`，M4.2 历史证据）。
-- compileall PASS；Anti-AstrBot PASS（M4.2 历史证据）。
-- git diff --check PASS；Secret/PII scan PASS（本轮执行）。
-
-## Real environment status
-
-- Real Provider Tool Call: **PASS**（2026-08-18）
-- Real QQ Agent E2E: **PASS**（2026-08-19）
-- NapCat 独立环境：`C:\Tools\NapCat\m43-clean`
-- CampusCue runtime：`v2\.venv-m42fresh`，`CAMPUSCUE_TASK_PIPELINE=1` + `CAMPUSCUE_AGENT=1`，DB `v2/data/m4-qq-accept.db`
+- Full V2 pytest：**480 passed**（fresh installed-package `.venv-m5fresh` non-editable）
+- M5 focused：**14 passed**
+- compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret/PII scan PASS
+- uvicorn local HTTP smoke PASS（health/task CRUD/reminders/backup）
+- These are local Workspace Agent results, not independent External ChatGPT execution。
 
 ## Known limitation / open design risk
 
-- **[DESIGN_LIMITATION][M4]**：One source message can create at most one Task in the first version because the M2 `(source_id, source_message_id)` uniqueness contract remains unchanged。A second `task_create` from the same user message is safely returned as failure。No schema v3 was introduced。
-- M3 Task/Reminder mutations use separate repository commits; temporary inconsistency after a Reminder operation failure can self-heal through startup `resync_all()`。This checkpoint does not redesign M3, add a unit-of-work, or modify Reminder architecture。Re-open only if External ChatGPT explicitly requests it。
+- M4 first-version `(source_id, source_message_id)` uniqueness remains；M5 schema v3 does not change it。
+- M3 Task/Reminder cross-repository atomicity remains open design risk; startup `resync_all()` recovery accepted。
+- SSE no-replay；断线后 REST refresh canonical state。
 
 ## Next gate
 
-External ChatGPT should independently inspect the pushed checkpoint（重点：M4.3 真实 QQ E2E 证据 + NapCat Shell Node 独立环境准备）。M4 FINAL is not declared。
+External ChatGPT independent review of the pushed M5 checkpoint。M5 FINAL is not declared。
 
 ## Privacy / safety
 
 - No real QQ IDs, group IDs, chat content, tokens, Provider secrets, or local private paths are recorded here。
-- Acceptance used only synthetic tasks in the local acceptance DB（`m4-qq-accept.db`）；NapCat runtime data and acceptance DB are not committed。
-- NapCat 独立环境不注入系统 QQ；TEST_BOT 登录态由人类扫码建立；未触碰主号。
-- Fresh virtual environment files are not committed。
+- Acceptance used isolated temp DBs; fresh venv and runtime data are not committed。

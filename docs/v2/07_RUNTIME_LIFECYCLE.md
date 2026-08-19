@@ -74,7 +74,7 @@ CREATED → STARTING → RUNNING → STOPPING → STOPPED
 
 ## Health
 
-`GET /api/health`（M5 实现）返回：runtime 状态、adapter 连接状态、DB 可达性、最近事件时间戳。供 WebUI 状态页与外部监测使用。
+`GET /api/v1/health`（M5 实现）返回：runtime 状态、adapter 连接状态、DB 可达性、reminders/agent/api 状态。供 WebUI 状态页与外部监测使用。
 
 ## 配置入口
 

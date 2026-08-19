@@ -90,7 +90,7 @@ class TestSchemaMigration:
         version = conn.execute("SELECT schema_version FROM schema_meta").fetchone()[0]
         conn.close()
         assert "reminders" in tables
-        assert version == 2
+        assert version == 3
         asyncio.run(db.dispose())
 
     def test_v1_db_migrates_preserving_data(self, tmp_path):
@@ -157,7 +157,7 @@ class TestSchemaMigration:
         tasks = conn.execute("SELECT title, status FROM tasks").fetchall()
         conn.close()
         assert "reminders" in tables
-        assert version == 2
+        assert version == 3
         assert ("旧任务", "pending") in tasks  # data preserved
         asyncio.run(db.dispose())
 

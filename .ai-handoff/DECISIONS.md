@@ -22,3 +22,10 @@
 | M4-003 | TaskService mutation gate | All Agent mutations preserve M3 reminder lifecycle |
 | M4-004 | Explicit Agent activation | Group @self only; ambient messages remain Task Pipeline |
 | M4-005 | Bounded in-memory conversation | No persistent Agent memory in M4 |
+| M5-001 | API base path `/api/v1` + health `/api/v1/health` | Canonical contract for M6 |
+| M5-002 | API auth = loopback no-auth / Bearer token when required | Local-first, no account system in M5 |
+| M5-003 | SSE notification only, no replay | REST is canonical state |
+| M5-004 | Agent API requires source_id | Preserve M4 source isolation |
+| M5-005 | Messages = extraction projection | Do not store full QQ history |
+| M5-006 | Settings persisted in schema v3 | Real settings backend, not fake JSON |
+| M5-007 | Backup = logical JSON, restore single transaction | Safe replace + resync |

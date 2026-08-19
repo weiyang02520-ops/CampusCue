@@ -8,10 +8,10 @@
 - **M2**：数据层 + Provider foundation；AI-first 任务抽取（L0-L7 pipeline）；**真实 QQ → 真实 Provider → SQLite Task 全链路**（2026-08-10 真实验收通过）
 - **M3**：Reminder 提醒子系统（schema v2）——DB reminder facts（canonical）+ ReminderService（三档/quiet-hours/幂等）+ APScheduler 派生 jobs（确定性 job_id，重启 resync 重建）；启用 `CAMPUSCUE_REMINDERS=1`
 - **M4**：Agent tool loop implementation——provider-neutral tool calls、source-scoped Task Tools、TaskService mutation gate、bounded conversation/context、显式 QQ @激活；**Real Provider Tool Call PASS（2026-08-18）**；**Real QQ Agent E2E PASS（2026-08-19）**
+- **M5**：FastAPI REST + Realtime SSE（`/api/v1`）——Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System + Backup/Restore/Import/Export；默认 loopback，schema v3
 
 ## 未实现（Not yet implemented）
 
-- M5 API / SSE / Realtime
 - M6 WebUI
 - 端用户提醒投递 UX（M3 为调度/生命周期；delivery 注入边界 + NoopDelivery）
 - 插件系统 / MCP / RAG

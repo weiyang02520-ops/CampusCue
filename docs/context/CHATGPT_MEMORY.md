@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-19 · M4.3 real QQ E2E checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-19 · M5 API checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M0-M3 FINAL PASS；M4.1 STATIC HARDENING = PASS；M4.2 REAL PROVIDER TOOL CALL = PASS；M4.3 REAL QQ AGENT E2E = PASS；M4 = IMPLEMENTATION_AND_REAL_ENV_COMPLETE_AWAITING_EXTERNAL_REVIEW；M4 FINAL = NOT YET DECLARED；M5 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M4 FINAL = PASS；M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -393,3 +393,18 @@ User
 - [REPO_CONFIRMED][NAPCAT_ENV]：M4.3 使用官方 NapCat.Shell.Windows.Node v4.18.19；wrapper.node 官方包缺 `crypto.dll`/`ssl.dll`（PE 导入依赖），从本机官方 QQ 安装目录 `C:\Program Files\Tencent\versions\9.9.33-52230\resources\app` 补齐后 native module load PASS；`--no-sandbox` 问题通过 `NAPCAT_DISABLE_MULTI_PROCESS=1` 官方环境变量解决。
 - [TEST_CONFIRMED]：M4 focused **88 passed**；full V2 **466 passed**（M4.2 fresh `.venv-m42fresh` 历史证据）；M4.3 真实验收为 Workspace Agent local evidence，非独立 External ChatGPT 执行；CampusCue Git 仓库本轮仅文档更新，无生产源码改动。
 - [DESIGN_LIMITATION][M4]：One source message can create at most one Task in the first version（M2 `(source_id, source_message_id)` 唯一约束不变；second task_create safely fails；no schema v3）。
+
+## 9X. MEMORY DELTA（M5 API + Realtime，2026-08-19）
+
+- [EXTERNAL_REVIEW][CURRENT]：M4 FINAL = PASS（External ChatGPT，baseline `3c84ce161ac146986f319bb57c2ae3af6b704c13`）；**M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M5 FINAL NOT declared；M6 NOT authorized。
+- [USER_STATED][WORKFLOW_PREFERENCE][CURRENT]：优先完成项目；正常安全开发操作由 Workspace Agent 自主执行；避免过度 STOP。
+- [DESIGN_DECISION][M5]：final API base path = `/api/v1`；health = `GET /api/v1/health`。
+- [DESIGN_DECISION][M5]：API auth = 默认 loopback 无认证；`CAMPUSCUE_REQUIRE_AUTH=1` 或非 loopback 强制 Bearer token；token 只来自 env。
+- [DESIGN_DECISION][M5]：SSE = notification only / no replay；bounded per-subscriber queue；慢订阅者断开。
+- [DESIGN_DECISION][M5]：Agent API 要求 `source_id`；Runtime 构造 trusted context，禁止 HTTP 注入 provenance。
+- [DESIGN_DECISION][M5]：Messages API = extraction projection；不保存完整 QQ 历史。
+- [DESIGN_DECISION][M5]：Settings 持久化 = schema v3 `settings` 表；timezone 修改返回 restart_required。
+- [DESIGN_DECISION][M5]：Backup = 逻辑 JSON（format_version=1, schema_version=3），restore 单事务替换 + resync；import/export 兼容 `campuscue.tasks` V1。
+- [DESIGN_DECISION][M5]：schema v3 = settings 表 + sources.deleted_at（软删除保留 provenance）+ M5 索引；v1→v2→v3 migration atomic。
+- [TEST_CONFIRMED]：新增 M5 tests 14（API 10 + realtime 2 + migration 2）；full V2 **480 passed**；fresh installed-package `.venv-m5fresh` non-editable PASS；compileall PASS；Anti-AstrBot PASS；uvicorn local HTTP smoke PASS。Workspace Agent local evidence，非独立 External ChatGPT 执行。
+- [KNOWN_LIMITATION]：M4 first-version source_message_id uniqueness remains；M5 schema v3 does not change it。M3 Task/Reminder cross-repository atomicity remains open design risk; startup resync_all recovery accepted。

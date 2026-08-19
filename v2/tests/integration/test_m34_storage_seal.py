@@ -133,7 +133,7 @@ class TestAtomicMigration:
         _make_v1(p)
         db = Database(DatabaseConfig(path=p, env="test"))
         asyncio.run(db.initialize())
-        assert _version(p) == 2
+        assert _version(p) == 3
         assert "reminders" in _tables(p)
         asyncio.run(db.dispose())
 
@@ -278,11 +278,11 @@ class TestCompleteColumnManifests:
         _make_v1(p)
         db = Database(DatabaseConfig(path=p, env="test"))
         asyncio.run(db.initialize())
-        assert _version(p) == 2
+        assert _version(p) == 3
         assert "reminders" in _tables(p)
         # reopen the migrated v2 (idempotent)
         db2 = Database(DatabaseConfig(path=p, env="test"))
         asyncio.run(db2.initialize())  # must not raise
-        assert _version(p) == 2
+        assert _version(p) == 3
         asyncio.run(db.dispose())
         asyncio.run(db2.dispose())

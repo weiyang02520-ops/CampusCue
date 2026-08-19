@@ -30,12 +30,12 @@
 - 允许 LAN：必须重新设计安全模型（token/密码认证 + HTTPS 或代理），M5 定稿
 - OneBot WS server：仅接受本机 NapCat（127.0.0.1 或校验 token 头），防外部伪造消息注入
 
-## API 安全（M5 定稿）
+## API 安全（M5 已实现）
 
-- 默认 loopback 无认证（本地使用）；`CAMPUSCUE_REQUIRE_AUTH=1` 或 LAN 模式启用认证
+- 默认 loopback 无认证（本地使用）；`CAMPUSCUE_REQUIRE_AUTH=1` 或非 loopback host 启用认证；token 只来自 `CAMPUSCUE_API_TOKEN`，不落 DB/日志/Git
 - 所有用户输入（API / Tool / OneBot）校验：Pydantic / jsonschema / 枚举闭集
 - 破坏性操作（恢复、删除）：显式确认字段（V1 `confirm_replace` 模式保留）
-- 限流：登录/测试端点 token-bucket（参考 AstrBot dashboard 做法，从简）
+- SSE 慢 subscriber 使用 bounded queue，溢出断开而非阻塞业务
 
 ## 测试隔离（硬性）
 

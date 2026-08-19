@@ -1,6 +1,6 @@
 # 09_STORAGE.md
 
-> 存储设计（M2 实现，M5 完善）。**DB = 唯一业务事实源**。
+> 存储设计（M2 实现，M5 schema v3 完善）。**DB = 唯一业务事实源**。
 
 ## 技术选型
 
@@ -8,6 +8,7 @@
 - 单文件数据库（如 `data/campuscue.db`），数据目录与代码分离，gitignore
 - WAL 模式 + `busy_timeout`（参考 AstrBot/V1 对 SQLite 写锁的处理：**async 不等于无并发写**，必须处理写锁）
 - 迁移：第一版用轻量方案（`create_all` + 版本表/手工迁移脚本），不引入 Alembic（YAGNI；出现真实迁移需求再评估）
+- 当前 schema：**v3**（M5）——v1→v2 加 reminders；v2→v3 加 `settings` 表、`sources.deleted_at`（软删除）、M5 查询索引。迁移保持 atomic（BEGIN IMMEDIATE / COMMIT / ROLLBACK）。
 
 ## 表（草案，M2 定稿）
 

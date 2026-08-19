@@ -88,12 +88,39 @@ class AgentConfig:
 
 
 @dataclass(frozen=True)
+class ApiConfig:
+    """M5 FastAPI/Realtime configuration (default loopback, disabled)."""
+
+    enabled: bool = False  # CAMPUSCUE_API=1
+    host: str = "127.0.0.1"
+    port: int = 6200
+    require_auth: bool = False  # CAMPUSCUE_REQUIRE_AUTH=1
+    token: str | None = None  # CAMPUSCUE_API_TOKEN
+    sse_queue_size: int = 32
+    sse_heartbeat_interval: float = 15.0
+    timezone: str = "Asia/Shanghai"
+
+    def __post_init__(self) -> None:
+        if not 1 <= self.port <= 65535:
+            raise ValueError(f"invalid api port: {self.port!r}")
+        if self.sse_queue_size <= 0:
+            raise ValueError(f"sse_queue_size must be > 0, got {self.sse_queue_size!r}")
+        if self.sse_heartbeat_interval <= 0:
+            raise ValueError(f"sse_heartbeat_interval must be > 0, got {self.sse_heartbeat_interval!r}")
+        if self.host not in ("127.0.0.1", "localhost", "::1") and not (self.require_auth and self.token):
+            raise ValueError(
+                "non-loopback API host requires CAMPUSCUE_REQUIRE_AUTH=1 and CAMPUSCUE_API_TOKEN"
+            )
+
+
+@dataclass(frozen=True)
 class RuntimeConfig:
     onebot: OneBotConfig = field(default_factory=OneBotConfig)
     event_bus: EventBusConfig = field(default_factory=EventBusConfig)
     tasks: TaskPipelineConfig = field(default_factory=TaskPipelineConfig)
     reminders: ReminderConfig = field(default_factory=ReminderConfig)
     agent: AgentConfig = field(default_factory=AgentConfig)
+    api: ApiConfig = field(default_factory=ApiConfig)
     diagnostic: bool = False  # CAMPUSCUE_DIAGNOSTIC=1; default OFF (privacy)
 
     def __post_init__(self) -> None:
@@ -154,6 +181,14 @@ def _validate_task_config(tasks: TaskPipelineConfig, *, env: str) -> None:
         )
 
 
+def _validate_api_config(api: ApiConfig, tasks: TaskPipelineConfig) -> None:
+    if api.enabled and not tasks.enabled:
+        raise ConfigError(
+            "CAMPUSCUE_API=1 requires CAMPUSCUE_TASK_PIPELINE=1 "
+            "(API exposes real DB-backed services)"
+        )
+
+
 def _validate_agent_config(agent: AgentConfig, tasks: TaskPipelineConfig) -> None:
     """M4 §40 fail-fast invariant: the Agent REQUIRES the task pipeline/DB
     foundation (real TaskService + source context). Agent enabled while the
@@ -206,6 +241,18 @@ def load_config() -> RuntimeConfig:
         ),
     )
     _validate_agent_config(agent, tasks)
+    api_token = os.environ.get("CAMPUSCUE_API_TOKEN") or None
+    api = ApiConfig(
+        enabled=_env_bool("CAMPUSCUE_API"),
+        host=os.environ.get("CAMPUSCUE_API_HOST", "127.0.0.1"),
+        port=int(os.environ.get("CAMPUSCUE_API_PORT", "6200")),
+        require_auth=_env_bool("CAMPUSCUE_REQUIRE_AUTH"),
+        token=api_token,
+        sse_queue_size=int(os.environ.get("CAMPUSCUE_API_SSE_QUEUE", "32")),
+        sse_heartbeat_interval=float(os.environ.get("CAMPUSCUE_API_SSE_HEARTBEAT", "15")),
+        timezone=os.environ.get("CAMPUSCUE_TIMEZONE", "Asia/Shanghai"),
+    )
+    _validate_api_config(api, tasks)
     return RuntimeConfig(
         onebot=OneBotConfig(
             host=os.environ.get("CAMPUSCUE_ONEBOT_HOST", "127.0.0.1"),
@@ -230,5 +277,6 @@ def load_config() -> RuntimeConfig:
             quiet_end_hour=int(os.environ.get("CAMPUSCUE_REMINDER_QUIET_END", "8")),
         ),
         agent=agent,
+        api=api,
         diagnostic=_env_bool("CAMPUSCUE_DIAGNOSTIC"),
     )

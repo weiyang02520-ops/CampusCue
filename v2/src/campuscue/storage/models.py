@@ -32,7 +32,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 class UTCDateTime(TypeDecorator):
@@ -87,6 +87,9 @@ class Source(Base):
     privacy_policy: Mapped[str] = mapped_column(String(32), nullable=False, default="default")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    # M5 soft-delete marker: keeps Task/Extraction provenance rows valid while
+    # hiding the Source from normal lists. NULL = active.
+    deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
 
 class Task(Base):
@@ -97,6 +100,8 @@ class Task(Base):
         # one Task from one source message.
         UniqueConstraint("source_id", "source_message_id", name="uq_task_source_message"),
         Index("ix_task_dedup_key", "dedup_key"),
+        Index("ix_task_status_source", "status", "source_id"),
+        Index("ix_task_deadline", "deadline"),
         # DB-level closed-set defense (M2a.1-C): repository is not the only writer
         CheckConstraint("status IN ('pending_confirm','pending','done','dismissed')", name="ck_task_status"),
         CheckConstraint("category IN ('homework','exam','competition','activity','notice','other')", name="ck_task_category"),
@@ -149,6 +154,7 @@ class Extraction(Base):
     __tablename__ = "extractions"
     __table_args__ = (
         CheckConstraint("status IN ('success','skipped','error','duplicate')", name="ck_extraction_status"),
+        Index("ix_extraction_source_created", "source_id", "created_at"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -191,6 +197,21 @@ class ProviderConfig(Base):
     secret_reference: Mapped[str | None] = mapped_column(String(128), nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
+class Setting(Base):
+    """M5 settings persistence: one row per setting key, value as JSON.
+
+    Keys are stable contract strings (e.g. timezone, theme,
+    message_retention_days, reminder_*). Only runtime-safe preferences are
+    exposed by the Settings API.
+    """
+
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[dict] = mapped_column(JSON, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
 
 
