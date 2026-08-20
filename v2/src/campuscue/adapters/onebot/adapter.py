@@ -61,9 +61,10 @@ class ActionFailure(Exception):
 
 
 class OneBotAdapter(PlatformAdapter):
-    def __init__(self, config: OneBotConfig, *, on_event) -> None:
+    def __init__(self, config: OneBotConfig, *, on_event, on_connection=None) -> None:
         self._config = config
         self._on_event = on_event  # awaitable(CampusEvent) -> None (bus.publish)
+        self._on_connection = on_connection  # awaitable(bool) -> None; optional neutral notifier boundary
         self._server = None
         self._server_task: asyncio.Task[None] | None = None
         self._conn: ServerConnection | None = None
@@ -141,11 +142,13 @@ class OneBotAdapter(PlatformAdapter):
             # fail the OLD connection's pending actions; the new connection gets
             # a fresh map so a delayed old cleanup can never touch its futures
             self._fail_pending(old_pending, "connection replaced by new connection")
+            await self._notify_connection(False)
             try:
                 await old.close()
             except Exception:
                 pass
         logger.info("onebot client connected")
+        await self._notify_connection(True)
         try:
             async for raw in conn:
                 if self._conn is not conn:
@@ -160,6 +163,7 @@ class OneBotAdapter(PlatformAdapter):
                 # we still own the active slot: this is a genuine disconnect
                 self._conn = None
                 self._fail_all_pending("connection lost")
+                await self._notify_connection(False)
             # else: superseded — pending map already belongs to the new connection
             logger.info("onebot client disconnected")
 
@@ -199,6 +203,16 @@ class OneBotAdapter(PlatformAdapter):
         return f"onebot:{self._config.host}:{self._config.port}"
 
     # ------------------------------------------------------------------ outbound
+
+    async def _notify_connection(self, connected: bool) -> None:
+        if self._on_connection is None:
+            return
+        try:
+            await self._on_connection(connected)
+        except Exception:
+            # Realtime is derived notification; a notifier failure must not
+            # break the adapter connection lifecycle.
+            logger.exception("connection lifecycle notification failed")
 
     async def send(self, message: OutgoingMessage) -> None:
         if message.conversation_type == ConversationType.GROUP:

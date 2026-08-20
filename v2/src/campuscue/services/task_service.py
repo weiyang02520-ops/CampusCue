@@ -21,6 +21,7 @@ dedup-recheck + insert. Same-source-message DB UNIQUE remains final defense.
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Final
@@ -41,6 +42,7 @@ from campuscue.tasks.models import TaskCandidate
 # Public service-boundary sentinel: omitted deadline is distinct from an
 # explicit ``None`` which clears the deadline.
 DEADLINE_UNSET: Final = object()
+logger = logging.getLogger("campuscue.task_service")
 
 
 @dataclass(frozen=True)
@@ -69,16 +71,26 @@ class TaskService:
     async def _publish(self, event: str, task: Task | None) -> None:
         if self._notifier is None or task is None:
             return
-        await self._notifier.publish(
-            event,
-            {
-                "id": task.id,
-                "title": task.title,
-                "status": task.status,
-                "deadline": task.deadline.isoformat() if task.deadline else None,
-                "updated_at": task.updated_at.isoformat(),
-            },
-        )
+        try:
+            await self._notifier.publish(
+                event,
+                {
+                    "id": task.id,
+                    "title": task.title,
+                    "status": task.status,
+                    "deadline": task.deadline.isoformat() if task.deadline else None,
+                    "updated_at": task.updated_at.isoformat(),
+                },
+            )
+        except Exception:
+            # Realtime is a derived notification channel. The DB mutation has
+            # already committed and must not be turned into an API failure by
+            # a broken transport implementation.
+            logger.exception(
+                "realtime publish failed after task mutation; event=%s task_id=%s",
+                event,
+                task.id,
+            )
 
     async def create_task(self, candidate: TaskCandidate) -> TaskCreationResult:
         """Authoritative create. Serialized by the process-local lock:

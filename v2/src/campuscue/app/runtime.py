@@ -22,6 +22,7 @@ from campuscue.core.router import Router
 from campuscue.handlers.echo import echo_handler
 
 logger = logging.getLogger("campuscue.runtime")
+API_STARTUP_TIMEOUT_S = 5.0
 
 
 class RuntimeState(str, Enum):
@@ -53,6 +54,7 @@ class CampusRuntime:
         self._started_at = None
         self._api_deps = None
         self._api_app = None
+        self._api_startup_exception: BaseException | None = None
 
     @property
     def uptime_seconds(self) -> float:
@@ -81,6 +83,7 @@ class CampusRuntime:
             self.adapter = OneBotAdapter(
                 self.config.onebot,
                 on_event=self.bus.publish,
+                on_connection=self._on_adapter_connection,
             )
             await self.adapter.start()
             if self.config.api.enabled:
@@ -313,8 +316,52 @@ class CampusRuntime:
         )
         server = uvicorn.Server(config)
         self._api_server = server
-        self._api_task = asyncio.create_task(server.serve(), name="campuscue.api")
+        self._api_startup_exception = None
+        self._api_task = asyncio.create_task(self._serve_api(server), name="campuscue.api")
+        try:
+            await asyncio.wait_for(
+                self._wait_for_api_ready(server, self._api_task),
+                timeout=API_STARTUP_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError as exc:
+            raise RuntimeError("API server startup timed out") from exc
         logger.info("campuscue api listening on http://%s:%s", self.config.api.host, self.config.api.port)
+
+    async def _serve_api(self, server) -> None:
+        """Keep Uvicorn's SystemExit startup failure inside the owned task."""
+        try:
+            await server.serve()
+        except asyncio.CancelledError:
+            raise
+        except BaseException as exc:
+            self._api_startup_exception = exc
+
+    async def _wait_for_api_ready(self, server, task: asyncio.Task) -> None:
+        """Wait for Uvicorn's actual bind/start barrier, not task creation."""
+        while not server.started:
+            if task.done():
+                if self._api_startup_exception is not None:
+                    raise RuntimeError("API server failed during startup") from self._api_startup_exception
+                try:
+                    task.result()
+                except asyncio.CancelledError as exc:
+                    raise RuntimeError("API server task was cancelled during startup") from exc
+                except BaseException as exc:
+                    raise RuntimeError("API server failed during startup") from exc
+                raise RuntimeError("API server exited before startup")
+            await asyncio.sleep(0.01)
+
+    async def _on_adapter_connection(self, connected: bool) -> None:
+        notifier = self._realtime
+        if notifier is None:
+            return
+        await notifier.publish(
+            "connection.updated",
+            {
+                "adapter_id": f"onebot:{self.config.onebot.host}:{self.config.onebot.port}",
+                "connected": connected,
+            },
+        )
 
     async def _fire_reminder(self, reminder_id: int) -> None:
         """Scheduler fire handler -> ReminderService.fire (re-checks latest
@@ -349,9 +396,13 @@ class CampusRuntime:
                 self._api_server.should_exit = True
                 if self._api_task is not None:
                     await asyncio.wait_for(self._api_task, 3.0)
-            except Exception:
+            except BaseException:
                 if self._api_task is not None:
                     self._api_task.cancel()
+                    try:
+                        await self._api_task
+                    except BaseException:
+                        pass
             self._api_server = None
             self._api_task = None
         if self._api_log_handler is not None:
@@ -394,9 +445,13 @@ class CampusRuntime:
                 self._api_server.should_exit = True
                 if self._api_task is not None:
                     await asyncio.wait_for(self._api_task, 5.0)
-            except (asyncio.TimeoutError, Exception):
+            except BaseException:
                 if self._api_task is not None:
                     self._api_task.cancel()
+                    try:
+                        await self._api_task
+                    except BaseException:
+                        pass
             self._api_server = None
             self._api_task = None
         if self._api_log_handler is not None:

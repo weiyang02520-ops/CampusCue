@@ -12,6 +12,7 @@
 
 - M0-M4：**FINAL PASS**（M4 External ChatGPT 审核通过）
 - M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M5.1 hardening = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
 - M5 FINAL = NOT YET DECLARED
 - M6 = NOT_AUTHORIZED
 
@@ -19,13 +20,15 @@
 
 - M1-M4 完整（含真实 QQ E2E）。
 - **M5 API + Realtime（本轮）**：FastAPI `/api/v1` REST + SSE；Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System；Backup/Restore/Import/Export；Auth；Runtime lifecycle；RealtimeHub notifier 注入；schema v3（settings + sources.deleted_at + indexes）；contract/integration tests + fresh installed package。
+- **M5.1 Final Hardening（本轮）**：SSE overflow now closes the active stream; configured heartbeat is consumed; Uvicorn startup has a readiness barrier and rollback; duplicate system health route removed; Adapter emits neutral `connection.updated`; realtime publish failures are isolated after committed mutations.
 
 ## verified (Workspace Agent local evidence)
 
-- Full V2 pytest：**480 passed**（fresh installed-package `.venv-m5fresh` non-editable）
-- M5 focused：**14 passed**（API 10 + realtime 2 + migration 2）
+- Full V2 pytest：**487 passed**（fresh installed-package `.venv-m51fresh` non-editable）
+- M5/M5.1 focused：**23 passed**；本轮新增 focused tests **7 passed**
 - compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret/PII scan PASS
 - uvicorn local HTTP smoke PASS（health/task CRUD/reminders/backup）
+- Runtime readiness smoke PASS（real localhost health + occupied-port rollback）；SSE lifecycle/heartbeat focused integration PASS。
 - These are local Workspace Agent results, not independent External ChatGPT execution。
 
 ## real_environment
@@ -41,7 +44,7 @@
 
 ## next_gate
 
-External ChatGPT independent review of the pushed M5 checkpoint。M5 FINAL must not be declared by this checkpoint。
+External ChatGPT independent review of the pushed M5.1 checkpoint。M5 FINAL must not be declared by this checkpoint。
 
 ## architecture_decisions
 

@@ -59,7 +59,11 @@ def create_app(deps: APIDependencies) -> FastAPI:
 
         async def gen():
             yield ": connected\n\n"
-            async for chunk in hub.stream(sub_id, queue):
+            async for chunk in hub.stream(
+                sub_id,
+                queue,
+                heartbeat_interval_s=deps.config.sse_heartbeat_interval,
+            ):
                 yield chunk
 
         return StreamingResponse(gen(), media_type="text/event-stream")

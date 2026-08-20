@@ -24,7 +24,6 @@ def _deps(request: Request):
     return request.app.state.deps
 
 
-@router.get("/health", response_model=HealthOut)
 async def health(request: Request):
     deps = _deps(request)
     runtime = deps.runtime

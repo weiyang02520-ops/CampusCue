@@ -29,3 +29,6 @@
 | M5-005 | Messages = extraction projection | Do not store full QQ history |
 | M5-006 | Settings persisted in schema v3 | Real settings backend, not fake JSON |
 | M5-007 | Backup = logical JSON, restore single transaction | Safe replace + resync |
+| M5.1-001 | SSE subscriber close is an explicit lifecycle state/event | Queue overflow must terminate the active generator, not only remove registry membership |
+| M5.1-002 | Runtime API startup has a bounded Uvicorn readiness barrier | `create_task()` alone does not prove bind/start success |
+| M5.1-003 | Adapter connection notifications cross an optional neutral callback | M1-M4 remain API-independent while M5 can publish `connection.updated` |

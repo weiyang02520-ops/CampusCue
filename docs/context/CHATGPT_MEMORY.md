@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-19 · M5 API checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M5.1 hardening checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M4 FINAL = PASS；M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M4 FINAL = PASS；M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -407,4 +407,11 @@ User
 - [DESIGN_DECISION][M5]：Backup = 逻辑 JSON（format_version=1, schema_version=3），restore 单事务替换 + resync；import/export 兼容 `campuscue.tasks` V1。
 - [DESIGN_DECISION][M5]：schema v3 = settings 表 + sources.deleted_at（软删除保留 provenance）+ M5 索引；v1→v2→v3 migration atomic。
 - [TEST_CONFIRMED]：新增 M5 tests 14（API 10 + realtime 2 + migration 2）；full V2 **480 passed**；fresh installed-package `.venv-m5fresh` non-editable PASS；compileall PASS；Anti-AstrBot PASS；uvicorn local HTTP smoke PASS。Workspace Agent local evidence，非独立 External ChatGPT 执行。
+
+## 9Y. MEMORY DELTA（M5.1 Final Hardening，2026-08-20）
+
+- [EXTERNAL_REVIEW][CHANGES_REQUESTED]：External review of M5 commit `2d34d3382c7c7770536918926b45d1ba1bfc10e4` identified A slow SSE subscriber stream not terminating, B configured heartbeat not consumed, C missing Uvicorn readiness barrier, D duplicate health route, and E realtime lifecycle/completeness evidence gaps。
+- [REPO_CONFIRMED][TEST_CONFIRMED]：M5.1 fixed A-D/E with bounded subscriber close state, API heartbeat wiring, owned Uvicorn readiness barrier and rollback, canonical `/api/v1/health`, neutral Adapter `connection.updated`, and post-commit notifier exception isolation。
+- [TEST_CONFIRMED]：M5/M5.1 focused **23 passed**；M5.1 new **7 passed**；full V2 **487 passed** in fresh non-editable `.venv-m51fresh`；compileall PASS；Anti-AstrBot PASS；local health/readiness/SSE/occupied-port rollback evidence PASS。These are Workspace Agent local results, not independent External ChatGPT execution。
+- [CURRENT]：**M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED**。
 - [KNOWN_LIMITATION]：M4 first-version source_message_id uniqueness remains；M5 schema v3 does not change it。M3 Task/Reminder cross-repository atomicity remains open design risk; startup resync_all recovery accepted。

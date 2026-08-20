@@ -42,6 +42,12 @@ CREATED → STARTING → RUNNING → STOPPING → STOPPED
 
 任一环节失败：已启动组件按逆序回滚停止，进入 FAILED。
 
+M5 API startup includes a readiness barrier: `CampusRuntime.start()` owns the
+Uvicorn task, waits for `server.started`, and fails with a bounded timeout if
+the task exits or never binds. A bind/start failure therefore rolls back the
+already-started adapter, bus, scheduler and DB before entering `FAILED`；不会
+用固定 sleep 猜测服务是否已启动。
+
 ## 关闭顺序（graceful shutdown）
 
 ```
@@ -62,6 +68,8 @@ CREATED → STARTING → RUNNING → STOPPING → STOPPED
 - Adapter receive loop → owner: OneBotAdapter
 - Reminder jobs → owner: Scheduler
 - SSE streams → owner: FastAPI（connection scope）
+- API server task → owner: CampusRuntime；shutdown signals Uvicorn and awaits
+  the task, cancelling and awaiting it only after a bounded timeout.
 
 禁止：fire-and-forget `create_task` 后不持有引用（shutdown 会泄漏挂起 task）。
 

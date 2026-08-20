@@ -163,16 +163,16 @@ class ReminderService:
         now = self._clock.utcnow()
         reminder = await self._reminders.mark_cancelled(reminder_id, now=now)
         await self._scheduler.unschedule(reminder_job_id(reminder.id))
-        if self._notifier is not None:
-            await self._notifier.publish(
-                "reminder.cancelled",
-                {
-                    "id": reminder.id,
-                    "task_id": reminder.task_id,
-                    "status": reminder.status,
-                    "updated_at": reminder.updated_at.isoformat(),
-                },
-            )
+        await self._publish_safely(
+            "reminder.cancelled",
+            {
+                "id": reminder.id,
+                "task_id": reminder.task_id,
+                "status": reminder.status,
+                "updated_at": reminder.updated_at.isoformat(),
+            },
+            reminder.id,
+        )
         return reminder
 
     async def delete_reminders_for_task(self, task_id: int) -> int:
@@ -306,16 +306,16 @@ class ReminderService:
             await self._reminders.mark_cancelled(reminder_id, now=self._clock.utcnow())
             return False
         reminder = await self._reminders.mark_fired(reminder_id, run_at=self._clock.utcnow())
-        if self._notifier is not None:
-            await self._notifier.publish(
-                "reminder.fired",
-                {
-                    "id": reminder.id,
-                    "task_id": reminder.task_id,
-                    "status": reminder.status,
-                    "trigger_at": reminder.trigger_at.isoformat(),
-                },
-            )
+        await self._publish_safely(
+            "reminder.fired",
+            {
+                "id": reminder.id,
+                "task_id": reminder.task_id,
+                "status": reminder.status,
+                "trigger_at": reminder.trigger_at.isoformat(),
+            },
+            reminder.id,
+        )
         # platform-neutral delivery boundary (injected; M3 tests use fake sink)
         await self._deliver(reminder, task)
         return True
@@ -327,6 +327,18 @@ class ReminderService:
 
     def set_delivery(self, delivery) -> None:
         self._delivery = delivery
+
+    async def _publish_safely(self, event: str, data: dict, entity_id: int) -> None:
+        if self._notifier is None:
+            return
+        try:
+            await self._notifier.publish(event, data)
+        except Exception:
+            logger.exception(
+                "realtime publish failed after reminder mutation; event=%s reminder_id=%s",
+                event,
+                entity_id,
+            )
 
     # ---------------------------------------------------------------- helper
 

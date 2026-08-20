@@ -73,7 +73,12 @@ def _cfg(**kw):
 
 
 def _mk_adapter(**cfg_kw) -> OneBotAdapter:
-    return OneBotAdapter(_cfg(**cfg_kw), on_event=lambda ev: asyncio.sleep(0))
+    on_connection = cfg_kw.pop("on_connection", None)
+    return OneBotAdapter(
+        _cfg(**cfg_kw),
+        on_event=lambda ev: asyncio.sleep(0),
+        on_connection=on_connection,
+    )
 
 
 def _hello_payload(seq: int) -> str:
@@ -158,6 +163,23 @@ async def test_disconnect_fails_own_pending_real_path():
     assert len(a._pending) == 0
     assert a._conn is None
     await task
+
+
+@pytest.mark.asyncio
+async def test_connection_lifecycle_publishes_connect_and_disconnect_events():
+    events = []
+
+    async def on_connection(connected):
+        events.append(connected)
+
+    a = _mk_adapter(on_connection=on_connection)
+    conn = _LiveConn()
+    task = asyncio.create_task(a._handle_connection(conn), name="connection-events")
+    await asyncio.sleep(0.05)
+    assert events == [True]
+    conn.stop_loop()
+    await task
+    assert events == [True, False]
 
 
 @pytest.mark.asyncio

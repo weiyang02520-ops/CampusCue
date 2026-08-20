@@ -78,6 +78,18 @@
 
 - `GET /api/v1/stream`：SSE notification only，无 replay。
 - 事件：`task.created/updated/completed/dismissed/deleted`、`reminder.fired/cancelled`、`extraction.updated`、`connection.updated`。
-- 每个 subscriber 独立 bounded queue；慢 subscriber 断开。
-- 心跳：`: ping`（默认 15s）。
+- 每个 subscriber 独立 bounded queue；慢 subscriber 标记 closed、从 active registry 移除，并唤醒正在运行的 stream generator 使 SSE 连接真正结束。
+- 心跳：`: ping`（由 `ApiConfig.sse_heartbeat_interval` / `CAMPUSCUE_API_SSE_HEARTBEAT` 控制，默认 15s）。
 - 断线后客户端必须 REST refresh canonical state。
+
+### Realtime event producer matrix
+
+| Event | Producer | Commit point | Payload | Evidence |
+|---|---|---|---|---|
+| `task.created` / `task.updated` / `task.completed` / `task.dismissed` / `task.deleted` | `TaskService` | task mutation repository commit | task id/status/deadline/updated time | TaskService/API tests |
+| `reminder.fired` / `reminder.cancelled` | `ReminderService` | reminder mutation commit | reminder id/task id/status/time | Reminder tests |
+| `extraction.updated` | `TaskPipeline` | extraction row commit | extraction/source/message/status/confidence | Pipeline tests |
+| `connection.updated` | `OneBotAdapter` optional neutral connection callback | active connection set/cleared | adapter id + connected flag | real `_handle_connection` lifecycle test |
+
+Realtime publication is derived notification only. Publisher failures are
+isolated after the business mutation and do not change a successful API result.

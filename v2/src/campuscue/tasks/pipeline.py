@@ -260,15 +260,21 @@ class TaskPipeline:
             error=error,
         )
         if self._notifier is not None:
-            await self._notifier.publish(
-                "extraction.updated",
-                {
-                    "id": row.id,
-                    "source_id": row.source_id,
-                    "source_message_id": row.source_message_id,
-                    "status": row.status,
-                    "confidence": row.confidence,
-                    "created_at": row.created_at.isoformat(),
-                },
-            )
+            try:
+                await self._notifier.publish(
+                    "extraction.updated",
+                    {
+                        "id": row.id,
+                        "source_id": row.source_id,
+                        "source_message_id": row.source_message_id,
+                        "status": row.status,
+                        "confidence": row.confidence,
+                        "created_at": row.created_at.isoformat(),
+                    },
+                )
+            except Exception:
+                logger.exception(
+                    "realtime publish failed after extraction mutation; extraction_id=%s",
+                    row.id,
+                )
         return row

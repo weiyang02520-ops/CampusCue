@@ -286,3 +286,10 @@
   - pyproject 增加 fastapi/uvicorn/pydantic，packages 含 campuscue.api
 - **测试**：新增 M5 14 tests；full V2 **480 passed**（fresh `.venv-m5fresh` non-editable）；compileall PASS；Anti-AstrBot PASS；uvicorn local HTTP smoke PASS。
 - **Gate**：M4 FINAL = PASS；M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED。
+
+## 2026-08-20 · M5.1 FINAL HARDENING
+
+- **任务**：修复 External ChatGPT 对 M5 commit `2d34d3382c7c7770536918926b45d1ba1bfc10e4` 的 A-E 审查问题；不进入 M6。
+- **主要修改**：SSE subscriber 显式 close 状态/唤醒 active stream；`ApiConfig.sse_heartbeat_interval` 接线；Uvicorn `server.started` readiness barrier + bounded timeout + occupied-port rollback；删除重复 `/api/v1/system/health`；OneBotAdapter optional neutral connection callback 发布 `connection.updated`；Task/Reminder/Pipeline 在业务 commit 后隔离 realtime publish failure。
+- **测试**：M5/M5.1 focused **23 passed**；本轮新增 **7 passed**；fresh `.venv-m51fresh` non-editable full V2 **487 passed**；compileall PASS；Anti-AstrBot PASS；local HTTP/SSE readiness and occupied-port rollback PASS；git diff --check PASS。
+- **Gate**：M4 FINAL = PASS；**M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED。
