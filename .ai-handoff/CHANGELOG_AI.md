@@ -330,3 +330,11 @@
 - **实现**：Home 使用 Settings timezone 的动态日期/星期和本周 pending 计数；upcoming 按 deadline 排序；完成与忽略动作分离；移动端底栏改为总览/任务/日历/AI/更多，并提供可访问 More bottom sheet；移除 priority `urgent`、加入共享中文 task label helper、修正主题切换 icon/label、移除 topbar 假头像。
 - **测试**：typecheck PASS；Vitest **4 passed**；M6 focused Playwright **12 passed**；axe violations 0；light/dark screenshots 分别写入 `.ai-handoff/visual/m621/`、`.ai-handoff/visual/m621-dark/`；m61/m62/m62-dark evidence 保持未覆盖。
 - **Gate**：M5 FINAL = PASS；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+
+## 2026-08-20 · M6.3 VISUAL CHARACTER PASS
+
+- **基线**：创建并推送 annotated tag `m6.2.1-ui-baseline`，指向 `01461b9e4a9ece79ee0ed01343277f71ea803aef`；m61/m62/m621 evidence 未覆盖。
+- **范围**：保持 Blue + Teal、IA、M5 contract、store、router、backend、schema 和业务逻辑；引入 Cue Line + Cue Dot motif、section tint、page identity、structured empty state、Tasks/Agent/Calendar/Home 核心页节奏，以及 Messages/Connections/Providers/Settings 的统一细节。
+- **约束**：无渐变、玻璃拟态、neon、紫色 AI 风、插画、emoji、新图片或 Admin Template 式填空；Mobile Agent composer 调整到 bottom nav 之上。
+- **验收**：typecheck/build PASS；Vitest **4 passed**；focused Playwright **12 passed**；axe 0；real integration 两条测试 individually PASS；light/dark screenshot capture PASS；证据位于 `.ai-handoff/visual/m63/`、`.ai-handoff/visual/m63-dark/`。
+- **Gate**：M5 FINAL = PASS；M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；**M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。

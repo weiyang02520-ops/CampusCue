@@ -1,6 +1,6 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.2.1 Final Product Detail Cleanup — External Review Request
+# CampusCue M6.3 Visual Character Pass — External Review Request
 
 ## Gate state
 
@@ -10,6 +10,7 @@
 - M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
 - M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW（previous visual baseline）
 - M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
+- M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
@@ -54,6 +55,14 @@
 - Runtime frontend priority vocabulary is only `low | normal | high`; category/status/priority presentation uses shared Chinese labels；theme toggle icon/label semantics are corrected；fake topbar avatar is removed.
 - New evidence is isolated under `.ai-handoff/visual/m621/` and `.ai-handoff/visual/m621-dark/`; `.ai-handoff/visual/m61/`, `m62/`, and `m62-dark/` are preserved.
 
+## M6.3 visual character pass
+
+- Baseline tag `m6.2.1-ui-baseline` points to the stable M6.2.1 HEAD; no prior m61/m62/m621 screenshots were overwritten.
+- Cue Line + Cue Dot is used as a restrained CampusCue motif across page headers, task deadlines, calendar/task days, signal empty states, Agent, and sidebar rhythm.
+- Home, Tasks, Agent, and Calendar received the primary pass; Messages, Connections, Providers, and Settings received the same empty-state, surface, status, source/provider, and section-rail language.
+- Desktop whitespace is carried by the page background rather than stretched panels；Tasks overview uses real task data；Agent uses a barely visible CSS dot field；Mobile Agent composer sits above the bottom nav。
+- No API, store, router, backend, schema, SSE, task logic, generated image, gradient, glassmorphism, neon, emoji, or marketing layout changes。
+
 ## Local evidence (Workspace Agent only)
 
 - Full V2 pytest: **488 passed** (fresh installed-package `.venv-m511fresh` non-editable)
@@ -62,13 +71,13 @@
 - uvicorn local HTTP smoke PASS (health/task CRUD/reminders/backup)
 - local HTTP/SSE readiness smoke PASS; occupied-port startup failure and rollback PASS
 - These results are local Workspace Agent evidence, not independent External ChatGPT execution。
-- WebUI typecheck PASS；production build PASS；Vitest **4 passed**；M6 focused Playwright **12 passed**；axe violations 0；light/dark M6.2.1 evidence under `.ai-handoff/visual/m621/` and `.ai-handoff/visual/m621-dark/`。
+- WebUI typecheck/build PASS；Vitest **4 passed**；M6 focused Playwright **12 passed**；axe violations 0；real integration tests individually PASS；light/dark M6.3 evidence under `.ai-handoff/visual/m63/` and `.ai-handoff/visual/m63-dark/`。
 
 ## Not run / not touched
 
 - M5 FINAL: PASS
 - M6.1: IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW（baseline）
-- M6.2.1: IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
+- M6.3: IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6 FINAL: NOT YET DECLARED pending external visual comparison
 - M7: NOT_AUTHORIZED
 - No real QQ/NapCat re-verification was needed; M4 real E2E remains valid.
@@ -82,4 +91,4 @@
 
 ## Review focus
 
-- Please compare preserved `.ai-handoff/visual/m61/` and `.ai-handoff/visual/m62/` against `.ai-handoff/visual/m621/`, and inspect `.ai-handoff/visual/m621-dark/`. Focus on date/time correctness, action semantics, mobile More navigation/accessibility, canonical labels, surface hierarchy, dark mode parity, mobile density, responsive overflow, and preserved product clarity. **EXTERNAL VISUAL REVIEW REQUIRED. M6 FINAL must not be declared from local evidence alone.**
+- Please compare `.ai-handoff/visual/m621/` against `.ai-handoff/visual/m63/`, and inspect `.ai-handoff/visual/m63-dark/`. Focus on whether the character pass adds hierarchy and recognizability without becoming decorative: Cue motif restraint, empty states, Tasks whitespace, Agent canvas/composer, Calendar scanability, mobile bottom-nav safety, dark-mode strength, and preserved product clarity. **EXTERNAL VISUAL REVIEW REQUIRED. M6 FINAL must not be declared from local evidence alone.**

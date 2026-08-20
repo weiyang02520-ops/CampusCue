@@ -2,13 +2,14 @@
 
 > 当前状态摘要。详细内容见 canonical HANDOFF.md 与 PROJECT_STATE.md。
 
-- 阶段：**M6.2.1 FINAL PRODUCT DETAIL CLEANUP（IMPLEMENTATION COMPLETE，AWAITING VISUAL REVIEW）**
+- 阶段：**M6.3 VISUAL CHARACTER PASS（IMPLEMENTATION COMPLETE，AWAITING EXTERNAL VISUAL REVIEW）**
 - **M4 FINAL = PASS**
 - **M5 FINAL = PASS**（External ChatGPT）
 - **M6 = CHANGES_REQUESTED（已按外部审核修复）**
 - **M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 - **M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**
 - **M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**
+- **M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
 - M5 REST/SSE：PASS（Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System/Backup/Restore/Import/Export/Auth/Health）
@@ -19,3 +20,4 @@
 - Known limitation：M4 source_message_id uniqueness remains；M3 cross-repository atomicity open risk；SSE no-replay。
 - M6.2 WebUI：保留八页面与 M5 contract；tokens/surface hierarchy/accent/status/deadline/brand/micro-motion polish；light `.ai-handoff/visual/m62/` + dark `.ai-handoff/visual/m62-dark/`；axe 0；Playwright full 12 passed；等待外部视觉审核。
 - M6.2.1：Home 动态日期/时区、完成/忽略分离、移动端 More bottom sheet、canonical priority、共享 labels、theme icon/topbar cleanup；focused Playwright 12 passed；light `.ai-handoff/visual/m621/` + dark `.ai-handoff/visual/m621-dark/`；等待外部视觉审核。
+- M6.3：Cue Line + Cue Dot、page identity、section tint、structured empty states、Tasks/Agent/Calendar/Home 核心页和其余四页视觉收口；typecheck/build/unit/Axe/focused E2E/individual real integration PASS；light `.ai-handoff/visual/m63/` + dark `.ai-handoff/visual/m63-dark/`；等待外部视觉审核。

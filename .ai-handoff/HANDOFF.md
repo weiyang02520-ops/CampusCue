@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6.2.1 Final Product Detail Cleanup Checkpoint）
+## 当前（M6.3 Visual Character Pass Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -10,6 +10,7 @@
 - **M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**（baseline）
 - **M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**（previous visual baseline）
 - **M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**
+- **M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
 - 本 checkpoint：在 M6.1 骨架上完成 subtle visual polish；未改 IA、数据结构、业务流程、API contract、store、router、backend 或 schema。
@@ -37,6 +38,13 @@
 - 移动端底栏收口为总览/任务/日历/AI/更多；更多使用可访问 bottom sheet，包含消息/连接/模型提供商/设置，并支持 Escape、遮罩关闭、焦点恢复和当前路由 active state。
 - 前端运行时优先级只保留 `low | normal | high`；TaskRow、Calendar、Editor 使用共享中文 category/status/priority label helper；主题切换显示与图标匹配；移除 topbar 假头像。
 - 不改 RealtimeHub、M5 contract、M6 IA 或进入 M7；新增独立 `.ai-handoff/visual/m621/` 与 `.ai-handoff/visual/m621-dark/`，不覆盖 m61/m62 evidence。
+
+## M6.3 Visual Character Pass 范围
+
+- 保留 M6.2.1 的 Blue + Teal、IA、布局、API、store、router、backend、schema 和业务逻辑；新增 Cue Line + Cue Dot 品牌母题、section tint、page identity、空状态层级和更自然的内容比例。
+- Home、Tasks、Agent、Calendar 先做核心视觉收口；Messages、Connections、Providers、Settings 统一 signal、source、provider、settings 的细节节奏。
+- 重点修复 Tasks/Messages/Providers/Agent 的“骨架页”观感、Calendar 的机械格子、Desktop 留白和 Mobile Agent composer 与底栏关系；不使用渐变、玻璃、neon、插画、emoji 或新增图片。
+- `m6.2.1-ui-baseline` 已指向 `01461b9e4a9ece79ee0ed01343277f71ea803aef` 并推送；新证据独立写入 `.ai-handoff/visual/m63/` 与 `.ai-handoff/visual/m63-dark/`。
 
 ## 本轮验收（M5 API — PASS）
 
@@ -72,6 +80,7 @@
 - WebUI `pnpm typecheck` PASS；`pnpm build` PASS；Vitest 2 passed；Playwright full **12 passed**；axe violations 0；截图覆盖 1440 全页面、390 home/tasks/editor/calendar/agent/settings、1024 tasks、768 calendar，见 `.ai-handoff/visual/m62/`；dark evidence 见 `.ai-handoff/visual/m62-dark/`。
 - Real integration PASS：真实 API task mutation → named SSE → REST refresh；task CRUD/deadline clear/done；calendar navigation；source test；local fake provider test；settings save；export download。
 - M6.2.1 focused：typecheck PASS；Vitest 4 passed；Playwright focused 12 passed；axe violations 0；light/dark m621 screenshot capture PASS；视觉抽查通过。
+- M6.3：typecheck/build PASS；Vitest 4 passed；focused Playwright 12 passed；axe 0；real integration tests individually PASS；light/dark m63 screenshot capture PASS；mobile Agent composer verified above bottom nav。
 
 ## Known limitation / open design risk
 
@@ -81,7 +90,7 @@
 
 ## Next gate
 
-External visual review comparing the preserved `.ai-handoff/visual/m61/` + `.ai-handoff/visual/m62/` baselines with new `.ai-handoff/visual/m621/` and `.ai-handoff/visual/m621-dark/` is required。M6 FINAL is not declared；M7 remains unauthorized。
+External visual review comparing `.ai-handoff/visual/m621/` against new `.ai-handoff/visual/m63/` and `.ai-handoff/visual/m63-dark/` is required。M6 FINAL is not declared；M7 remains unauthorized。
 
 ## Privacy / safety
 
