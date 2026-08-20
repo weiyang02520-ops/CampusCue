@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M4 FINAL = PASS；M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -40,6 +40,7 @@
 ## 2. GLOBAL WORKING MODE（长期 AI 协作模式）[USER_STATED][GLOBAL_WORKFLOW][CURRENT]
 
 ```
+
 User
 → External ChatGPT（规划/审核/下一轮 prompt）
 → Workspace Agent（源码检查/实现/测试）
@@ -422,3 +423,11 @@ User
 - [TEST_CONFIRMED]：M5/M5.1/M5.1.1 focused **24 passed**；fresh non-editable `.venv-m511fresh` full V2 **488 passed**；compileall PASS；Anti-AstrBot PASS；secret/PII and diff checks PASS。
 - [CURRENT]：**M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED**。
 - [KNOWN_LIMITATION]：M4 first-version source_message_id uniqueness remains；M5 schema v3 does not change it。M3 Task/Reminder cross-repository atomicity remains open design risk; startup resync_all recovery accepted。
+
+## 9AA. MEMORY DELTA（M6 WebUI implementation checkpoint，2026-08-20）
+
+- [EXTERNAL_REVIEW][CURRENT]：M5 FINAL = PASS before M6 authorization；M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6 FINAL NOT declared；M7 NOT authorized。
+- [REPO_CONFIRMED][DESIGN_DECISION]：`v2/web/` uses Vue 3 + TypeScript + Vite + Vue Router + Pinia + Lucide. Routes cover Home, Tasks, Messages, Calendar, Agent, Connections, Providers, Settings.
+- [TEST_CONFIRMED]：M6 typecheck/build PASS；Vitest 2 passed；Playwright 9 passed；axe violations 0；responsive screenshots generated at 390/599/768/1024/1440. Synthetic fixtures contain no real QQ IDs, message content, tokens, or provider secrets.
+- [DESIGN_DECISION]：M5 REST is canonical; SSE is notification-only with reconnect/backoff + REST refresh. Agent UI renders non-empty `tool_activity` only; backend currently returns empty activity and the UI does not fake it.
+- [CURRENT]：External visual review is the next gate. Do not declare M6 FINAL or enter M7。

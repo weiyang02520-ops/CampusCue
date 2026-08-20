@@ -97,3 +97,12 @@ Vue 3 + TypeScript + Vite + Vue Router + Pinia + Lucide（M6 实现，见总根�
 - M6 生成桌面/移动（1440/1024/768/390）真实截图，提交 `REVIEW_REQUEST.md`：
   `VISUAL REVIEW REQUIRED BY EXTERNAL MODEL`
 - 审核通过前不宣称"视觉正常"。
+
+## M6 implementation addendum (2026-08-20)
+
+- `v2/web/` is the implemented Vue 3 + TypeScript + Vite workspace. It uses Vue Router, Pinia, and Lucide icons.
+- Implemented routes: Home, Tasks, Messages, Calendar, Agent, Connections, Providers, Settings.
+- M5 REST remains canonical for initial loads and mutations. `/api/v1/stream` is notification-only; reconnect uses bounded exponential backoff and refreshes REST state.
+- Task completion/dismissal uses optimistic UI with rollback on failure. Agent tool activity is rendered only when the backend returns non-empty `tool_activity`; no fake tool animation is emitted.
+- Light/dark semantic tokens, desktop sidebar, mobile bottom navigation, no-emoji controls, visible focus, labeled fields, no horizontal overflow, and synthetic Playwright fixtures are implemented.
+- Gate remains `M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW`; screenshots require external visual review before `M6 FINAL`.

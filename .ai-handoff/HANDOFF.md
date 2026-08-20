@@ -2,15 +2,14 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M5 API + Realtime Checkpoint）
+## 当前（M6 WebUI Implementation Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
-- **M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
-- **M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
-- **M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
-- **M5 FINAL = NOT YET DECLARED**
-- **M6 = NOT_AUTHORIZED**
-- 本 checkpoint：M5 API + Realtime 最终封口、测试、fresh installed package、本地 HTTP/SSE smoke 完成。
+- **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
+- **M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**
+- **M6 FINAL = NOT YET DECLARED**
+- **M7 = NOT_AUTHORIZED**
+- 本 checkpoint：完整 WebUI、M5 REST/SSE integration、responsive Playwright、axe、截图和前端 clean build 完成。
 
 ## 本轮验收（M5 API — PASS）
 
@@ -43,6 +42,7 @@
 - uvicorn local HTTP smoke PASS（health/task CRUD/reminders/backup）
 - Local readiness/SSE smoke PASS；occupied-port startup failure and rollback PASS。
 - These are local Workspace Agent results, not independent External ChatGPT execution。
+- WebUI `pnpm typecheck` PASS；`pnpm build` PASS；Vitest 2 passed；Playwright 9 passed；axe violations 0；截图覆盖 390/599/768/1024/1440，见 `.ai-handoff/visual/m6/`。
 
 ## Known limitation / open design risk
 
@@ -52,7 +52,7 @@
 
 ## Next gate
 
-External ChatGPT independent review of the pushed M5.1.1 checkpoint。M5 FINAL is not declared；M6 remains unauthorized。
+External visual review of the pushed M6 WebUI screenshots。M6 FINAL is not declared；M7 remains unauthorized。
 
 ## Privacy / safety
 

@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M4 FINAL = **PASS**；M5.1.1 = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M5 FINAL = **NOT YET DECLARED**；M6 = **NOT_AUTHORIZED**。M4 已由 External ChatGPT 独立审核通过；M5.1.1 route cleanup 已由 Workspace Agent local evidence 完成（2026-08-20，见 .ai-handoff/HANDOFF.md）；M5 FINAL 不因本 checkpoint 自动通过。
+> **当前 active gate**：M5 FINAL = **PASS**；M6 = **IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = **NOT YET DECLARED**；M7 = **NOT_AUTHORIZED**。M5 已在 M6 授权前由 External ChatGPT 审核通过；M6 WebUI 已由 Workspace Agent 完成实现与本地自动验收（2026-08-20，见 .ai-handoff/HANDOFF.md）；视觉审核通过前不宣称 M6 FINAL。
 
 ## M1：Independent QQ Runtime
 
@@ -98,14 +98,14 @@
 
 **实现**：按 11_API_SPEC（M5 implemented contract）。
 
-**状态**：**M5.1.1 IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**（2026-08-20，Workspace Agent local evidence）。
+**状态**：**M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）。
 - REST contract PASS；Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System PASS
 - Backup/Restore/Import/Export PASS；SSE Realtime PASS
 - Auth PASS；Runtime lifecycle PASS；Schema v3 + migration PASS
 - M5.1/M5.1.1 focused tests 新增 8；full V2 **488 passed**（fresh `.venv-m511fresh` non-editable）；compileall PASS；Anti-AstrBot PASS
 - SSE lifecycle、heartbeat wiring、Uvicorn readiness/occupied-port rollback、canonical health、connection.updated 均有本地证据。
 - HTTP route early-close cleanup has a route-level body-iterator regression; full V2 is **488 passed** in fresh `.venv-m511fresh`。
-- M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED
+- M5 FINAL = PASS；M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
 
 ## M6：WebUI
 
@@ -117,6 +117,8 @@
 - 自动 UI 行为测试（Playwright：桌面 + 390/599/768/1024/1440）通过，无 console error、无横向溢出
 - 无障碍自动检查（焦点/alt/label）
 - 生成截图 → `VISUAL REVIEW REQUIRED BY EXTERNAL MODEL` → **外部视觉审核通过才 PASS**
+
+**本 checkpoint 实现证据**：`v2/web/` 已实现八个产品页面、M5 REST/SSE 集成、Pinia、浅深色主题、Playwright 9 passed、axe violations 0，以及 390/599/768/1024/1440 截图。M6 FINAL 尚未声明。
 
 ## M7：Full E2E
 

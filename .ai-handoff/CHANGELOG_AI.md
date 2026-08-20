@@ -300,3 +300,10 @@
 - **主要修改**：`/api/v1/stream` 外层 generator 增加 `finally` cleanup；客户端在 `: connected` 后立即关闭时也会调用幂等 `hub.unsubscribe()`。
 - **测试**：新增真实 route-level body-iterator lifecycle regression **1 passed**；focused **24 passed**；fresh `.venv-m511fresh` non-editable full V2 **488 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；secret/PII scan PASS。
 - **Gate**：M4 FINAL = PASS；M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED。
+
+## 2026-08-20 · M6 WEBUI IMPLEMENTATION CHECKPOINT
+
+- **任务**：按 M6 授权直接实现 `v2/web/`，保持 M5 backend frozen；完成首页、任务、消息、日历、AI 助手、连接、模型提供商、设置八个区域。
+- **实现**：Vue 3 + TypeScript + Vite + Vue Router + Pinia + Lucide；M5 REST canonical integration；SSE notification-only reconnect/backoff；optimistic task completion rollback；light/dark tokens；responsive sidebar/bottom navigation；no emoji or secrets in UI fixtures。
+- **测试**：typecheck PASS；production build PASS；Vitest 2 passed；Playwright 9 passed；axe violations 0；screenshots at 390/599/768/1024/1440；backend baseline remains 488 passed from fresh installed package。
+- **Gate**：M5 FINAL = PASS；**M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。

@@ -1,0 +1,3 @@
+export function formatDate(value: string | null, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone) { if (!value) return '未设置截止时间'; return new Intl.DateTimeFormat('zh-CN', { timeZone: timezone, month: 'short', day: 'numeric', weekday: 'short' }).format(new Date(value)) }
+export function formatTime(value: string | null, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone) { if (!value) return ''; return new Intl.DateTimeFormat('zh-CN', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(value)) }
+export function relative(value: string) { const days = Math.ceil((new Date(value).getTime() - Date.now()) / 86_400_000); return days < 0 ? '已逾期' : days === 0 ? '今天' : days === 1 ? '明天' : `${days} 天后` }

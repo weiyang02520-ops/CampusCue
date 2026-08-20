@@ -1,0 +1,8 @@
+export type Page<T> = { items: T[]; total: number; limit: number; offset: number }
+export type Task = { id: number; title: string; description: string | null; category: string; course: string | null; deadline: string | null; status: string; priority: string; confidence: number | null; source_id: number | null; source_message_id: string | null; source_text_reference: string | null; created_at: string; updated_at: string }
+export type Source = { id: number; platform: string; conversation_id: string; name: string; enabled: boolean; auto_extract: boolean; context_window: number; privacy_policy: string; created_at: string; updated_at: string; deleted_at: string | null }
+export type Message = { id: number; source_id: number | null; source_message_id: string; created_at: string; status: string; confidence: number | null; had_task: boolean; task_id: number | null; reason: string | null; text_retained: boolean; retained_text: string | null }
+export type Provider = { id: number; name: string; provider_type: string; base_url: string; model: string; temperature: number | null; max_tokens: number | null; max_context_tokens: number | null; timeout_s: number; secret_reference: string | null; enabled: boolean; created_at: string; updated_at: string }
+export type Reminder = { id: number; task_id: number; trigger_at: string; type: string; status: string; last_run: string | null; error: string | null; created_at: string; updated_at: string }
+export type Settings = { settings: Record<string, unknown>; restart_required: string[] }
+export type Health = { status: string; runtime: string; database: string; adapter: string; reminders: string; agent: string; api: string }
