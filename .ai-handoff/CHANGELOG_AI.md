@@ -362,3 +362,11 @@
 - **实现**：连续 Atmospheric Canvas；`glass-subtle/panel/raised/floating` 分级材质；Backdrop/Tint/Blur/Edge Light/Shadow；Text Contrast First；`@supports not (backdrop-filter)` 实色回退。
 - **验证**：Glass material Playwright 1 passed；M6 focused Playwright 16 passed；typecheck/build PASS；axe 0；390/599/768/1024/1440 responsive PASS；专用 evidence 在 `.ai-handoff/visual/m651/glass/`。
 - **Gate**：**M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## 2026-08-20 · M6.5.2 GLASS REFINEMENT & PRODUCTIZATION
+
+- **外部审核结论**：M6.5.1 Glass direction = PASS；材质已可感知。本轮仅做 refinement，不放大玻璃效果，不进入 Dark/Neumorphism 或 Stage 2。
+- **实现**：降低 Atmospheric Canvas 强度（尤其 warm amber）；建立 Base / Primary / Context / Raised / Floating semantic tiers 与统一 blur/elevation tokens；Home Today 去除嵌套白色 empty card；Tasks toolbar/context/rows 统一并修复 raw ISO date；Agent Context Rail、顶部 utility controls、prompt chips、composer 和 mobile separation 收口；Settings backup preview 使用共享本地化日期 formatter。
+- **证据**：Stage 1 新证据 `.ai-handoff/visual/m652/glass/` 五张；M6.5.1 `.ai-handoff/visual/m651/glass/` 从 `m6.5.1-glass-baseline` 恢复，旧 evidence 未覆盖。
+- **验收**：typecheck/build PASS；Vitest 4；M6.5.2 focused 2；M6 focused 16；M6.5.1 regression 1；real integration 2；fresh installed-package full V2 488；compileall/Anti-AstrBot/diff-check/Secret+PII PASS；axe 0；responsive overflow、console error、theme persistence、fallback PASS。
+- **Gate**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

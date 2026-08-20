@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M6.5.1 Glass checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M6.5.2 Glass checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -483,4 +483,12 @@ User
 - **[DESIGN_DECISION]**：按 VibeHub 严格 anatomy 建立真实 Glass：可感知 Atmospheric Backdrop、分级半透明 Tint、按层级调节 Blur、top/left Edge Light、只在悬浮关系使用的 Soft Shadow；文字对比优先，提供 solid/tinted fallback。
 - **[SCOPE]**：第一阶段仅 App Shell/Home/Tasks/Agent；Dark 和 Neumorphism 冻结；不改 M6.4 信息结构、dataset、IA、API、store、router、backend、schema 或业务逻辑。后续 Calendar/Messages/Connections/Providers/Settings/Dialog/Sheet 统一必须等 Glass 外部审核。
 - **[VERIFIED]**：专用 Glass material test 1 passed；M6 focused Playwright 16 passed；typecheck/build PASS；axe 0；marker screenshot 证明颜色区域能透过 Agent glass 被 tint + blur 感知；evidence 在 `.ai-handoff/visual/m651/glass/`。
-- **[CURRENT]**：**M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL NOT declared；DARK REVIEW/NEUMORPHISM REVIEW pending；M6 FINAL NOT declared；M7 NOT authorized。
+- **[CURRENT][HISTORICAL]**：**M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**；GLASS FINAL NOT declared；DARK REVIEW/NEUMORPHISM REVIEW pending；M6 FINAL NOT declared；M7 NOT authorized。
+
+## 9AK. MEMORY DELTA（M6.5.2 Glass refinement & productization，2026-08-20）
+
+- **[EXTERNAL_VISUAL_REVIEW][M6.5.1]**：Glass direction = PASS；Atmospheric Backdrop、Tint、Blur、Edge Light、Shadow、Contrast 材质成立。剩余问题是 backdrop 稍强、tier 未统一、utility controls 偏 SaaS opaque、Home nested white、Tasks dead canvas/raw ISO、mobile separation。
+- **[DESIGN_DECISION]**：M6.5.2 固化 Base / Primary / Context / Raised / Floating semantic material tiers；backdrop 支持层级但不成为主视觉；高频 rows/正文保持实色可读；raw ISO timestamp 永不直接显示给用户。
+- **[REPO_CONFIRMED]**：Stage 1 仅 App Shell/Home/Tasks/Agent；新增 `.ai-handoff/visual/m652/glass/` 五张 evidence；`.ai-handoff/visual/m651/glass/` 从 `m6.5.1-glass-baseline` 恢复，旧 evidence 未覆盖；Settings backup preview 也改用共享本地化日期 formatter。
+- **[TEST_CONFIRMED]**：M6.5.2 focused 2 passed；M6 focused 16；M6.5.1 regression 1；real integration 2；WebUI typecheck/build/Vitest 4；fresh installed-package full V2 488；compileall/Anti-AstrBot/diff-check/Secret+PII/axe/overflow/console/theme/fallback PASS。
+- **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL NOT declared；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING；M6 FINAL NOT declared；M7 NOT authorized。STOP for external visual review。

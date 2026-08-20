@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6.5.1 REAL Glassmorphism Correction Checkpoint）
+## 当前（M6.5.2 Glass Refinement & Productization Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -13,7 +13,8 @@
 - **M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（baseline）
 - **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
-- **M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
+- **M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**（方向与材质成立）
+- **M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **GLASS FINAL = NOT YET DECLARED**
 - **DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**
 - **M6 FINAL = NOT YET DECLARED**
@@ -74,6 +75,14 @@
 - The `/api/v1/stream` outer generator now unsubscribes in `finally`, covering an HTTP consumer that closes immediately after `: connected` before `RealtimeHub.stream()` enters its own lifecycle.
 - Route-level ASGI body-iterator regression confirms early close leaves `subscriber_count() == 0`.
 
+## M6.5.2 Glass Refinement & Productization
+
+- **External review result**：M6.5.1 Glass direction = PASS；Atmospheric Backdrop、Tint、Blur、Edge Light、Shadow 和 Contrast 已达到可感知的 Glassmorphism。M6.5.2 收口 backdrop 过强、材质 tier 不统一、工具控件过实、Home 嵌套白卡、Tasks raw ISO 和移动端层级。
+- **实现**：新增 semantic Glass tiers（Base / Primary / Context / Raised / Floating）与统一 blur/elevation tokens；降低 light backdrop（尤其 warm amber）；Home Today 直接承载 empty content；Tasks toolbar/context/rows 统一层级；Agent context、head utilities、prompt chips、composer 收口；移动端 Agent separation 与 bottom nav 保持玻璃层级；Settings backup preview 使用共享本地化日期 formatter。
+- **范围**：Stage 1 仅 App Shell、Home、Tasks、Agent；不扩张 Dark/Neumorphism，不改 IA、dataset、API、store、router、backend、schema、M5 或 M4。
+- **证据**：新增 `.ai-handoff/visual/m652/glass/` 五张 Stage 1 refinement screenshots；M6.5.1 `.ai-handoff/visual/m651/glass/` 从 `m6.5.1-glass-baseline` 恢复，未覆盖。
+- **验证**：M6.5.2 focused Glass 2 passed；M6 focused Playwright 16 passed；M6.5.1 regression 1 passed；real integration 2 passed；typecheck/build/Vitest 4 passed；fresh installed-package full V2 488 passed；compileall/Anti-AstrBot/diff-check/Secret+PII scan PASS；axe 0、responsive overflow、console error、theme persistence、fallback PASS。
+
 ## Verification（Workspace Agent local evidence）
 
 - Full V2 pytest：**488 passed**（fresh installed-package `.venv-m511fresh` non-editable）
@@ -95,7 +104,7 @@
 
 ## Next gate
 
-External visual review comparing `.ai-handoff/visual/m621/` against new `.ai-handoff/visual/m63/` and `.ai-handoff/visual/m63-dark/` is required。M6 FINAL is not declared；M7 remains unauthorized。
+External visual review of `.ai-handoff/visual/m652/glass/` against `.ai-handoff/visual/m651/glass/` is required。M6.5.2 is implementation-complete only；GLASS FINAL、M6 FINAL are not declared；Dark/Neumorphism remain pending；M7 remains unauthorized。
 
 ## Privacy / safety
 
@@ -146,4 +155,4 @@ External visual review comparing `.ai-handoff/visual/m621/` against new `.ai-han
 
 - typecheck/build PASS；M6 focused Playwright **16 passed**；Glass material Playwright **1 passed**；axe 0（focused suite）；responsive 390/599/768/1024/1440 PASS。
 - Glass evidence 已通过内部视觉检查：Shell atmosphere 连续、Agent marker 可透过 tint + blur 感知、Glass container / opaque content / raised composer 层级可分辨。
-- **M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+- **M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**（historical direction gate）；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

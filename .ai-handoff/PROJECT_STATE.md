@@ -20,7 +20,8 @@
 - M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
-- M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS（方向与材质成立）
+- M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - GLASS FINAL = NOT YET DECLARED
 - DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING
 - M6 FINAL = NOT YET DECLARED
@@ -39,6 +40,7 @@
 - **M6.4 Information Layering Pass（本轮）**：保持 M6.3 visual language，完成 Tasks/Agent/Messages 优先的信息分层，并收口 Calendar/Connections/Providers/Settings；新增 `.ai-handoff/visual/m64/` 与 `.ai-handoff/visual/m64-dark/`，不改 backend/API/business logic。
 - **M6.5 Visual Depth & Product Composition（本轮）**：完成页面构图、surface hierarchy、字体比例、局部玻璃拟态和明暗/响应式收口；新增 `.ai-handoff/visual/m65/` 与 `.ai-handoff/visual/m65-dark/`，不改 backend/API/business logic。
 - **M6.5.1 REAL Glassmorphism Correction（本轮）**：在 M6.5 HEAD 上只返工 App Shell/Home/Tasks/Agent 的真实 Glass material；新增连续 Atmospheric Canvas、分级 glass tokens、test-only marker verification 和 `.ai-handoff/visual/m651/glass/`，不扩张其他主题。
+- **M6.5.2 Glass Refinement & Productization（本轮）**：按外部 Glass PASS 收口 backdrop、semantic material tiers、Agent utility/composer、Home empty state、Tasks toolbar/context/ISO date、mobile separation；新增 `.ai-handoff/visual/m652/glass/`，不改 backend/API/store/router/schema/business logic。
 
 ## verified (Workspace Agent local evidence)
 
@@ -55,6 +57,7 @@
 - M6.4：fresh installed-package `.venv-m64fresh` full V2 **488 passed**；typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**；m64 light/dark screenshot capture PASS；prior evidence preserved。
 - M6.5：typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**；m65 light/dark screenshot capture PASS；prior evidence preserved。
 - M6.5.1 Glass：typecheck/build PASS；focused Playwright **16 passed**；Glass material test **1 passed**；axe 0；m651 core evidence PASS；prior m65/m64 evidence preserved。
+- M6.5.2 Glass：typecheck/build PASS；Vitest **4 passed**；focused refinement **2 passed**；M6 focused **16 passed**；M6.5.1 regression **1 passed**；real integration **2 passed**；fresh V2 **488 passed**；axe 0；responsive overflow/console/theme/fallback PASS；Stage 1 evidence `.ai-handoff/visual/m652/glass/`；m651 evidence restored from annotated baseline tag。
 
 ## real_environment
 
@@ -69,7 +72,7 @@
 
 ## next_gate
 
-External visual review of M6.5.1 Glass evidence against the M6.5 implementation。GLASS FINAL、DARK REVIEW、NEUMORPHISM REVIEW and M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
+External visual review of M6.5.2 Stage 1 Glass evidence against the M6.5.1 baseline。GLASS FINAL、DARK REVIEW、NEUMORPHISM REVIEW and M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
 
 ## architecture_decisions
 

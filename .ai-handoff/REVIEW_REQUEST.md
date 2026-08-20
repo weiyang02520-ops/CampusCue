@@ -1,6 +1,6 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.5.1 REAL Glassmorphism Correction — External Review Request
+# CampusCue M6.5.2 Glass Refinement & Productization — External Review Request
 
 ## Gate state
 
@@ -13,7 +13,8 @@
 - M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
-- M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS（方向与材质成立）
+- M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
@@ -84,6 +85,18 @@
 - M6.3: IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6 FINAL: NOT YET DECLARED pending external visual comparison
 - M7: NOT_AUTHORIZED
+
+## M6.5.2 Stage 1 review target
+
+M6.5.1 Glass direction has passed external visual review. This checkpoint refines the material system without amplifying it: quieter backdrop, fixed semantic tiers (Base / Primary / Context / Raised / Floating), less opaque utility controls, direct Home Today empty content, readable Tasks rows with localized dates, and a calmer mobile Agent separation.
+
+Review the new evidence in `.ai-handoff/visual/m652/glass/` against the preserved M6.5.1 evidence in `.ai-handoff/visual/m651/glass/`:
+
+- `refine-home-1440.png` / `refine-home-390.png`
+- `refine-tasks-1440.png`
+- `refine-agent-1440.png` / `refine-agent-390.png`
+
+Questions: Is the backdrop quieter while still making the material legible? Are Base/Primary/Context/Raised tiers visually coherent? Does information remain ahead of material? Are Home Today, Tasks overview/date, Agent utilities/composer, and mobile bottom navigation product-ready? **GLASS FINAL and M6 FINAL must remain undeclared until external review.**
 - No real QQ/NapCat re-verification was needed; M4 real E2E remains valid.
 - No real QQ IDs, group IDs, chat content, tokens, Provider secrets, or local private paths are included.
 
@@ -118,4 +131,4 @@
 - Hard checklist: Backdrop, Tint, Blur, Edge Light, Shadow, Text Contrast, Solid/Tinted Fallback. The test-only marker must remain perceptible through the Agent glass surface after tint + blur。
 - Confirm the three-plane relationship: Atmospheric Backdrop → Glass Workspace/Context → opaque readable content → Raised Composer. Task rows/message bubbles/calendar cells must not become individually blurred。
 - No Dark expansion, no Neumorphism expansion, no IA/data/API/store/router/backend/schema/business logic changes。
-- **M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+- **M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**（historical direction gate）；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
