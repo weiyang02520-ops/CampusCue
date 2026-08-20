@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6.3 Visual Character Pass Checkpoint）
+## 当前（M6.5 Visual Depth & Product Composition Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -11,9 +11,11 @@
 - **M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**（previous visual baseline）
 - **M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**
 - **M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
+- **M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（baseline）
+- **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
-- 本 checkpoint：在 M6.1 骨架上完成 subtle visual polish；未改 IA、数据结构、业务流程、API contract、store、router、backend 或 schema。
+- 本 checkpoint：在 M6.4 信息分层上完成 controlled visual depth；玻璃拟态仅用于局部上下文/浮层/焦点层，并提供实色回退；未改 IA、数据结构、业务流程、API contract、store、router、backend 或 schema。
 
 ## M6.1 修复范围
 
@@ -113,3 +115,17 @@ External visual review comparing `.ai-handoff/visual/m621/` against new `.ai-han
 - Light evidence `.ai-handoff/visual/m64/`; dark evidence `.ai-handoff/visual/m64-dark/`。
 - compileall PASS；Anti-AstrBot PASS；git diff --check PASS；secret/PII scan PASS。
 - **M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## M6.5 Visual Depth & Product Composition
+
+- Baseline tag `m6.4-ui-baseline` points to `26392e633b1ab47bfe39c1831c774c638f9b7076`; prior m63/m64 evidence is preserved。
+- Page composition now uses differentiated max-widths, editorial grids, canvas/section/primary/raised surface hierarchy, stronger typography scale, and a restrained Blue + Teal cue system。
+- Glassmorphism is local only: Agent canvas/context/composer, Home focus surfaces, connection indicator, inspector/diagnostics and dialogs; long task/message rows and settings form remain readable solid/tinted surfaces。
+- `backdrop-filter` has a solid fallback via `@supports not`; no new data, API, store, router, backend, schema or business logic。
+- New evidence is under `.ai-handoff/visual/m65/` and `.ai-handoff/visual/m65-dark/`。
+
+## M6.5 Verification（Workspace Agent local evidence）
+
+- WebUI typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**。
+- Light/dark screenshot capture PASS；responsive evidence covers 390/768/1024/1440；visual dataset remains 5 tasks / 3 messages / 3 sources / 1 provider。
+- **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

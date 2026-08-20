@@ -18,6 +18,8 @@
 - M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW (previous visual baseline)
 - M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
 - M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
@@ -32,6 +34,7 @@
 - **M6.2.1 Final Product Detail Cleanup（本轮）**：完成 Home 动态日期/时区与 action 分离、移动端 More bottom sheet、canonical priority、共享中文标签、theme icon 修正、topbar 假头像移除；生成独立 `.ai-handoff/visual/m621/` 与 `.ai-handoff/visual/m621-dark/`。
 - **M6.3 Visual Character Pass（本轮）**：保留 M6.2.1 结构与业务 contract；以 Cue Line + Cue Dot、section tint、页面 identity、空状态、Tasks/Agent/Calendar/Home 节奏和 Messages/Connections/Providers/Settings 细节完成 distinctive product polish；生成 `.ai-handoff/visual/m63/` 与 `.ai-handoff/visual/m63-dark/`。
 - **M6.4 Information Layering Pass（本轮）**：保持 M6.3 visual language，完成 Tasks/Agent/Messages 优先的信息分层，并收口 Calendar/Connections/Providers/Settings；新增 `.ai-handoff/visual/m64/` 与 `.ai-handoff/visual/m64-dark/`，不改 backend/API/business logic。
+- **M6.5 Visual Depth & Product Composition（本轮）**：完成页面构图、surface hierarchy、字体比例、局部玻璃拟态和明暗/响应式收口；新增 `.ai-handoff/visual/m65/` 与 `.ai-handoff/visual/m65-dark/`，不改 backend/API/business logic。
 
 ## verified (Workspace Agent local evidence)
 
@@ -46,6 +49,7 @@
 - M6.2.1：typecheck PASS；Vitest **4 passed**；focused Playwright **12 passed**；axe 0；m621 light/dark screenshot capture PASS；m61/m62/m62-dark evidence 未覆盖。
 - M6.3：typecheck/build PASS；Vitest **4 passed**；focused Playwright **12 passed**；axe 0；real integration two tests individually PASS；m63 light/dark screenshot capture PASS；m61/m62/m621 evidence 未覆盖。
 - M6.4：fresh installed-package `.venv-m64fresh` full V2 **488 passed**；typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**；m64 light/dark screenshot capture PASS；prior evidence preserved。
+- M6.5：typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**；m65 light/dark screenshot capture PASS；prior evidence preserved。
 
 ## real_environment
 
@@ -60,7 +64,7 @@
 
 ## next_gate
 
-External visual review of M6.4 evidence against the `m6.3-ui-baseline` and M6.3 evidence。M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
+External visual review of M6.5 evidence against the `m6.4-ui-baseline` and M6.4 evidence。M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
 
 ## architecture_decisions
 

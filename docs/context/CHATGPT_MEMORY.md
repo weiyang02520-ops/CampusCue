@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M6.3 visual character checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M6.5 visual depth checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -468,3 +468,11 @@ User
 - **[DESIGN_DECISION]**：M6.4 采用 three-level information hierarchy：primary immediately visible，context nearby/collapsible，advanced only after action。Tasks filter/More/context aside、Agent context rail/mobile sheet/four prompts、Messages master-detail、Calendar selected-day agenda、Connections/Providers/Settings advanced disclosure are presentation-layer changes；API/store/router/backend/schema/business logic frozen。
 - **[TEST_CONFIRMED]**：fresh installed-package `.venv-m64fresh` full V2 488 passed；WebUI typecheck/build/Vitest 4/focused Playwright 16/axe 0/real integration 2 passed；m64 light/dark screenshots generated；compileall/Anti-AstrBot/diff-check/secret-PII PASS。
 - **[CURRENT]**：等待 External ChatGPT 对比 M6.3 baseline 与 M6.4 evidence；不得声明 M6 FINAL 或进入 M7。
+
+## 9AI. MEMORY DELTA（M6.5 visual depth & product composition pass，2026-08-20）
+
+- **[REPO_CONFIRMED]**：创建并推送 `m6.4-ui-baseline` → `26392e633b1ab47bfe39c1831c774c638f9b7076`；m63/m64 evidence 保持未覆盖。
+- **[DESIGN_DECISION]**：CampusCue 采用 editorial productivity / quiet premium / academic workspace 的页面构图；surface hierarchy、typography scale、section contrast 和 whitespace 是主层；玻璃拟态只在 Agent context/composer、Home focus、状态/检查器/对话框等局部使用。
+- **[SAFETY]**：`backdrop-filter` 有实色 fallback；长列表、正文、设置表单不使用持续模糊；透明度、边缘高光、阴影按明暗主题适配，文字对比度优先。
+- **[VERIFIED]**：typecheck/build PASS；Vitest 4；focused Playwright 16；axe 0；real integration 2；m65 light/dark evidence PASS；responsive 390/768/1024/1440 PASS。
+- **[CURRENT]**：**M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL NOT declared；M7 NOT authorized；等待外部视觉对比。

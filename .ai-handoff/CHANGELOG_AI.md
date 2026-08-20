@@ -346,3 +346,11 @@
 - **范围**：保持 M6.3 Blue + Teal、Cue Line + Cue Dot、light/dark、sidebar/mobile nav、Lucide、真实 REST/Agent API；不改 backend/API/store/router/schema/business logic。
 - **验收**：fresh installed-package `.venv-m64fresh` full V2 **488 passed**；typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**；light/dark screenshots 位于 `.ai-handoff/visual/m64/`、`.ai-handoff/visual/m64-dark/`；compileall/Anti-AstrBot/diff-check/secret-PII PASS。
 - **Gate**：**M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## 2026-08-20 · M6.5 VISUAL DEPTH & PRODUCT COMPOSITION PASS
+
+- **基线**：创建并推送 annotated tag `m6.4-ui-baseline`，指向 `26392e633b1ab47bfe39c1831c774c638f9b7076`；m63/m64 evidence 保持不覆盖。
+- **实现**：完成 differentiated page widths、editorial grid composition、canvas/section/primary/raised surface hierarchy、typography scale、stronger brand area、light/dark responsive refinement；局部加入玻璃拟态材质。
+- **玻璃拟态边界**：仅用于 Agent canvas/context/composer、Home focus、连接状态、inspector/diagnostics/dialog；任务正文、消息列表和设置表单保持实色或 tint；`backdrop-filter` 有 `@supports` 实色回退。
+- **验收**：typecheck/build PASS；Vitest 4；focused Playwright 16；axe 0；real integration 2；light/dark m65 screenshot capture PASS；prior evidence preserved。
+- **Gate**：**M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

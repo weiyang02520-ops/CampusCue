@@ -1,6 +1,6 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.3 Visual Character Pass — External Review Request
+# CampusCue M6.5 Visual Depth & Product Composition — External Review Request
 
 ## Gate state
 
@@ -11,6 +11,8 @@
 - M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW（previous visual baseline）
 - M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
 - M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
@@ -98,3 +100,11 @@
 - M6.4 verification: fresh installed-package `.venv-m64fresh` full V2 **488 passed**；WebUI typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**；light/dark evidence under `.ai-handoff/visual/m64/` and `.ai-handoff/visual/m64-dark/`。
 - Compare M6.4 against the `m6.3-ui-baseline` and M6.3 evidence. Focus on progressive disclosure: Tasks primary list vs context aside, Agent conversation vs context rail, Messages master/detail, mobile sheets, Calendar selected-day agenda, and advanced provider/connection/settings details。
 - **M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## M6.5 visual review request
+
+- Baseline: `m6.4-ui-baseline` → `26392e633b1ab47bfe39c1831c774c638f9b7076`；compare `.ai-handoff/visual/m65/` and `.ai-handoff/visual/m65-dark/` against M6.4 evidence。
+- Review page composition, canvas/section/raised surface hierarchy, Home/Tasks/Agent editorial grids, Agent context depth, Calendar scanability, Messages signal stream, Settings three-column navigation, 1024/768/390 behavior, and dark-mode contrast。
+- Glassmorphism is intentionally local, not global: inspect Agent context/composer, Home focus, dialogs/inspectors and connection status; verify text remains clear and solid fallbacks are acceptable when `backdrop-filter` is unavailable。
+- No backend/API/store/router/schema/business logic changes；dataset remains 5 tasks / 3 messages / 3 sources / 1 provider。
+- **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

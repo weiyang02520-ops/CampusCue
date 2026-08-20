@@ -18,23 +18,23 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-20 · M6.3 WebUI checkpoint）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-20 · M6.5 WebUI checkpoint）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
+| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**：M1-M4 完成；M5 FastAPI REST + SSE + schema v3；M5.1.1 route cleanup complete locally；Legacy frozen。最新本地 checkpoint 证据：**488 tests passed**（2026-08-20，fresh `.venv-m511fresh` non-editable） |
 | REAL ENV | 已验证：M1.2 + M2b.2 QQ 全链路；M4.2 Real Provider Tool Call PASS；M4.3 Real QQ Agent E2E PASS；M5 本地 uvicorn HTTP smoke PASS（2026-08-19） |
 
-## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-20 · M6.3 WebUI checkpoint）
+## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-20 · M6.5 WebUI checkpoint）
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；**M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
-- **下一步**：External visual comparison of M6.2.1 baseline and M6.3 evidence; M6 FINAL must not be declared from local evidence alone。
+- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；**M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+- **下一步**：External visual comparison of M6.4 baseline and M6.5 evidence; M6 FINAL must not be declared from local evidence alone。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
 - **M4.2 real provider fact**：真实 OpenAI 兼容端点（DeepSeek）tool-call 轮次可能同时返回辅助 content + tool_calls——tool_calls 权威、辅助文本丢弃（`_parse_ok` 最小修复，M4.2）。
@@ -196,6 +196,13 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **[DESIGN_DECISION]**：保留 M6.3 Blue + Teal、Cue Line + Cue Dot、light/dark、sidebar/mobile nav 和真实 API；按 progressive disclosure 将 primary / context / advanced 分层。Tasks/Agent/Messages 为主工作区，Calendar/Connections/Providers/Settings 做上下文与高级信息收纳；不改 backend/API/store/router/schema/business logic。
 - **[TEST_CONFIRMED]**：fresh installed-package `.venv-m64fresh` full V2 **488 passed**；typecheck/build PASS；Vitest 4；focused Playwright 16；axe 0；real integration 2；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；secret/PII scan PASS；light/dark evidence `.ai-handoff/visual/m64/` + `.ai-handoff/visual/m64-dark/`。
 - **[CURRENT]**：等待 External ChatGPT 视觉审核 M6.4；不得声明 M6 FINAL 或进入 M7。
+
+## 9AH. M6.5 VISUAL DEPTH & PRODUCT COMPOSITION CHECKPOINT（2026-08-20）
+
+- **[REPO_CONFIRMED][CURRENT]**：`m6.4-ui-baseline` 已推送并指向 `26392e633b1ab47bfe39c1831c774c638f9b7076`；M6.5 完成；**M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL NOT declared；M7 NOT authorized。
+- **[DESIGN_DECISION]**：用 editorial productivity / quiet premium / academic workspace 方向加深视觉构图；玻璃拟态仅作为局部层级材质，配合透明 tint、backdrop blur、edge light、soft shadow，并提供实色回退；不能全站玻璃化。
+- **[VERIFIED]**：WebUI typecheck/build PASS；Vitest 4；focused Playwright 16；axe 0；real integration 2；light/dark m65 evidence PASS；m63/m64 evidence preserved。
+- **[CURRENT]**：等待 External ChatGPT 对比 M6.4 baseline 与 M6.5 evidence；不得声明 M6 FINAL 或进入 M7。
 
 - **M2a.1 运行时事实**：LLMRequest.timeout_s=None 默认（回落 provider 配置）；secret_reference 共享校验 providers/validation.py；Clock 注入 repository 时间戳；DB CHECK 约束（tasks/extractions/provider_configs）；schema 预检零变更（SchemaRefusedError）；186 tests 全绿。
 
