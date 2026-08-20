@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M4 FINAL = **PASS**；M5.1 = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M5 FINAL = **NOT YET DECLARED**；M6 = **NOT_AUTHORIZED**。M4 已由 External ChatGPT 独立审核通过；M5.1 hardening 已由 Workspace Agent local evidence 完成（2026-08-20，见 .ai-handoff/HANDOFF.md）；M5 FINAL 不因本 checkpoint 自动通过。
+> **当前 active gate**：M4 FINAL = **PASS**；M5.1.1 = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M5 FINAL = **NOT YET DECLARED**；M6 = **NOT_AUTHORIZED**。M4 已由 External ChatGPT 独立审核通过；M5.1.1 route cleanup 已由 Workspace Agent local evidence 完成（2026-08-20，见 .ai-handoff/HANDOFF.md）；M5 FINAL 不因本 checkpoint 自动通过。
 
 ## M1：Independent QQ Runtime
 
@@ -98,12 +98,13 @@
 
 **实现**：按 11_API_SPEC（M5 implemented contract）。
 
-**状态**：**M5.1 IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**（2026-08-20，Workspace Agent local evidence）。
+**状态**：**M5.1.1 IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**（2026-08-20，Workspace Agent local evidence）。
 - REST contract PASS；Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System PASS
 - Backup/Restore/Import/Export PASS；SSE Realtime PASS
 - Auth PASS；Runtime lifecycle PASS；Schema v3 + migration PASS
-- M5.1 focused tests 新增 7；full V2 **487 passed**（fresh `.venv-m51fresh` non-editable）；compileall PASS；Anti-AstrBot PASS
+- M5.1/M5.1.1 focused tests 新增 8；full V2 **488 passed**（fresh `.venv-m511fresh` non-editable）；compileall PASS；Anti-AstrBot PASS
 - SSE lifecycle、heartbeat wiring、Uvicorn readiness/occupied-port rollback、canonical health、connection.updated 均有本地证据。
+- HTTP route early-close cleanup has a route-level body-iterator regression; full V2 is **488 passed** in fresh `.venv-m511fresh`。
 - M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED
 
 ## M6：WebUI

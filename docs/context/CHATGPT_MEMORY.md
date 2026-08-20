@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M5.1 hardening checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M5.1.1 route cleanup checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M4 FINAL = PASS；M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M4 FINAL = PASS；M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -414,4 +414,11 @@ User
 - [REPO_CONFIRMED][TEST_CONFIRMED]：M5.1 fixed A-D/E with bounded subscriber close state, API heartbeat wiring, owned Uvicorn readiness barrier and rollback, canonical `/api/v1/health`, neutral Adapter `connection.updated`, and post-commit notifier exception isolation。
 - [TEST_CONFIRMED]：M5/M5.1 focused **23 passed**；M5.1 new **7 passed**；full V2 **487 passed** in fresh non-editable `.venv-m51fresh`；compileall PASS；Anti-AstrBot PASS；local health/readiness/SSE/occupied-port rollback evidence PASS。These are Workspace Agent local results, not independent External ChatGPT execution。
 - [CURRENT]：**M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED**。
+
+## 9Z. MEMORY DELTA（M5.1.1 Final SSE Route Cleanup，2026-08-20）
+
+- [EXTERNAL_REVIEW][CHANGES_REQUESTED]：M5.1 commit `9f0c058146625a78dfbba8745721d73b46707faf` had one remaining early HTTP SSE close edge case: the client could close after `: connected` before `hub.stream()` established its own cleanup。
+- [REPO_CONFIRMED][TEST_CONFIRMED]：`/api/v1/stream` outer generator now unsubscribes in `finally`; route-level body-iterator regression confirms early close leaves zero subscribers。
+- [TEST_CONFIRMED]：M5/M5.1/M5.1.1 focused **24 passed**；fresh non-editable `.venv-m511fresh` full V2 **488 passed**；compileall PASS；Anti-AstrBot PASS；secret/PII and diff checks PASS。
+- [CURRENT]：**M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED**。
 - [KNOWN_LIMITATION]：M4 first-version source_message_id uniqueness remains；M5 schema v3 does not change it。M3 Task/Reminder cross-repository atomicity remains open design risk; startup resync_all recovery accepted。

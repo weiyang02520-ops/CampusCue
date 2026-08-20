@@ -293,3 +293,10 @@
 - **主要修改**：SSE subscriber 显式 close 状态/唤醒 active stream；`ApiConfig.sse_heartbeat_interval` 接线；Uvicorn `server.started` readiness barrier + bounded timeout + occupied-port rollback；删除重复 `/api/v1/system/health`；OneBotAdapter optional neutral connection callback 发布 `connection.updated`；Task/Reminder/Pipeline 在业务 commit 后隔离 realtime publish failure。
 - **测试**：M5/M5.1 focused **23 passed**；本轮新增 **7 passed**；fresh `.venv-m51fresh` non-editable full V2 **487 passed**；compileall PASS；Anti-AstrBot PASS；local HTTP/SSE readiness and occupied-port rollback PASS；git diff --check PASS。
 - **Gate**：M4 FINAL = PASS；**M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED。
+
+## 2026-08-20 · M5.1.1 FINAL SSE ROUTE CLEANUP
+
+- **任务**：修复 External ChatGPT 发现的 early HTTP SSE disconnect lifecycle edge case。
+- **主要修改**：`/api/v1/stream` 外层 generator 增加 `finally` cleanup；客户端在 `: connected` 后立即关闭时也会调用幂等 `hub.unsubscribe()`。
+- **测试**：新增真实 route-level body-iterator lifecycle regression **1 passed**；focused **24 passed**；fresh `.venv-m511fresh` non-editable full V2 **488 passed**；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；secret/PII scan PASS。
+- **Gate**：M4 FINAL = PASS；M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED。

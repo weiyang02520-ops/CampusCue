@@ -58,13 +58,19 @@ def create_app(deps: APIDependencies) -> FastAPI:
         sub_id, queue = hub.subscribe()
 
         async def gen():
-            yield ": connected\n\n"
-            async for chunk in hub.stream(
-                sub_id,
-                queue,
-                heartbeat_interval_s=deps.config.sse_heartbeat_interval,
-            ):
-                yield chunk
+            try:
+                yield ": connected\n\n"
+                async for chunk in hub.stream(
+                    sub_id,
+                    queue,
+                    heartbeat_interval_s=deps.config.sse_heartbeat_interval,
+                ):
+                    yield chunk
+            finally:
+                # The client can disconnect after the initial connected
+                # frame, before hub.stream() has entered its own lifecycle.
+                # Keep route ownership responsible for removing the slot.
+                hub.unsubscribe(sub_id, reason="HTTP stream closed")
 
         return StreamingResponse(gen(), media_type="text/event-stream")
 

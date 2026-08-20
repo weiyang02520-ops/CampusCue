@@ -7,6 +7,7 @@
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 - **M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+- **M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 - **M5 FINAL = NOT YET DECLARED**
 - **M6 = NOT_AUTHORIZED**
 - 本 checkpoint：M5 API + Realtime 最终封口、测试、fresh installed package、本地 HTTP/SSE smoke 完成。
@@ -29,10 +30,15 @@
 - Realtime completeness PASS：task, reminder, extraction and adapter connection producers are present; `connection.updated` crosses the neutral Adapter callback boundary and is tested through the real connection lifecycle.
 - Commit ordering PASS：business mutations commit before notification; TaskService, ReminderService and TaskPipeline isolate notifier failures so derived realtime cannot turn a successful mutation into an API failure.
 
+## M5.1.1 Final SSE Route Cleanup
+
+- The `/api/v1/stream` outer generator now unsubscribes in `finally`, covering an HTTP consumer that closes immediately after `: connected` before `RealtimeHub.stream()` enters its own lifecycle.
+- Route-level ASGI body-iterator regression confirms early close leaves `subscriber_count() == 0`.
+
 ## Verification（Workspace Agent local evidence）
 
-- Full V2 pytest：**487 passed**（fresh installed-package `.venv-m51fresh` non-editable）
-- M5/M5.1 focused：**23 passed**；M5.1 new tests：**7 passed**
+- Full V2 pytest：**488 passed**（fresh installed-package `.venv-m511fresh` non-editable）
+- M5/M5.1/M5.1.1 focused：**24 passed**；M5.1.1 new test：**1 passed**
 - compileall PASS；Anti-AstrBot PASS；git diff --check PASS；Secret/PII scan PASS
 - uvicorn local HTTP smoke PASS（health/task CRUD/reminders/backup）
 - Local readiness/SSE smoke PASS；occupied-port startup failure and rollback PASS。
@@ -46,7 +52,7 @@
 
 ## Next gate
 
-External ChatGPT independent review of the pushed M5.1 checkpoint。M5 FINAL is not declared；M6 remains unauthorized。
+External ChatGPT independent review of the pushed M5.1.1 checkpoint。M5 FINAL is not declared；M6 remains unauthorized。
 
 ## Privacy / safety
 

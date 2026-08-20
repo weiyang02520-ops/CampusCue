@@ -7,6 +7,7 @@
 - M4 FINAL = **PASS**
 - M5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
 - M5.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
 - M5 FINAL = NOT YET DECLARED
 - M6 = NOT_AUTHORIZED
 
@@ -17,11 +18,12 @@
 - Schema v3: settings table, sources.deleted_at (soft delete preserving provenance), M5 indexes; atomic v1→v2→v3 migration.
 - Backup/Restore/Import/Export; auth; runtime API lifecycle.
 - M5.1 hardening: real SSE stream termination on overflow, configured heartbeat wiring, Uvicorn readiness/rollback, canonical health route cleanup, neutral `connection.updated` producer, and notifier exception isolation after commit.
+- M5.1.1 route cleanup: outer HTTP SSE generator unsubscribes in `finally` for early consumer close after `: connected`.
 
 ## Local evidence (Workspace Agent only)
 
-- Full V2 pytest: **487 passed** (fresh installed-package `.venv-m51fresh` non-editable)
-- M5/M5.1 focused: **23 passed**; M5.1 new tests: **7 passed**
+- Full V2 pytest: **488 passed** (fresh installed-package `.venv-m511fresh` non-editable)
+- M5/M5.1/M5.1.1 focused: **24 passed**; M5.1.1 new test: **1 passed**
 - compileall PASS; Anti-AstrBot PASS; git diff --check PASS; Secret/PII scan PASS
 - uvicorn local HTTP smoke PASS (health/task CRUD/reminders/backup)
 - local HTTP/SSE readiness smoke PASS; occupied-port startup failure and rollback PASS

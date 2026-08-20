@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
 from campuscue.api.dependencies import APIDependencies
 from campuscue.api.realtime import RealtimeHub
@@ -125,4 +126,43 @@ def test_sse_route_uses_configured_heartbeat(tmp_path: Path):
     assert response.status_code == 200
     assert captured["heartbeat_interval_s"] == 0.01
     assert deps.realtime.subscriber_count() == 0
+    asyncio.run(db.dispose())
+
+
+def test_sse_route_early_consumer_close_cleans_subscriber(tmp_path: Path):
+    db = Database(DatabaseConfig(path=tmp_path / "sse-early-close.db", env="test"))
+    asyncio.run(db.initialize())
+    deps = APIDependencies(config=ApiConfig(enabled=True), database=db)
+    app = create_app(deps)
+    included_router = next(
+        parent for parent in app.routes if hasattr(parent, "original_router")
+    )
+    route = next(
+        route
+        for route in included_router.original_router.routes
+        if getattr(route, "path", None) == "/api/v1/stream"
+    )
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/api/v1/stream",
+            "raw_path": b"/api/v1/stream",
+            "query_string": b"",
+            "headers": [],
+            "scheme": "http",
+            "server": ("127.0.0.1", 6200),
+            "client": ("127.0.0.1", 6201),
+        }
+    )
+
+    async def run():
+        response = await route.endpoint(request)
+        assert deps.realtime.subscriber_count() == 1
+        first = await anext(response.body_iterator)
+        assert first == ": connected\n\n"
+        await response.body_iterator.aclose()
+        assert deps.realtime.subscriber_count() == 0
+
+    asyncio.run(run())
     asyncio.run(db.dispose())
