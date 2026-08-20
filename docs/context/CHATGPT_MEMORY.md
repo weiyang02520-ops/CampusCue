@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M5.1.1 route cleanup checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M6.2.1 product detail checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -431,6 +431,13 @@ User
 - [TEST_CONFIRMED]：typecheck/build/Vitest PASS；Playwright full 12 passed（单 worker 保证 shared real harness deterministic）；axe 0；light screenshots `.ai-handoff/visual/m62/`；dark evidence `.ai-handoff/visual/m62-dark/`；m61 baseline screenshots restored from `m6.1-ui-baseline` and not overwritten。
 - [REPO_CONFIRMED]：新增 accent/surface/shadow tokens、Home/Tasks/Agent polish、Calendar/Messages/Connections/Providers/Settings shared visual language、Sparkles brand mark、deadline urgency/category/status/confidence detail、dialog/toast/hover/mobile micro-interactions；无 gradient/glass/neon/emoji/robot。
 - [CURRENT]：等待 External ChatGPT 对比 M6.1/M6.2 视觉证据；不得声明 M6 FINAL 或进入 M7。
+
+## 9AD. MEMORY DELTA（M6.2.1 final product detail cleanup，2026-08-20）
+
+- [REPO_CONFIRMED][CURRENT]：M6.2.1 完成 M6.2 视觉语言上的产品细节收口；**M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL NOT declared；M7 NOT authorized。
+- [DESIGN_DECISION]：保持 M6 IA、M5 contract 和现有页面骨架；Home 读取 Settings timezone 生成动态日期/周条并区分 complete/dismiss；移动底栏为总览/任务/日历/AI/更多，More 使用可访问 bottom sheet；priority canonical 为 `low | normal | high`；共享 helper 统一 category/status/priority 中文 label；theme icon/label 语义修正；移除 topbar 假头像。
+- [TEST_CONFIRMED]：typecheck PASS；Vitest 4 passed；focused Playwright 12 passed；axe 0；light evidence `.ai-handoff/visual/m621/`；dark evidence `.ai-handoff/visual/m621-dark/`；m61/m62/m62-dark 未覆盖。
+- [CURRENT]：等待 External ChatGPT 对比 M6.1/M6.2 基线与 M6.2.1 新证据；不得声明 M6 FINAL 或进入 M7。
 
 ## 9AB. MEMORY DELTA（M6.1 WebUI integration hardening checkpoint，2026-08-20）
 

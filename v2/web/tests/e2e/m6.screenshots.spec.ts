@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const token = 'm6-local-test-token'
-const evidenceDir = path.resolve('..', '..', '.ai-handoff', 'visual', process.env.M6_SCREENSHOT_DIR || 'm62')
+const evidenceDir = path.resolve('..', '..', '.ai-handoff', 'visual', process.env.M6_SCREENSHOT_DIR || 'm621')
 
 test('captures M6.1 page and responsive evidence', async ({ page }) => {
   fs.mkdirSync(evidenceDir, { recursive: true })
@@ -35,6 +35,10 @@ test('captures M6.1 page and responsive evidence', async ({ page }) => {
   await page.getByRole('button', { name: '新建任务' }).click()
   await page.screenshot({ path: path.join(evidenceDir, 'tasks-editor-390.png'), fullPage: true })
   await page.getByRole('button', { name: '取消' }).click()
+  await page.getByRole('button', { name: '更多' }).click()
+  await page.screenshot({ path: path.join(evidenceDir, 'mobile-more-390.png'), fullPage: true })
+  await page.getByRole('dialog', { name: '更多' }).getByRole('link', { name: '设置' }).click()
+  await page.screenshot({ path: path.join(evidenceDir, 'settings-from-more-390.png'), fullPage: true })
   await capture('/calendar', 'calendar', 390, 844)
   await capture('/agent', 'agent', 390, 844)
   await capture('/settings', 'settings', 390, 844)

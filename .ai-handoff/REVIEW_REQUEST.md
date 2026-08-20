@@ -1,6 +1,6 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.2 Subtle Visual Polish — External Review Request
+# CampusCue M6.2.1 Final Product Detail Cleanup — External Review Request
 
 ## Gate state
 
@@ -8,7 +8,8 @@
 - M5 FINAL = PASS（External ChatGPT）
 - M6 = CHANGES_REQUESTED（External integration review）
 - M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
-- M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
+- M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW（previous visual baseline）
+- M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
@@ -46,6 +47,13 @@
 - Added surface hierarchy, Today accent line, focus-day indicator, neutral task category chips, deadline urgency tones, message status rails/confidence bars, brand Sparkles mark, composer focus state, dialog/toast motion, and mobile active-nav indicator.
 - No gradients, glassmorphism, neon, emoji, decorative images, robots, IA changes, or product rewrite.
 
+## M6.2.1 product detail cleanup
+
+- Home date/week and pending count derive from Settings timezone; upcoming tasks sort by deadline; complete and dismiss use separate request actions.
+- Mobile nav is 总览/任务/日历/AI/更多；More opens an accessible bottom sheet for 消息/连接/模型提供商/设置 with Escape/backdrop close, focus restoration, and active-route state.
+- Runtime frontend priority vocabulary is only `low | normal | high`; category/status/priority presentation uses shared Chinese labels；theme toggle icon/label semantics are corrected；fake topbar avatar is removed.
+- New evidence is isolated under `.ai-handoff/visual/m621/` and `.ai-handoff/visual/m621-dark/`; `.ai-handoff/visual/m61/`, `m62/`, and `m62-dark/` are preserved.
+
 ## Local evidence (Workspace Agent only)
 
 - Full V2 pytest: **488 passed** (fresh installed-package `.venv-m511fresh` non-editable)
@@ -54,13 +62,13 @@
 - uvicorn local HTTP smoke PASS (health/task CRUD/reminders/backup)
 - local HTTP/SSE readiness smoke PASS; occupied-port startup failure and rollback PASS
 - These results are local Workspace Agent evidence, not independent External ChatGPT execution。
-- WebUI typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**；axe violations 0；real integration passed；light evidence under `.ai-handoff/visual/m62/` and dark evidence under `.ai-handoff/visual/m62-dark/`。
+- WebUI typecheck PASS；production build pending final gate run；Vitest **4 passed**；M6 focused Playwright **12 passed**；axe violations 0；light/dark M6.2.1 evidence under `.ai-handoff/visual/m621/` and `.ai-handoff/visual/m621-dark/`。
 
 ## Not run / not touched
 
 - M5 FINAL: PASS
 - M6.1: IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW（baseline）
-- M6.2: IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
+- M6.2.1: IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
 - M6 FINAL: NOT YET DECLARED pending external visual comparison
 - M7: NOT_AUTHORIZED
 - No real QQ/NapCat re-verification was needed; M4 real E2E remains valid.
@@ -74,4 +82,4 @@
 
 ## Review focus
 
-- Please compare `.ai-handoff/visual/m61/` against `.ai-handoff/visual/m62/` and inspect `.ai-handoff/visual/m62-dark/`. Focus on whether the result is more refined rather than more decorative: surface hierarchy, accent restraint, deadline readability, dark mode parity, mobile density, responsive overflow, and preserved product clarity. **EXTERNAL VISUAL REVIEW REQUIRED. M6 FINAL must not be declared from local evidence alone.**
+- Please compare preserved `.ai-handoff/visual/m61/` and `.ai-handoff/visual/m62/` against `.ai-handoff/visual/m621/`, and inspect `.ai-handoff/visual/m621-dark/`. Focus on date/time correctness, action semantics, mobile More navigation/accessibility, canonical labels, surface hierarchy, dark mode parity, mobile density, responsive overflow, and preserved product clarity. **EXTERNAL VISUAL REVIEW REQUIRED. M6 FINAL must not be declared from local evidence alone.**

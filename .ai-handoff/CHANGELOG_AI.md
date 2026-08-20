@@ -323,3 +323,10 @@
 - **约束**：无大面积渐变、紫色 AI 风、neon、glassmorphism、emoji、robot、装饰插画或 Product Rewrite。
 - **验收**：typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**（shared real harness 固定单 worker）；axe violations 0；real integration PASS；light screenshots `.ai-handoff/visual/m62/`；dark evidence `.ai-handoff/visual/m62-dark/`。
 - **Gate**：M5 FINAL = PASS；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+
+## 2026-08-20 · M6.2.1 FINAL PRODUCT DETAIL CLEANUP
+
+- **任务**：在 M6.2 visual language 上完成最终产品细节收口；不重构 IA、不修改 M5 backend、不进入 M6 FINAL 或 M7。
+- **实现**：Home 使用 Settings timezone 的动态日期/星期和本周 pending 计数；upcoming 按 deadline 排序；完成与忽略动作分离；移动端底栏改为总览/任务/日历/AI/更多，并提供可访问 More bottom sheet；移除 priority `urgent`、加入共享中文 task label helper、修正主题切换 icon/label、移除 topbar 假头像。
+- **测试**：typecheck PASS；Vitest **4 passed**；M6 focused Playwright **12 passed**；axe violations 0；light/dark screenshots 分别写入 `.ai-handoff/visual/m621/`、`.ai-handoff/visual/m621-dark/`；m61/m62/m62-dark evidence 保持未覆盖。
+- **Gate**：M5 FINAL = PASS；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。

@@ -1,7 +1,7 @@
 export type Page<T> = { items: T[]; total: number; limit: number; offset: number }
 export type TaskStatus = 'pending_confirm' | 'pending' | 'done' | 'dismissed'
 export type TaskCategory = 'homework' | 'exam' | 'competition' | 'activity' | 'notice' | 'other'
-export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
+export type TaskPriority = 'low' | 'normal' | 'high'
 export type Task = { id: number; title: string; description: string | null; category: TaskCategory; course: string | null; deadline: string | null; status: TaskStatus; priority: TaskPriority; confidence: number | null; source_id: number | null; source_message_id: string | null; source_text_reference: string | null; created_at: string; updated_at: string }
 export type TaskWrite = { title: string; description?: string | null; category: TaskCategory; course?: string | null; deadline?: string | null; priority: TaskPriority; source_id?: number | null; status?: TaskStatus }
 export type Source = { id: number; platform: string; conversation_id: string; name: string; enabled: boolean; auto_extract: boolean; context_window: number; privacy_policy: string; created_at: string; updated_at: string; deleted_at: string | null }

@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M5 FINAL = **PASS**；M6 = **CHANGES_REQUESTED（已完成 M6.1 修复）**；M6.1 = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = **NOT YET DECLARED**；M7 = **NOT_AUTHORIZED**。M6.2 保留 M6.1 IA 与 contract，仅完成轻量 visual polish；外部视觉审核通过前不宣称 M6 FINAL。
+> **当前 active gate**：M5 FINAL = **PASS**；M6 = **CHANGES_REQUESTED（已完成 M6.1 修复）**；M6.1 = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M6.2.1 = **IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = **NOT YET DECLARED**；M7 = **NOT_AUTHORIZED**。M6.2.1 保留 M6 IA 与 contract，仅完成产品细节收口；外部视觉审核通过前不宣称 M6 FINAL。
 
 ## M1：Independent QQ Runtime
 
