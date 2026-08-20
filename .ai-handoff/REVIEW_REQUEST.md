@@ -62,7 +62,7 @@
 - uvicorn local HTTP smoke PASS (health/task CRUD/reminders/backup)
 - local HTTP/SSE readiness smoke PASS; occupied-port startup failure and rollback PASS
 - These results are local Workspace Agent evidence, not independent External ChatGPT execution。
-- WebUI typecheck PASS；production build pending final gate run；Vitest **4 passed**；M6 focused Playwright **12 passed**；axe violations 0；light/dark M6.2.1 evidence under `.ai-handoff/visual/m621/` and `.ai-handoff/visual/m621-dark/`。
+- WebUI typecheck PASS；production build PASS；Vitest **4 passed**；M6 focused Playwright **12 passed**；axe violations 0；light/dark M6.2.1 evidence under `.ai-handoff/visual/m621/` and `.ai-handoff/visual/m621-dark/`。
 
 ## Not run / not touched
 
