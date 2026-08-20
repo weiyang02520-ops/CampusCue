@@ -2,3 +2,4 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+.m61-real.db

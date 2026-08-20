@@ -307,3 +307,11 @@
 - **实现**：Vue 3 + TypeScript + Vite + Vue Router + Pinia + Lucide；M5 REST canonical integration；SSE notification-only reconnect/backoff；optimistic task completion rollback；light/dark tokens；responsive sidebar/bottom navigation；no emoji or secrets in UI fixtures。
 - **测试**：typecheck PASS；production build PASS；Vitest 2 passed；Playwright 9 passed；axe violations 0；screenshots at 390/599/768/1024/1440；backend baseline remains 488 passed from fresh installed package。
 - **Gate**：M5 FINAL = PASS；**M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+
+## 2026-08-20 · M6.1 WEBUI INTEGRATION HARDENING
+
+- **触发**：External review 将 M6 标记为 `CHANGES_REQUESTED`，指出 task status、命名 SSE、Settings/System 接线、硬编码 Calendar、mock-only integration 及多个页面 CRUD/筛选缺口。
+- **修复**：统一 canonical `done` 状态；fetch + Bearer SSE reader 消费命名事件并 REST refresh；补齐真实 Settings/System、Tasks CRUD/filter/editor/delete/deadline clear、Calendar、Messages detail/filter、Connections、Providers、Agent source selector。
+- **真实验收**：隔离 SQLite + 真实 M5 FastAPI composition + RealtimeHub + deterministic local fake provider upstream；真实 task mutation → named SSE → REST refresh、CRUD、calendar、source/provider test、settings/export 均通过。
+- **测试**：typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**；axe violations 0；页面截图位于 `.ai-handoff/visual/m61/`；backend fresh installed-package baseline **488 passed**。
+- **Gate**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；**M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。

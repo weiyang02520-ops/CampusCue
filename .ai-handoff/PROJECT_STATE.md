@@ -13,7 +13,8 @@
 - M0-M4：**FINAL PASS**（M4 External ChatGPT 审核通过）
 - M5 FINAL = PASS (External ChatGPT review completed before M6 authorization)
 - M5.1.1 route cleanup = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW (historical implementation checkpoint)
-- M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
+- M6 = CHANGES_REQUESTED (External integration review)
+- M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
@@ -23,7 +24,7 @@
 - **M5 API + Realtime（本轮）**：FastAPI `/api/v1` REST + SSE；Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System；Backup/Restore/Import/Export；Auth；Runtime lifecycle；RealtimeHub notifier 注入；schema v3（settings + sources.deleted_at + indexes）；contract/integration tests + fresh installed package。
 - **M5.1.1 Final SSE Route Cleanup（本轮）**：HTTP stream outer generator 在客户端于 `: connected` 后立即断开、尚未进入 `hub.stream()` 时也会执行 unsubscribe cleanup。
 - **M5.1 Final Hardening（本轮）**：SSE overflow now closes the active stream; configured heartbeat is consumed; Uvicorn startup has a readiness barrier and rollback; duplicate system health route removed; Adapter emits neutral `connection.updated`; realtime publish failures are isolated after committed mutations.
-- **M6 WebUI（本轮）**：新增 `v2/web/` Vue 3 + TypeScript + Vite 工作台；首页、任务、消息、日历、AI、连接、模型提供商、设置；M5 REST/SSE 集成；响应式布局、浅深色主题、Lucide 图标、键盘焦点与 axe 验收；Playwright synthetic fixtures 不含真实 PII。
+- **M6.1 WebUI integration hardening（本轮）**：修复 canonical task status、命名 SSE 消费与鉴权、Settings/System API 接线、真实日历/筛选/CRUD/编辑/删除/测试/导入导出/Agent source selector；加入真实 FastAPI+SQLite+RealtimeHub+local fake provider harness 与真实 Playwright integration。
 
 ## verified (Workspace Agent local evidence)
 
@@ -33,7 +34,7 @@
 - uvicorn local HTTP smoke PASS（health/task CRUD/reminders/backup）
 - Runtime readiness smoke PASS（real localhost health + occupied-port rollback）；SSE lifecycle/heartbeat focused integration PASS。
 - These are local Workspace Agent results, not independent External ChatGPT execution。
-- M6 WebUI：typecheck PASS；production build PASS；Vitest 2 passed；Playwright 9 passed（deep links、task mutation、Agent chat、axe、390/599/768/1024/1440 screenshots）；截图位于 `.ai-handoff/visual/m6/`，等待外部视觉审核。
+- M6.1 WebUI：typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**（含真实 M5 integration 与页面级证据）；axe violations 0；截图位于 `.ai-handoff/visual/m61/`。
 
 ## real_environment
 
@@ -48,7 +49,7 @@
 
 ## next_gate
 
-External visual review of the pushed M6 WebUI screenshots。M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
+External review of M6.1 product integration, real M5 harness evidence, and page-level screenshots。M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
 
 ## architecture_decisions
 

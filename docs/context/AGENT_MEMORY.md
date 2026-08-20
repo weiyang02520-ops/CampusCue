@@ -23,7 +23,7 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M5 FINAL = PASS；M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
+| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**：M1-M4 完成；M5 FastAPI REST + SSE + schema v3；M5.1.1 route cleanup complete locally；Legacy frozen。最新本地 checkpoint 证据：**488 tests passed**（2026-08-20，fresh `.venv-m511fresh` non-editable） |
@@ -33,8 +33,8 @@
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M5 FINAL = PASS；**M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
-- **下一步**：External model visual review of M6 screenshots and responsive source; M6 FINAL must not be declared from local evidence alone。
+- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；**M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+- **下一步**：External review of M6.1 integration, source and page evidence; M6 FINAL must not be declared from local evidence alone。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
 - **M4.2 real provider fact**：真实 OpenAI 兼容端点（DeepSeek）tool-call 轮次可能同时返回辅助 content + tool_calls——tool_calls 权威、辅助文本丢弃（`_parse_ok` 最小修复，M4.2）。
@@ -171,7 +171,7 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 ## 18. CURRENT NEXT TASK
 
-- **当前状态**：**M5 FINAL = PASS**；**M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+- **当前状态**：**M5 FINAL = PASS**；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；**M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
 - **M4 implementation**：[REPO_CONFIRMED] Provider-neutral Tool Calling、ToolRegistry、trusted source-scoped Task Tools、AgentRuntime、router/runtime wiring、per-thread lock、LRU thread cap、CJK ContextBudget、event timestamp prompt、peer-review regression tests、config/package changes。
 - **M4.1 static hardening**：[TEST_CONFIRMED]（fresh installed-package isolation）TaskService `DEADLINE_UNSET` sentinel（省略=不变/None=清除/naive 拒绝）；Agent handler missing/disabled source gate；trusted `user_text` provenance（`source_text_reference` 非模型注入）；ContextBudget current-input single count；Provider timeout 独立性；multi-create first-version limitation documented。
 - **M4.2 Real Provider Tool Call**：[TEST_CONFIRMED] **PASS**（2026-08-18）——openai_compatible / deepseek-chat / 真实 httpx transport；真实 Provider 自主发出 `task_list`（模型选择 scope=week/today）+ 自主 `task_get` → ToolRegistry → TaskService → 临时真实 SQLite → tool result 回传 → 第二次真实 Provider 调用 → 最终回答反映合成 DB 任务；改 title 后回答变化（数据驱动）；Source A/B 作用域隔离双向验证。
@@ -179,10 +179,10 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **M4.3 Real QQ Agent E2E**：[REAL_ENV_CONFIRMED] **PASS**（2026-08-19）——NapCat Shell Windows Node v4.18.19 独立环境 + TEST_BOT 登录 + Reverse WS → CampusCue（127.0.0.1:6199/ws）→ 真实群消息 `@TEST_BOT 我这周有什么事情？` → @self Agent 激活 → 真实 DeepSeek 自主 `task_list` → ToolRegistry → TaskService → 真实 SQLite → tool result 回传 → 第二次真实 Provider 调用 → `send_group_msg` retcode 0 回复任务列表；通过生产 TaskService 修改任务标题后，第二次真实查询回复随 SQLite 数据变化（数据驱动）；普通不 @ 群消息不触发 Agent（无 Agent tool loop、无回复；仅 M2 AI-first extraction 判 has_task=false/skipped）。
 - **M5 API + Realtime / M5.1.1 Hardening**：[TEST_CONFIRMED] **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**（2026-08-20）——SSE overflow truly terminates active stream；early HTTP route close cleanup；heartbeat config wired；Uvicorn readiness barrier + occupied-port rollback；canonical `/api/v1/health`；neutral Adapter `connection.updated`；post-commit realtime exception isolation；full V2 **488 passed**。
 - **验证（fresh installed-package isolation）**：[TEST_CONFIRMED] `.venv-m511fresh` 全新 non-editable 安装 working-tree V2 + test extras；imports resolved from fresh site-packages；M5/M5.1/M5.1.1 focused **24 passed**；full V2 **488 passed**；compileall PASS；Anti-AstrBot PASS；git diff-check PASS；Secret/PII scan PASS（测试中的 fake credentials/IDs 仅为 public fixtures）。
-- **M6 WebUI**：[REPO_CONFIRMED][TEST_CONFIRMED] `v2/web/` implemented with Vue 3 + TypeScript + Vite + Router + Pinia + Lucide；八个路由页面；REST canonical + SSE notification refresh；optimistic rollback；dark/light tokens；Playwright 9 passed；axe 0；screenshots at 390/599/768/1024/1440；synthetic fixtures contain no PII or secrets。
+- **M6.1 WebUI**：[REPO_CONFIRMED][TEST_CONFIRMED] `v2/web/` uses Vue 3 + TypeScript + Vite + Router + Pinia + Lucide；八个路由页面；canonical task status；authenticated named-SSE notification refresh；real task/calendar/source/provider/settings flows；Playwright full 12 passed；axe 0；page screenshots at `.ai-handoff/visual/m61/`；isolated fixtures contain no PII or secrets。
 - **M4 limitation**：[DESIGN_LIMITATION] One source message can create at most one Task in the first version because the M2 `(source_id, source_message_id)` uniqueness contract remains unchanged；second `task_create` safely fails；no schema v3。
 - **M3 limitation**：[KNOWN_LIMITATION] Cross-repository Task/Reminder atomicity remains open design risk; startup `resync_all()` recovery accepted; no unit-of-work or Reminder architecture redesign in this checkpoint。
-- **下一步**：External visual review of pushed M6 screenshots and source；M6 FINAL must not be declared by this checkpoint。
+- **下一步**：External review of pushed M6.1 integration evidence and page screenshots；M6 FINAL must not be declared by this checkpoint。
 - **M3 关键事实**：DB reminder facts canonical / scheduler jobs derived（resync_all 重建）；确定性 job_id `reminder:<id>`；APScheduler 3.11 实测：replace_existing 会追加→用显式 remove-then-add；shutdown 未启动调度器抛 SchedulerNotRunningError→容错；misfire_grace_time 必须 >0；quiet-hours 23-08 折叠 + 同分钟去重 + MIN_LEAD_SECONDS=60；停机错过不补发。
 - **REAL ENV 关键事实**：NapCat Framework 启动建议 **stdout/stderr 重定向**（2026-08-10 本机实测前台启动触发 EPIPE，重定向后成功——本地观察，非普适规则）；`napimain.exe <QQ> <dll> <cjs>` 注入；WS client 配置在账号专用 `onebot11_<id>.json`；**用户大号受保护不可动**；测试 bot 独立小号。M4.3 使用官方 NapCat.Shell.Windows.Node v4.18.19 独立目录 `C:\Tools\NapCat\m43-clean`（不注入系统 QQ）；`NAPCAT_DISABLE_MULTI_PROCESS=1` 可绕过 worker `--no-sandbox` bad-option 路径；TEST_BOT quick login 需手Q 验证时回退二维码。
 - **运行 V2 必须用独立 venv**（`v2/.venv-m1-real` 真实环境 / `.venv-m2iso` 隔离验证）。

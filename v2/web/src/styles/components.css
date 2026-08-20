@@ -1,1 +1,27 @@
 /* M6 component surface styles are intentionally token-only; keep visual decisions in tokens/base. */
+.task-done { opacity:.56 }
+.task-done h3 { text-decoration:line-through }
+.task-done .task-check { color:#fff; background:var(--success); border-color:var(--success) }
+.task-with-actions { position:relative; display:flex; align-items:center; gap:5px; border-top:1px solid var(--border) }
+.task-with-actions .task-row { flex:1; min-width:0; border-top:0 }
+.task-actions { display:flex; gap:2px }
+.filters { display:flex; align-items:end; gap:12px; padding:14px; margin:-4px 0 16px; box-shadow:none }
+.filters label { display:grid; gap:5px; color:var(--text-2); font-size:12px; font-weight:620 }
+.filters input,.filters select { min-height:38px; padding:0 9px; border:1px solid var(--border-strong); border-radius:7px; color:var(--text); background:var(--surface) }
+.button-danger { color:#fff; background:var(--danger) }
+.dialog-copy { color:var(--text-2); line-height:1.7 }
+.calendar-controls { display:flex; align-items:center; gap:6px }
+.month-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:24px }
+.month-weekday { padding:6px 8px; color:var(--text-3); font-size:11px; text-align:right; text-transform:uppercase }
+.month-cell { min-height:82px; padding:9px; border:1px solid var(--border); border-radius:8px; color:var(--text-2); background:var(--surface); font-size:12px; text-align:right }
+.month-cell.muted { color:var(--border-strong); background:var(--surface-muted) }
+.month-cell.today { border-color:var(--primary); box-shadow:inset 0 0 0 1px var(--primary) }
+.day-tasks { display:flex; justify-content:flex-start; flex-wrap:wrap; gap:4px; margin-top:20px }
+.day-tasks i { width:6px; height:6px; border-radius:50%; background:var(--primary) }.day-tasks i.priority-urgent,.day-tasks i.priority-high { background:var(--danger) }.day-tasks i.priority-low { background:var(--text-3) }
+.calendar-empty { margin-top:22px }
+.message-filters { display:flex; align-items:end; gap:14px; padding:14px; margin-bottom:16px; box-shadow:none }
+.message-filters label { display:grid; gap:5px; color:var(--text-2); font-size:12px; font-weight:620 }.message-filters select { min-height:38px; padding:0 9px; border:1px solid var(--border-strong); border-radius:7px; color:var(--text); background:var(--surface) }.message-filters .muted-copy { margin:0 0 8px auto }.clickable { cursor:pointer; transition:background .16s ease }.clickable:hover,.clickable:focus { background:var(--surface-muted) }.detail-list { display:grid; gap:14px }.detail-list > div { display:flex; justify-content:space-between; gap:18px; padding-bottom:12px; border-bottom:1px solid var(--border); color:var(--text-3); font-size:13px }.detail-list strong { color:var(--text); font-weight:600; text-align:right }.retention-note { border:0!important; padding:10px 12px!important; color:var(--success)!important; background:var(--success-soft) }.retention-note span { display:flex; align-items:center; gap:7px }
+@media (max-width:767px) { .message-filters { align-items:stretch; flex-direction:column }.message-filters .muted-copy { margin:0 } }
+.check-line { display:flex!important; grid-template-columns:none!important; align-items:center; gap:8px!important; color:var(--text-2); font-size:13px!important }.check-line input { width:16px!important; min-height:16px!important; accent-color:var(--primary) }.data-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:17px }.upload-button { position:relative; cursor:pointer }.upload-button input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer }.form-success { display:block; margin-top:10px; color:var(--success); font-size:12px }.logs-preview { display:grid; gap:6px; margin-top:20px; padding-top:15px; border-top:1px solid var(--border); color:var(--text-3); font-size:11px }.logs-preview > div { display:flex; align-items:center; gap:6px; color:var(--text-2); font-weight:650 }.logs-preview p { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }.restore-preview { display:grid; gap:10px; color:var(--text-2); font-size:13px }.provider-actions { display:flex; align-items:center; gap:3px }.provider-test { display:block; margin-top:6px; color:var(--success); font-size:11px }.provider-test.bad,.test-fail { color:var(--danger)!important }.test-success { color:var(--success)!important }
+@media (max-width:767px) { .month-grid { gap:3px }.month-cell { min-height:57px; padding:6px }.day-tasks { margin-top:10px }.month-weekday { padding-inline:2px } }
+@media (max-width:767px) { .filters { align-items:stretch; flex-direction:column } .filters .button { width:100% } .task-toolbar .segmented { max-width:100%; overflow:auto } .task-actions { flex-direction:column } }

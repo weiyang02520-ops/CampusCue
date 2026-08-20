@@ -2,14 +2,23 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6 WebUI Implementation Checkpoint）
+## 当前（M6.1 WebUI Integration Hardening Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
-- **M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**
+- **M6 = CHANGES_REQUESTED → M6.1 修复完成**
+- **M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
-- 本 checkpoint：完整 WebUI、M5 REST/SSE integration、responsive Playwright、axe、截图和前端 clean build 完成。
+- 本 checkpoint：完成外部集成审核指出的契约修复；真实 M5 FastAPI/SQLite/RealtimeHub/local fake provider harness、真实命名 SSE、全页面截图和前端 clean build 完成。
+
+## M6.1 修复范围
+
+- Task status 统一为后端 canonical `pending_confirm | pending | done | dismissed`；任务筛选、编辑、删除、截止时间清除、完成/驳回和双提交保护均走真实 API。
+- SSE 改为带 Bearer header 的 fetch reader，消费命名事件并以 REST refresh 为 canonical；不把 token 放入 URL。
+- Settings 只发送后端允许字段；System status/logs/backup/restore/import/export 已接线。
+- Calendar 使用真实 deadline 查询和月导航；Messages/Connections/Providers/Agent source selector 均补齐真实查询或 CRUD/test/delete/toggle flows。
+- `v2/web/tests/real_backend.py` 使用隔离 SQLite、真实 M5 composition、确定性 local fake provider upstream；不使用 QQ、真实 API key 或真实 PII。
 
 ## 本轮验收（M5 API — PASS）
 
@@ -42,7 +51,8 @@
 - uvicorn local HTTP smoke PASS（health/task CRUD/reminders/backup）
 - Local readiness/SSE smoke PASS；occupied-port startup failure and rollback PASS。
 - These are local Workspace Agent results, not independent External ChatGPT execution。
-- WebUI `pnpm typecheck` PASS；`pnpm build` PASS；Vitest 2 passed；Playwright 9 passed；axe violations 0；截图覆盖 390/599/768/1024/1440，见 `.ai-handoff/visual/m6/`。
+- WebUI `pnpm typecheck` PASS；`pnpm build` PASS；Vitest 2 passed；Playwright full **12 passed**；axe violations 0；截图覆盖 1440 全页面、390 home/tasks/editor/calendar/agent/settings、1024 tasks、768 calendar，见 `.ai-handoff/visual/m61/`。
+- Real integration PASS：真实 API task mutation → named SSE → REST refresh；task CRUD/deadline clear/done；calendar navigation；source test；local fake provider test；settings save；export download。
 
 ## Known limitation / open design risk
 
@@ -52,7 +62,7 @@
 
 ## Next gate
 
-External visual review of the pushed M6 WebUI screenshots。M6 FINAL is not declared；M7 remains unauthorized。
+External review of M6.1 implementation and evidence is required。M6 FINAL is not declared；M7 remains unauthorized。
 
 ## Privacy / safety
 

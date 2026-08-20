@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [EXTERNAL_REVIEW][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -424,9 +424,17 @@ User
 - [CURRENT]：**M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED**。
 - [KNOWN_LIMITATION]：M4 first-version source_message_id uniqueness remains；M5 schema v3 does not change it。M3 Task/Reminder cross-repository atomicity remains open design risk; startup resync_all recovery accepted。
 
+## 9AB. MEMORY DELTA（M6.1 WebUI integration hardening checkpoint，2026-08-20）
+
+- [EXTERNAL_REVIEW][CHANGES_REQUESTED]：M6 initial implementation had frontend/backend contract gaps: `completed` vs canonical `done`, named SSE events not consumed, fake Settings `language`, hardcoded Calendar, mock-only integration, and incomplete CRUD/system flows。
+- [REPO_CONFIRMED][CURRENT]：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已按审核修复）；**M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M6 FINAL NOT declared；M7 NOT authorized。
+- [TEST_CONFIRMED]：真实 isolated M5 FastAPI + SQLite + RealtimeHub + deterministic local fake provider harness passed task mutation → authenticated named SSE → REST refresh；full Playwright 12 passed；typecheck/build/Vitest/axe passed；page evidence at `.ai-handoff/visual/m61/`。
+- [REPO_CONFIRMED][DESIGN_DECISION]：M6.1 frontend uses canonical REST for state; fetch-based authenticated SSE consumes named events and triggers REST refresh; no token URL query; system/settings APIs use backend allowlist; real deadline/calendar and CRUD/test/delete/toggle flows are used。
+- [CURRENT]：等待 External ChatGPT review；不得声明 M6 FINAL 或进入 M7。
+
 ## 9AA. MEMORY DELTA（M6 WebUI implementation checkpoint，2026-08-20）
 
-- [EXTERNAL_REVIEW][CURRENT]：M5 FINAL = PASS before M6 authorization；M6 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6 FINAL NOT declared；M7 NOT authorized。
+- [HISTORICAL]：M5 FINAL = PASS before M6 authorization；initial M6 implementation checkpoint was superseded by M6.1 integration hardening。
 - [REPO_CONFIRMED][DESIGN_DECISION]：`v2/web/` uses Vue 3 + TypeScript + Vite + Vue Router + Pinia + Lucide. Routes cover Home, Tasks, Messages, Calendar, Agent, Connections, Providers, Settings.
 - [TEST_CONFIRMED]：M6 typecheck/build PASS；Vitest 2 passed；Playwright 9 passed；axe violations 0；responsive screenshots generated at 390/599/768/1024/1440. Synthetic fixtures contain no real QQ IDs, message content, tokens, or provider secrets.
 - [DESIGN_DECISION]：M5 REST is canonical; SSE is notification-only with reconnect/backoff + REST refresh. Agent UI renders non-empty `tool_activity` only; backend currently returns empty activity and the UI does not fake it.
