@@ -190,6 +190,13 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **运行 V2 必须用独立 venv**（`v2/.venv-m1-real` 真实环境 / `.venv-m2iso` 隔离验证）。
 - 详查 docs/v2/04、17_MILESTONES（M1/M2/M4）、07、06、08、10_REMINDER、10_TASK_PIPELINE。
 
+## 9AG. M6.4 INFORMATION LAYERING CHECKPOINT（2026-08-20）
+
+- **[REPO_CONFIRMED][CURRENT]**：`m6.3-ui-baseline` 已推送并指向 `5152bc6b5008e8c6fdf2cf28ff8040d87e416699`；M6.4 信息分层实现完成；**M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL NOT declared；M7 NOT authorized。
+- **[DESIGN_DECISION]**：保留 M6.3 Blue + Teal、Cue Line + Cue Dot、light/dark、sidebar/mobile nav 和真实 API；按 progressive disclosure 将 primary / context / advanced 分层。Tasks/Agent/Messages 为主工作区，Calendar/Connections/Providers/Settings 做上下文与高级信息收纳；不改 backend/API/store/router/schema/business logic。
+- **[TEST_CONFIRMED]**：fresh installed-package `.venv-m64fresh` full V2 **488 passed**；typecheck/build PASS；Vitest 4；focused Playwright 16；axe 0；real integration 2；compileall PASS；Anti-AstrBot PASS；git diff --check PASS；secret/PII scan PASS；light/dark evidence `.ai-handoff/visual/m64/` + `.ai-handoff/visual/m64-dark/`。
+- **[CURRENT]**：等待 External ChatGPT 视觉审核 M6.4；不得声明 M6 FINAL 或进入 M7。
+
 - **M2a.1 运行时事实**：LLMRequest.timeout_s=None 默认（回落 provider 配置）；secret_reference 共享校验 providers/validation.py；Clock 注入 repository 时间戳；DB CHECK 约束（tasks/extractions/provider_configs）；schema 预检零变更（SchemaRefusedError）；186 tests 全绿。
 
 - **AI-first 规则（ADR-013）**：本地规则不是语义 gate——MessageHygieneFilter 只 hard drop 高确定性垃圾；LocalSignalAnalyzer score 是 hints 绝不否决 LLM 调用（score=0 的正常消息仍进 LLM）；LLM 单次 triage+extraction（正常 1 call，schema fallback ≤2 calls）。

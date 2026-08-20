@@ -31,6 +31,7 @@
 - **M6.2 Subtle Visual Polish（本轮）**：保留现有 IA、布局和 API contract；通过 design tokens、surface hierarchy、teal accent、状态点、deadline/category 层级、brand mark、hover/focus/micro-motion 完成轻量视觉精修；Agent 去除机器人图标；生成独立 `.ai-handoff/visual/m62/` 与 dark evidence。
 - **M6.2.1 Final Product Detail Cleanup（本轮）**：完成 Home 动态日期/时区与 action 分离、移动端 More bottom sheet、canonical priority、共享中文标签、theme icon 修正、topbar 假头像移除；生成独立 `.ai-handoff/visual/m621/` 与 `.ai-handoff/visual/m621-dark/`。
 - **M6.3 Visual Character Pass（本轮）**：保留 M6.2.1 结构与业务 contract；以 Cue Line + Cue Dot、section tint、页面 identity、空状态、Tasks/Agent/Calendar/Home 节奏和 Messages/Connections/Providers/Settings 细节完成 distinctive product polish；生成 `.ai-handoff/visual/m63/` 与 `.ai-handoff/visual/m63-dark/`。
+- **M6.4 Information Layering Pass（本轮）**：保持 M6.3 visual language，完成 Tasks/Agent/Messages 优先的信息分层，并收口 Calendar/Connections/Providers/Settings；新增 `.ai-handoff/visual/m64/` 与 `.ai-handoff/visual/m64-dark/`，不改 backend/API/business logic。
 
 ## verified (Workspace Agent local evidence)
 
@@ -44,6 +45,7 @@
 - M6.2 visual polish：typecheck/build/unit PASS；Playwright full **12 passed**；light screenshots 位于 `.ai-handoff/visual/m62/`；dark evidence 位于 `.ai-handoff/visual/m62-dark/`；m61 baseline 保持未覆盖。
 - M6.2.1：typecheck PASS；Vitest **4 passed**；focused Playwright **12 passed**；axe 0；m621 light/dark screenshot capture PASS；m61/m62/m62-dark evidence 未覆盖。
 - M6.3：typecheck/build PASS；Vitest **4 passed**；focused Playwright **12 passed**；axe 0；real integration two tests individually PASS；m63 light/dark screenshot capture PASS；m61/m62/m621 evidence 未覆盖。
+- M6.4：fresh installed-package `.venv-m64fresh` full V2 **488 passed**；typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**；m64 light/dark screenshot capture PASS；prior evidence preserved。
 
 ## real_environment
 
@@ -58,7 +60,7 @@
 
 ## next_gate
 
-External visual review comparing M6.2.1 baseline with M6.3 evidence。M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
+External visual review of M6.4 evidence against the `m6.3-ui-baseline` and M6.3 evidence。M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
 
 ## architecture_decisions
 

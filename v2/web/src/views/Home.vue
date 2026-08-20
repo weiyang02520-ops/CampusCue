@@ -30,9 +30,9 @@ const todayKey = computed(() => dateKey(now.value))
 const weekDays = computed(() => Array.from({ length: 7 }, (_, offset) => { const date = new Date(now.value); date.setDate(date.getDate() + offset); const weekday = new Intl.DateTimeFormat('zh-CN', { timeZone: timezone.value, weekday: 'short' }).format(date).replace(/^周/, ''); return { key: dateKey(date), label: weekday, active: offset === 0 } }))
 const weekKeys = computed(() => new Set(weekDays.value.map(day => day.key)))
 const pending = computed(() => tasks.items.filter(task => task.status === 'pending' || task.status === 'pending_confirm'))
-const today = computed(() => pending.value.filter(task => task.deadline && dateKey(task.deadline) === todayKey.value))
+const today = computed(() => pending.value.filter(task => task.deadline && dateKey(task.deadline) === todayKey.value).slice(0, 3))
 const weekPending = computed(() => pending.value.filter(task => task.deadline && weekKeys.value.has(dateKey(task.deadline))))
-const upcoming = computed(() => pending.value.filter(task => !today.value.some(todayTask => todayTask.id === task.id)).sort((a, b) => { if (!a.deadline) return 1; if (!b.deadline) return -1; return a.deadline.localeCompare(b.deadline) }).slice(0, 4))
+const upcoming = computed(() => pending.value.filter(task => !today.value.some(todayTask => todayTask.id === task.id)).sort((a, b) => { if (!a.deadline) return 1; if (!b.deadline) return -1; return a.deadline.localeCompare(b.deadline) }).slice(0, 3))
 const homeDateLabel = computed(() => dateLabel(now.value))
 async function complete(id: number) { try { await tasks.mutate(id, 'complete'); app.toast('任务已完成') } catch { app.toast('保存失败，已恢复原状态') } }
 async function dismiss(id: number) { try { await tasks.mutate(id, 'dismiss'); app.toast('任务已忽略') } catch { app.toast('保存失败，已恢复原状态') } }

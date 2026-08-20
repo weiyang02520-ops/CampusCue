@@ -96,3 +96,20 @@ External visual review comparing `.ai-handoff/visual/m621/` against new `.ai-han
 
 - No real QQ IDs, group IDs, chat content, tokens, Provider secrets, or local private paths are recorded here。
 - Acceptance used isolated temp DBs; fresh venv and runtime data are not committed。
+
+## M6.4 Information Layering Pass
+
+- Baseline tag `m6.3-ui-baseline` points to `5152bc6b5008e8c6fdf2cf28ff8040d87e416699`; prior M6 evidence is preserved。
+- Tasks now prioritize title/deadline/status, with a collapsible context aside, sheet filters, explicit complete action, and low-frequency edit/dismiss/delete in More。
+- Agent now has a desktop conversation/context split, collapsible context rail, four prompts, mobile context sheet, and real deterministic Agent API conversation evidence。
+- Messages now default to the latest record in a desktop master/detail workspace, with mobile detail sheet and advanced metadata collapsed。
+- Calendar selected-day agenda and capped task dots; Connections summary/advanced details; Providers safe credential summary; Settings collapsed recent logs。
+- No backend/API/store/router/schema/SSE/business logic changes; user-facing engineering copy was removed。Visual fixture dataset is 5 tasks / 3 messages / 3 sources / 1 provider。
+
+## M6.4 Verification（Workspace Agent local evidence）
+
+- Fresh installed-package `.venv-m64fresh` full V2 pytest: **488 passed**。
+- WebUI typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**。
+- Light evidence `.ai-handoff/visual/m64/`; dark evidence `.ai-handoff/visual/m64-dark/`。
+- compileall PASS；Anti-AstrBot PASS；git diff --check PASS；secret/PII scan PASS。
+- **M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

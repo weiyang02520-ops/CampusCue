@@ -461,3 +461,10 @@ User
 - [TEST_CONFIRMED]：M6 typecheck/build PASS；Vitest 2 passed；Playwright 9 passed；axe violations 0；responsive screenshots generated at 390/599/768/1024/1440. Synthetic fixtures contain no real QQ IDs, message content, tokens, or provider secrets.
 - [DESIGN_DECISION]：M5 REST is canonical; SSE is notification-only with reconnect/backoff + REST refresh. Agent UI renders non-empty `tool_activity` only; backend currently returns empty activity and the UI does not fake it.
 - [CURRENT]：External visual review is the next gate. Do not declare M6 FINAL or enter M7。
+
+## 9AH. MEMORY DELTA（M6.4 information layering pass，2026-08-20）
+
+- **[REPO_CONFIRMED][CURRENT]**：`m6.3-ui-baseline` 指向 `5152bc6b5008e8c6fdf2cf28ff8040d87e416699`；M6.4 已完成；**M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL NOT declared；M7 NOT authorized。
+- **[DESIGN_DECISION]**：M6.4 采用 three-level information hierarchy：primary immediately visible，context nearby/collapsible，advanced only after action。Tasks filter/More/context aside、Agent context rail/mobile sheet/four prompts、Messages master-detail、Calendar selected-day agenda、Connections/Providers/Settings advanced disclosure are presentation-layer changes；API/store/router/backend/schema/business logic frozen。
+- **[TEST_CONFIRMED]**：fresh installed-package `.venv-m64fresh` full V2 488 passed；WebUI typecheck/build/Vitest 4/focused Playwright 16/axe 0/real integration 2 passed；m64 light/dark screenshots generated；compileall/Anti-AstrBot/diff-check/secret-PII PASS。
+- **[CURRENT]**：等待 External ChatGPT 对比 M6.3 baseline 与 M6.4 evidence；不得声明 M6 FINAL 或进入 M7。

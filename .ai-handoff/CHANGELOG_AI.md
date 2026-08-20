@@ -338,3 +338,11 @@
 - **约束**：无渐变、玻璃拟态、neon、紫色 AI 风、插画、emoji、新图片或 Admin Template 式填空；Mobile Agent composer 调整到 bottom nav 之上。
 - **验收**：typecheck/build PASS；Vitest **4 passed**；focused Playwright **12 passed**；axe 0；real integration 两条测试 individually PASS；light/dark screenshot capture PASS；证据位于 `.ai-handoff/visual/m63/`、`.ai-handoff/visual/m63-dark/`。
 - **Gate**：M5 FINAL = PASS；M6.2.1 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；**M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+
+## 2026-08-20 · M6.4 INFORMATION LAYERING PASS
+
+- **基线**：创建并推送 annotated tag `m6.3-ui-baseline`，指向 `5152bc6b5008e8c6fdf2cf28ff8040d87e416699`；旧 evidence 未覆盖。
+- **实现**：以 progressive disclosure 重排 Tasks、Agent、Messages 的一级/二级/高级信息；加入 Tasks filter sheet/More/context aside、Agent context rail/mobile sheet/four prompts、Messages desktop master-detail/mobile detail、Calendar selected-day agenda/dot cap；Connections/Providers/Settings 收纳高级信息；移除用户界面的工程化文案；夹具统一为 5 tasks / 3 messages / 3 sources / 1 provider。
+- **范围**：保持 M6.3 Blue + Teal、Cue Line + Cue Dot、light/dark、sidebar/mobile nav、Lucide、真实 REST/Agent API；不改 backend/API/store/router/schema/business logic。
+- **验收**：fresh installed-package `.venv-m64fresh` full V2 **488 passed**；typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**；light/dark screenshots 位于 `.ai-handoff/visual/m64/`、`.ai-handoff/visual/m64-dark/`；compileall/Anti-AstrBot/diff-check/secret-PII PASS。
+- **Gate**：**M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

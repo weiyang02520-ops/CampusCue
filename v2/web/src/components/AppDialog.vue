@@ -4,7 +4,7 @@ import { X } from 'lucide-vue-next'
 const props = defineProps<{ open: boolean; title: string; description?: string; variant?: 'dialog' | 'sheet' }>()
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLElement>(); const previous = ref<HTMLElement | null>(null)
-function keydown(event: KeyboardEvent) { if (event.key === 'Escape') emit('close') }
+function keydown(event: KeyboardEvent) { if (event.key === 'Escape') { emit('close'); return }; if (event.key !== 'Tab') return; const items = [...(dialog.value?.querySelectorAll<HTMLElement>('button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])') || [])].filter(item => !item.hasAttribute('disabled')); if (!items.length) return; const first = items[0]; const last = items[items.length - 1]; if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() } }
 watch(() => props.open, async open => { if (open) { previous.value = document.activeElement as HTMLElement; await nextTick(); dialog.value?.focus(); document.addEventListener('keydown', keydown) } else { document.removeEventListener('keydown', keydown); previous.value?.focus() } })
 onMounted(() => { if (props.open) document.addEventListener('keydown', keydown) }); onUnmounted(() => document.removeEventListener('keydown', keydown))
 </script>
