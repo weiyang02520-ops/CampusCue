@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'; import { RouterLink, useRoute } from 'vue-router'; import { Home, ListTodo, CalendarDays, Bot, MessageSquare, Cable, Cpu, Settings, Wifi, WifiOff, Bell } from 'lucide-vue-next'; import { useAppStore } from '../stores/app'
-const app = useAppStore(); const route = useRoute(); const items = [{ to:'/', label:'总览', icon:Home }, { to:'/tasks', label:'任务', icon:ListTodo }, { to:'/calendar', label:'日历', icon:CalendarDays }, { to:'/messages', label:'消息', icon:MessageSquare }, { to:'/agent', label:'AI 助手', icon:Bot }, { to:'/connections', label:'连接', icon:Cable }, { to:'/providers', label:'模型提供商', icon:Cpu }, { to:'/settings', label:'设置', icon:Settings }]; const title = computed(() => items.find(i => i.to === route.path)?.label || '总览')
+import { computed } from 'vue'; import { RouterLink, useRoute } from 'vue-router'; import { Home, ListTodo, CalendarDays, Sparkles, MessageSquare, Cable, Cpu, Settings, Wifi, WifiOff, Bell } from 'lucide-vue-next'; import { useAppStore } from '../stores/app'
+const app = useAppStore(); const route = useRoute(); const items = [{ to:'/', label:'总览', icon:Home }, { to:'/tasks', label:'任务', icon:ListTodo }, { to:'/calendar', label:'日历', icon:CalendarDays }, { to:'/messages', label:'消息', icon:MessageSquare }, { to:'/agent', label:'AI 助手', icon:Sparkles }, { to:'/connections', label:'连接', icon:Cable }, { to:'/providers', label:'模型提供商', icon:Cpu }, { to:'/settings', label:'设置', icon:Settings }]; const title = computed(() => items.find(i => i.to === route.path)?.label || '总览')
 </script>
 <template>
   <a class="skip-link" href="#main-content">跳到主要内容</a><div class="app-shell">

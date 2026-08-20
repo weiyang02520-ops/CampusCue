@@ -105,4 +105,4 @@ Vue 3 + TypeScript + Vite + Vue Router + Pinia + Lucide（M6 实现，见总根�
 - M5 REST remains canonical for initial loads and mutations. `/api/v1/stream` is notification-only; reconnect uses bounded exponential backoff and refreshes REST state.
 - Task completion/dismissal uses optimistic UI with rollback on failure. Agent tool activity is rendered only when the backend returns non-empty `tool_activity`; no fake tool animation is emitted.
 - Light/dark semantic tokens, desktop sidebar, mobile bottom navigation, no-emoji controls, visible focus, labeled fields, no horizontal overflow, and synthetic Playwright fixtures are implemented.
-- External integration review requested `M6 = CHANGES_REQUESTED`; this checkpoint completes `M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`. Screenshots and real M5 integration evidence require external review before `M6 FINAL`.
+- External integration review requested `M6 = CHANGES_REQUESTED`; M6.1 completed the contract hardening baseline. This checkpoint completes `M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW`. Screenshots require external visual comparison before `M6 FINAL`.

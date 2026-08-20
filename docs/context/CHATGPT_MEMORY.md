@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -423,6 +423,14 @@ User
 - [TEST_CONFIRMED]：M5/M5.1/M5.1.1 focused **24 passed**；fresh non-editable `.venv-m511fresh` full V2 **488 passed**；compileall PASS；Anti-AstrBot PASS；secret/PII and diff checks PASS。
 - [CURRENT]：**M5.1.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M5 FINAL = NOT YET DECLARED；M6 = NOT_AUTHORIZED**。
 - [KNOWN_LIMITATION]：M4 first-version source_message_id uniqueness remains；M5 schema v3 does not change it。M3 Task/Reminder cross-repository atomicity remains open design risk; startup resync_all recovery accepted。
+
+## 9AC. MEMORY DELTA（M6.2 subtle visual polish checkpoint，2026-08-20）
+
+- [REPO_CONFIRMED][CURRENT]：M5 FINAL = PASS；M6.1 保持为已完成 integration baseline；**M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL NOT declared；M7 NOT authorized。
+- [DESIGN_DECISION]：M6.2 保留 IA、layout、API、store、router、backend、schema；只改 tokens/shared CSS 和 presentation-level metadata/icon markup。方向是 quiet premium blue-slate + restrained teal，而不是 Product Rewrite。
+- [TEST_CONFIRMED]：typecheck/build/Vitest PASS；Playwright full 12 passed（单 worker 保证 shared real harness deterministic）；axe 0；light screenshots `.ai-handoff/visual/m62/`；dark evidence `.ai-handoff/visual/m62-dark/`；m61 baseline screenshots restored from `m6.1-ui-baseline` and not overwritten。
+- [REPO_CONFIRMED]：新增 accent/surface/shadow tokens、Home/Tasks/Agent polish、Calendar/Messages/Connections/Providers/Settings shared visual language、Sparkles brand mark、deadline urgency/category/status/confidence detail、dialog/toast/hover/mobile micro-interactions；无 gradient/glass/neon/emoji/robot。
+- [CURRENT]：等待 External ChatGPT 对比 M6.1/M6.2 视觉证据；不得声明 M6 FINAL 或进入 M7。
 
 ## 9AB. MEMORY DELTA（M6.1 WebUI integration hardening checkpoint，2026-08-20）
 

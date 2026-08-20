@@ -315,3 +315,11 @@
 - **真实验收**：隔离 SQLite + 真实 M5 FastAPI composition + RealtimeHub + deterministic local fake provider upstream；真实 task mutation → named SSE → REST refresh、CRUD、calendar、source/provider test、settings/export 均通过。
 - **测试**：typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**；axe violations 0；页面截图位于 `.ai-handoff/visual/m61/`；backend fresh installed-package baseline **488 passed**。
 - **Gate**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；**M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+
+## 2026-08-20 · M6.2 SUBTLE VISUAL POLISH
+
+- **基线**：创建并推送 annotated tag `m6.1-ui-baseline`，指向 M6.1 stable UI commit；`.ai-handoff/visual/m61/` 保持未覆盖。
+- **范围**：保留 IA、layout、API、store、router、backend、schema 和业务流程；只通过 tokens/shared CSS 与少量 presentation markup 增加 surface hierarchy、teal accent、status/deadline/category detail、Home/Tasks/Agent polish、全站 micro-interactions 和 dark/mobile refinement。
+- **约束**：无大面积渐变、紫色 AI 风、neon、glassmorphism、emoji、robot、装饰插画或 Product Rewrite。
+- **验收**：typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**（shared real harness 固定单 worker）；axe violations 0；real integration PASS；light screenshots `.ai-handoff/visual/m62/`；dark evidence `.ai-handoff/visual/m62-dark/`。
+- **Gate**：M5 FINAL = PASS；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；**M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。

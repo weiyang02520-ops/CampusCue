@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M5 FINAL = **PASS**；M6 = **CHANGES_REQUESTED（已完成 M6.1 修复）**；M6.1 = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M6 FINAL = **NOT YET DECLARED**；M7 = **NOT_AUTHORIZED**。M6.1 已完成真实 M5 integration harness、前端契约修复和页面级证据；外部审核通过前不宣称 M6 FINAL。
+> **当前 active gate**：M5 FINAL = **PASS**；M6 = **CHANGES_REQUESTED（已完成 M6.1 修复）**；M6.1 = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW**；M6 FINAL = **NOT YET DECLARED**；M7 = **NOT_AUTHORIZED**。M6.2 保留 M6.1 IA 与 contract，仅完成轻量 visual polish；外部视觉审核通过前不宣称 M6 FINAL。
 
 ## M1：Independent QQ Runtime
 
@@ -118,7 +118,9 @@
 - 无障碍自动检查（焦点/alt/label）
 - 生成截图 → `VISUAL REVIEW REQUIRED BY EXTERNAL MODEL` → **外部视觉审核通过才 PASS**
 
-**M6.1 checkpoint 实现证据**：`v2/web/` 已实现八个产品页面、真实 M5 REST/SSE 集成、任务/消息/日历/连接/模型/设置/Agent flows、Playwright full 12 passed、axe violations 0，以及 `.ai-handoff/visual/m61/` 页面级截图。M6 FINAL 尚未声明。
+**M6.1 checkpoint 实现证据**：`v2/web/` 已实现八个产品页面、真实 M5 REST/SSE 集成、任务/消息/日历/连接/模型/设置/Agent flows、Playwright full 12 passed、axe violations 0，以及 `.ai-handoff/visual/m61/` 页面级截图。M6.1 baseline 保留。
+
+**M6.2 checkpoint 实现证据**：共享 tokens/CSS 和 presentation-level markup 完成 quiet premium polish；typecheck/build/Vitest/Playwright full 12/axe 均通过；light evidence 位于 `.ai-handoff/visual/m62/`，dark evidence 位于 `.ai-handoff/visual/m62-dark/`。M6 FINAL 尚未声明。
 
 ## M7：Full E2E
 

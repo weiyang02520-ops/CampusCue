@@ -14,7 +14,8 @@
 - M5 FINAL = PASS (External ChatGPT review completed before M6 authorization)
 - M5.1.1 route cleanup = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW (historical implementation checkpoint)
 - M6 = CHANGES_REQUESTED (External integration review)
-- M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW (baseline)
+- M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
@@ -25,6 +26,7 @@
 - **M5.1.1 Final SSE Route Cleanup（本轮）**：HTTP stream outer generator 在客户端于 `: connected` 后立即断开、尚未进入 `hub.stream()` 时也会执行 unsubscribe cleanup。
 - **M5.1 Final Hardening（本轮）**：SSE overflow now closes the active stream; configured heartbeat is consumed; Uvicorn startup has a readiness barrier and rollback; duplicate system health route removed; Adapter emits neutral `connection.updated`; realtime publish failures are isolated after committed mutations.
 - **M6.1 WebUI integration hardening（本轮）**：修复 canonical task status、命名 SSE 消费与鉴权、Settings/System API 接线、真实日历/筛选/CRUD/编辑/删除/测试/导入导出/Agent source selector；加入真实 FastAPI+SQLite+RealtimeHub+local fake provider harness 与真实 Playwright integration。
+- **M6.2 Subtle Visual Polish（本轮）**：保留现有 IA、布局和 API contract；通过 design tokens、surface hierarchy、teal accent、状态点、deadline/category 层级、brand mark、hover/focus/micro-motion 完成轻量视觉精修；Agent 去除机器人图标；生成独立 `.ai-handoff/visual/m62/` 与 dark evidence。
 
 ## verified (Workspace Agent local evidence)
 
@@ -34,7 +36,8 @@
 - uvicorn local HTTP smoke PASS（health/task CRUD/reminders/backup）
 - Runtime readiness smoke PASS（real localhost health + occupied-port rollback）；SSE lifecycle/heartbeat focused integration PASS。
 - These are local Workspace Agent results, not independent External ChatGPT execution。
-- M6.1 WebUI：typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**（含真实 M5 integration 与页面级证据）；axe violations 0；截图位于 `.ai-handoff/visual/m61/`。
+- M6.1 WebUI：typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**（含真实 M5 integration 与页面级证据）；axe violations 0；baseline 截图位于 `.ai-handoff/visual/m61/`。
+- M6.2 visual polish：typecheck/build/unit PASS；Playwright full **12 passed**；light screenshots 位于 `.ai-handoff/visual/m62/`；dark evidence 位于 `.ai-handoff/visual/m62-dark/`；m61 baseline 保持未覆盖。
 
 ## real_environment
 
@@ -49,7 +52,7 @@
 
 ## next_gate
 
-External review of M6.1 product integration, real M5 harness evidence, and page-level screenshots。M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
+External visual review comparing M6.1 baseline with M6.2 polished evidence。M6 FINAL must not be declared by this checkpoint；M7 remains unauthorized。
 
 ## architecture_decisions
 

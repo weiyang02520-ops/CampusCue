@@ -1,6 +1,6 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.1 WebUI Integration Hardening — External Review Request
+# CampusCue M6.2 Subtle Visual Polish — External Review Request
 
 ## Gate state
 
@@ -8,10 +8,11 @@
 - M5 FINAL = PASS（External ChatGPT）
 - M6 = CHANGES_REQUESTED（External integration review）
 - M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M6.2 = IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
-## M6.1 scope
+## M6.2 scope
 
 - `v2/web/` is a Vue 3 + TypeScript + Vite frontend with Vue Router, Pinia, and Lucide icons.
 - Implemented product areas: Home, Tasks, Messages, Calendar, Agent, Connections, Providers, Settings.
@@ -21,6 +22,8 @@
 - Canonical task statuses are `pending_confirm | pending | done | dismissed`; no frontend `completed` status.
 - Authenticated fetch-based SSE consumes named M5 events and triggers canonical REST refresh; token is sent in `Authorization`, never in the URL.
 - Settings/System uses the actual M5 allowlist and endpoints. Tasks, Calendar, Messages, Connections, Providers and Agent source selection use real API contracts.
+- M6.2 changes only shared visual tokens, CSS and small presentation-level icon/metadata markup; IA, API, store, router, backend and schema are unchanged.
+- M6.1 baseline tag: `m6.1-ui-baseline`; baseline screenshots remain under `.ai-handoff/visual/m61/`.
 
 ## What was implemented
 
@@ -37,6 +40,12 @@
 - Hardcoded Calendar dates; missing task API filters, CRUD/editor/delete/deadline clear; missing Messages detail/filters/retention; incomplete Connections/Providers test/toggle/delete; missing Agent source selector.
 - Mock-only Playwright coverage replaced with a real isolated M5 FastAPI + SQLite + RealtimeHub harness and deterministic local fake provider upstream.
 
+## M6.2 visual polish
+
+- Quiet premium blue-slate direction retained; added restrained teal accent only for AI/source/calendar/status semantics.
+- Added surface hierarchy, Today accent line, focus-day indicator, neutral task category chips, deadline urgency tones, message status rails/confidence bars, brand Sparkles mark, composer focus state, dialog/toast motion, and mobile active-nav indicator.
+- No gradients, glassmorphism, neon, emoji, decorative images, robots, IA changes, or product rewrite.
+
 ## Local evidence (Workspace Agent only)
 
 - Full V2 pytest: **488 passed** (fresh installed-package `.venv-m511fresh` non-editable)
@@ -45,13 +54,14 @@
 - uvicorn local HTTP smoke PASS (health/task CRUD/reminders/backup)
 - local HTTP/SSE readiness smoke PASS; occupied-port startup failure and rollback PASS
 - These results are local Workspace Agent evidence, not independent External ChatGPT execution。
-- WebUI typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**；axe violations 0；real integration passed；page evidence generated under `.ai-handoff/visual/m61/`。
+- WebUI typecheck PASS；production build PASS；Vitest 2 passed；Playwright full **12 passed**；axe violations 0；real integration passed；light evidence under `.ai-handoff/visual/m62/` and dark evidence under `.ai-handoff/visual/m62-dark/`。
 
 ## Not run / not touched
 
 - M5 FINAL: PASS
-- M6.1: IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
-- M6 FINAL: NOT YET DECLARED pending external integration and visual review
+- M6.1: IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW（baseline）
+- M6.2: IMPLEMENTATION_COMPLETE_AWAITING_VISUAL_REVIEW
+- M6 FINAL: NOT YET DECLARED pending external visual comparison
 - M7: NOT_AUTHORIZED
 - No real QQ/NapCat re-verification was needed; M4 real E2E remains valid.
 - No real QQ IDs, group IDs, chat content, tokens, Provider secrets, or local private paths are included.
@@ -64,4 +74,4 @@
 
 ## Review focus
 
-- Please independently inspect the pushed source, real integration harness, and screenshots. Focus on canonical contract use, authenticated named SSE refresh, CRUD/error/loading behavior, hierarchy, density, mobile bottom navigation, task/date readability, dark mode parity, responsive overflow, and whether the calm student-workspace direction is visually coherent. **EXTERNAL REVIEW REQUIRED. M6 FINAL must not be declared from local evidence alone.**
+- Please compare `.ai-handoff/visual/m61/` against `.ai-handoff/visual/m62/` and inspect `.ai-handoff/visual/m62-dark/`. Focus on whether the result is more refined rather than more decorative: surface hierarchy, accent restraint, deadline readability, dark mode parity, mobile density, responsive overflow, and preserved product clarity. **EXTERNAL VISUAL REVIEW REQUIRED. M6 FINAL must not be declared from local evidence alone.**

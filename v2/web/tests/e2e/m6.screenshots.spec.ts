@@ -3,11 +3,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const token = 'm6-local-test-token'
-const evidenceDir = path.resolve('..', '..', '.ai-handoff', 'visual', 'm61')
+const evidenceDir = path.resolve('..', '..', '.ai-handoff', 'visual', process.env.M6_SCREENSHOT_DIR || 'm62')
 
 test('captures M6.1 page and responsive evidence', async ({ page }) => {
   fs.mkdirSync(evidenceDir, { recursive: true })
-  await page.addInitScript(value => localStorage.setItem('campuscue-api-token', value), token)
+  await page.addInitScript(({ token: initToken, dark }) => { localStorage.setItem('campuscue-api-token', initToken); if (dark) localStorage.setItem('campuscue-theme', 'dark') }, { token, dark: process.env.M6_DARK === '1' })
 
   const capture = async (route: string, name: string, width: number, height = 900) => {
     await page.setViewportSize({ width, height })
