@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M6.5 visual depth checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M6.5.1 Glass checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -476,3 +476,11 @@ User
 - **[SAFETY]**：`backdrop-filter` 有实色 fallback；长列表、正文、设置表单不使用持续模糊；透明度、边缘高光、阴影按明暗主题适配，文字对比度优先。
 - **[VERIFIED]**：typecheck/build PASS；Vitest 4；focused Playwright 16；axe 0；real integration 2；m65 light/dark evidence PASS；responsive 390/768/1024/1440 PASS。
 - **[CURRENT]**：**M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6 FINAL NOT declared；M7 NOT authorized；等待外部视觉对比。
+
+## 9AJ. MEMORY DELTA（M6.5.1 real Glassmorphism correction，2026-08-20）
+
+- **[REPO_CONFIRMED]**：Starting HEAD `524e4a13a2ba257fa5b04194219c17c9d6cd068c`；本轮不 amend 旧 M6.5 commit。
+- **[DESIGN_DECISION]**：按 VibeHub 严格 anatomy 建立真实 Glass：可感知 Atmospheric Backdrop、分级半透明 Tint、按层级调节 Blur、top/left Edge Light、只在悬浮关系使用的 Soft Shadow；文字对比优先，提供 solid/tinted fallback。
+- **[SCOPE]**：第一阶段仅 App Shell/Home/Tasks/Agent；Dark 和 Neumorphism 冻结；不改 M6.4 信息结构、dataset、IA、API、store、router、backend、schema 或业务逻辑。后续 Calendar/Messages/Connections/Providers/Settings/Dialog/Sheet 统一必须等 Glass 外部审核。
+- **[VERIFIED]**：专用 Glass material test 1 passed；M6 focused Playwright 16 passed；typecheck/build PASS；axe 0；marker screenshot 证明颜色区域能透过 Agent glass 被 tint + blur 感知；evidence 在 `.ai-handoff/visual/m651/glass/`。
+- **[CURRENT]**：**M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL NOT declared；DARK REVIEW/NEUMORPHISM REVIEW pending；M6 FINAL NOT declared；M7 NOT authorized。

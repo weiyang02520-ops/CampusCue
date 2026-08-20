@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6.5 Visual Depth & Product Composition Checkpoint）
+## 当前（M6.5.1 REAL Glassmorphism Correction Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -13,6 +13,9 @@
 - **M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（baseline）
 - **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
+- **M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
+- **GLASS FINAL = NOT YET DECLARED**
+- **DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
 - 本 checkpoint：在 M6.4 信息分层上完成 controlled visual depth；玻璃拟态仅用于局部上下文/浮层/焦点层，并提供实色回退；未改 IA、数据结构、业务流程、API contract、store、router、backend 或 schema。
@@ -129,3 +132,18 @@ External visual review comparing `.ai-handoff/visual/m621/` against new `.ai-han
 - WebUI typecheck/build PASS；Vitest **4 passed**；focused Playwright **16 passed**；axe 0；real integration **2 passed**。
 - Light/dark screenshot capture PASS；responsive evidence covers 390/768/1024/1440；visual dataset remains 5 tasks / 3 messages / 3 sources / 1 provider。
 - **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## M6.5.1 REAL Glassmorphism Correction
+
+- Starting HEAD: `524e4a13a2ba257fa5b04194219c17c9d6cd068c`（M6.5 visual-depth implementation）；不 amend 旧提交。
+- 只返工 Glass 核心四处：App Shell、Home、Tasks、Agent；Calendar/Messages/Connections/Providers/Settings 的 Glass 扩张暂缓。
+- 建立连续 CampusCue Atmospheric Canvas（Blue/Cyan/Teal/Muted Indigo with minimal warm light），并拆分 `glass-subtle/panel/raised/floating` 材质层。
+- Glass anatomy 已明确落地：Backdrop、半透明 Tint、分级 Blur、top/left Edge Light、前后层级 Shadow、Text Contrast First、solid/tinted fallback。
+- Task rows、message bubbles、calendar cells 不做逐项 blur；内容层保持稳定可读，Glass 集中在 Shell、Primary Workspace、Context、Toolbar、Composer 和 Floating UI。
+- 专用 Playwright evidence/test：`.ai-handoff/visual/m651/glass/`，含 `glass-shell/home/tasks/agent` 1440、Home/Agent 390 与 test-only atmosphere marker 截图。
+
+## M6.5.1 Verification（Workspace Agent local evidence）
+
+- typecheck/build PASS；M6 focused Playwright **16 passed**；Glass material Playwright **1 passed**；axe 0（focused suite）；responsive 390/599/768/1024/1440 PASS。
+- Glass evidence 已通过内部视觉检查：Shell atmosphere 连续、Agent marker 可透过 tint + blur 感知、Glass container / opaque content / raised composer 层级可分辨。
+- **M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

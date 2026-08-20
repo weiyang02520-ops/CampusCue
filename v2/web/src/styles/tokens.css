@@ -6,3 +6,4 @@
 :root[data-theme='dark'] { --canvas-top:#131a21; --canvas-body:#0e1319; --blue-wash:#182942; --teal-wash:#153338; --text-display:#f5f7fa; --shadow:0 16px 34px rgba(0,0,0,.24); --shadow-raised:0 22px 48px rgba(0,0,0,.3) }
 :root { --glass-surface:rgba(255,255,255,.68); --glass-surface-strong:rgba(255,255,255,.82); --glass-edge:rgba(255,255,255,.78); --glass-shadow:0 18px 42px rgba(26,52,82,.13) }
 :root[data-theme='dark'] { --glass-surface:rgba(23,31,42,.68); --glass-surface-strong:rgba(23,31,42,.84); --glass-edge:rgba(154,186,255,.22); --glass-shadow:0 20px 48px rgba(0,0,0,.32) }
+:root { --glass-subtle:rgba(255,255,255,.28); --glass-panel:rgba(255,255,255,.5); --glass-raised:rgba(255,255,255,.68); --glass-floating:rgba(255,255,255,.78); --glass-edge-top:rgba(255,255,255,.86); --glass-edge-side:rgba(255,255,255,.52); --glass-edge-bottom:rgba(73,104,142,.2); --glass-depth:0 24px 64px rgba(32,61,96,.17); --glass-depth-soft:0 14px 38px rgba(38,69,105,.12) }

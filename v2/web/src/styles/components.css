@@ -512,3 +512,52 @@ html { font-family:"Avenir Next","Segoe UI Variable","PingFang SC","Microsoft Ya
   .agent-context,.message-inspector,.settings-side { background:var(--surface-tint) }
   .home-page .focus-panel { background:var(--blue-wash) }
 }
+
+/* M6.5.1 REAL Glassmorphism Correction — light Glass only. */
+:root:not([data-theme='dark']) .app-shell { position:relative; isolation:isolate; overflow-x:clip; background-color:#eaf1f7; background-image:radial-gradient(ellipse 980px 620px at 3% -10%,rgba(43,196,205,.3),transparent 70%),radial-gradient(ellipse 920px 640px at 98% 2%,rgba(84,119,224,.26),transparent 72%),radial-gradient(ellipse 900px 620px at 18% 110%,rgba(36,173,158,.24),transparent 72%),radial-gradient(ellipse 680px 500px at 95% 94%,rgba(226,174,91,.14),transparent 76%),linear-gradient(145deg,#eef6fb 0%,#e8eef7 51%,#eef6f3 100%) }
+:root:not([data-theme='dark']) .sidebar,:root:not([data-theme='dark']) .main-column,:root:not([data-theme='dark']) .topbar,:root:not([data-theme='dark']) .page-content { position:relative; z-index:1; background:transparent }
+:root:not([data-theme='dark']) .sidebar { border-right:1px solid var(--glass-edge-side); box-shadow:8px 0 34px rgba(45,76,109,.08); backdrop-filter:blur(26px) saturate(125%) }
+:root:not([data-theme='dark']) .topbar { border-bottom:1px solid var(--glass-edge-side); box-shadow:0 1px 0 var(--glass-edge-top); backdrop-filter:blur(24px) saturate(125%) }
+:root:not([data-theme='dark']) .brand-mark { box-shadow:0 8px 22px rgba(37,99,235,.2) }
+:root:not([data-theme='dark']) .sidebar nav a.router-link-active { border:1px solid rgba(255,255,255,.54); background:rgba(255,255,255,.34); box-shadow:0 7px 20px rgba(47,83,125,.1); backdrop-filter:blur(16px) }
+:root:not([data-theme='dark']) .topbar .connection-indicator { background:rgba(255,255,255,.34); border-color:var(--glass-edge-top); box-shadow:var(--glass-depth-soft); backdrop-filter:blur(16px) saturate(130%) }
+:root:not([data-theme='dark']) .mobile-nav { background:rgba(255,255,255,.48); border-color:var(--glass-edge-top); box-shadow:0 -10px 28px rgba(42,73,107,.12); backdrop-filter:blur(20px) saturate(130%) }
+
+/* Home showcase: atmosphere → glass container → readable content. */
+:root:not([data-theme='dark']) .home-page .today-panel { border:1px solid var(--glass-edge-side); border-top-color:var(--glass-edge-top); border-left-color:var(--glass-edge-top); background:linear-gradient(135deg,rgba(255,255,255,.46),rgba(219,241,255,.3)); box-shadow:var(--glass-depth); backdrop-filter:blur(30px) saturate(140%) }
+:root:not([data-theme='dark']) .home-page .today-panel::after,:root:not([data-theme='dark']) .home-page .focus-panel::after { content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit; background:linear-gradient(135deg,rgba(255,255,255,.35),transparent 34%,transparent 72%,rgba(62,90,130,.08)); mix-blend-mode:screen }
+:root:not([data-theme='dark']) .home-page .today-panel .task-with-actions { margin:8px 0; padding-inline:14px; border:1px solid rgba(255,255,255,.58); border-radius:12px; background:rgba(255,255,255,.62); box-shadow:0 8px 20px rgba(48,78,111,.06) }
+:root:not([data-theme='dark']) .home-page .today-panel .empty-state { border:1px solid rgba(255,255,255,.58); border-radius:12px; background:rgba(255,255,255,.42); backdrop-filter:blur(12px) }
+:root:not([data-theme='dark']) .home-page .focus-panel { position:relative; overflow:hidden; border:1px solid var(--glass-edge-side); border-top-color:var(--glass-edge-top); border-left-color:var(--glass-edge-top); background:linear-gradient(145deg,rgba(116,166,255,.22),rgba(255,255,255,.38)); box-shadow:var(--glass-depth-soft); backdrop-filter:blur(28px) saturate(135%) }
+:root:not([data-theme='dark']) .home-page .home-lower .compact-panel { border:1px solid rgba(255,255,255,.5); background:rgba(255,255,255,.55); box-shadow:var(--glass-depth-soft); backdrop-filter:blur(20px) }
+:root:not([data-theme='dark']) .home-page .home-lower .compact-panel:last-child { background:rgba(116,211,201,.24) }
+
+/* Tasks: floating utility glass, readable rows, blue glass context. */
+:root:not([data-theme='dark']) .tasks-page .toolbar { padding:8px; border:1px solid var(--glass-edge-side); border-top-color:var(--glass-edge-top); border-radius:14px; background:var(--glass-floating); box-shadow:var(--glass-depth-soft); backdrop-filter:blur(24px) saturate(130%) }
+:root:not([data-theme='dark']) .tasks-page .toolbar .segmented,:root:not([data-theme='dark']) .tasks-page .toolbar .search-box,:root:not([data-theme='dark']) .tasks-page .toolbar .filter-button { background:rgba(255,255,255,.34); border-color:rgba(255,255,255,.58) }
+:root:not([data-theme='dark']) .tasks-page .task-page-layout > .panel:first-child { border:1px solid rgba(255,255,255,.42); background:rgba(255,255,255,.22); box-shadow:var(--glass-depth-soft); backdrop-filter:blur(22px) saturate(120%) }
+:root:not([data-theme='dark']) .tasks-page .task-with-actions { margin:8px 0; padding-inline:14px; border:1px solid rgba(255,255,255,.6); border-radius:12px; background:rgba(255,255,255,.67); box-shadow:0 8px 22px rgba(44,75,108,.07) }
+:root:not([data-theme='dark']) .tasks-page .task-with-actions:hover { background:rgba(255,255,255,.78) }
+:root:not([data-theme='dark']) .tasks-page .task-aside { border:1px solid rgba(137,184,255,.42); border-top-color:rgba(255,255,255,.76); border-left-color:rgba(255,255,255,.76); background:linear-gradient(150deg,rgba(109,163,255,.28),rgba(225,239,255,.32)); box-shadow:var(--glass-depth); backdrop-filter:blur(30px) saturate(140%) }
+
+/* Agent: the primary Glass showcase. Bubbles stay opaque for reading. */
+:root:not([data-theme='dark']) .agent-page { position:relative }
+:root:not([data-theme='dark']) .agent-shell { border:1px solid var(--glass-edge-side); border-top-color:var(--glass-edge-top); border-left-color:var(--glass-edge-top); background:linear-gradient(145deg,rgba(255,255,255,.4),rgba(218,247,244,.22)); box-shadow:var(--glass-depth); backdrop-filter:blur(32px) saturate(145%) }
+:root:not([data-theme='dark']) .agent-shell .chat-scroll { background:transparent }
+:root:not([data-theme='dark']) .agent-context { border:1px solid rgba(83,198,191,.38); border-top-color:rgba(255,255,255,.78); border-left-color:rgba(255,255,255,.72); background:linear-gradient(155deg,rgba(122,220,211,.3),rgba(222,247,245,.42)); box-shadow:var(--glass-depth); backdrop-filter:blur(34px) saturate(145%) }
+:root:not([data-theme='dark']) .agent-source-context { background:rgba(255,255,255,.34); border-color:rgba(255,255,255,.68); backdrop-filter:blur(18px) saturate(130%) }
+:root:not([data-theme='dark']) .agent-shell .chat-bubble { background:rgba(246,250,252,.86); box-shadow:0 7px 18px rgba(38,67,98,.08); backdrop-filter:none }
+:root:not([data-theme='dark']) .agent-shell .chat-message.user .chat-bubble { background:rgba(222,234,255,.92); }
+:root:not([data-theme='dark']) .agent-shell .chat-composer { border:1px solid rgba(255,255,255,.78); background:var(--glass-raised); box-shadow:0 16px 34px rgba(40,71,105,.16),inset 0 1px 0 rgba(255,255,255,.86); backdrop-filter:blur(28px) saturate(145%) }
+:root:not([data-theme='dark']) .agent-shell .prompt-chips button { background:rgba(255,255,255,.52); border-color:rgba(255,255,255,.7); backdrop-filter:blur(16px) }
+
+@supports not ((backdrop-filter:blur(1px))) {
+  :root:not([data-theme='dark']) .app-shell { background:#eaf1f7 }
+  :root:not([data-theme='dark']) .sidebar,:root:not([data-theme='dark']) .topbar { background:rgba(244,248,252,.94) }
+  :root:not([data-theme='dark']) .home-page .today-panel,:root:not([data-theme='dark']) .agent-shell { background:rgba(244,248,252,.94) }
+  :root:not([data-theme='dark']) .home-page .focus-panel,:root:not([data-theme='dark']) .tasks-page .task-aside,:root:not([data-theme='dark']) .agent-context { background:#e2efff }
+}
+:root:not([data-theme='dark']).glass-no-filter .sidebar,:root:not([data-theme='dark']).glass-no-filter .topbar { background:rgba(244,248,252,.94); backdrop-filter:none }
+:root:not([data-theme='dark']).glass-no-filter .home-page .today-panel,:root:not([data-theme='dark']).glass-no-filter .home-page .focus-panel,:root:not([data-theme='dark']).glass-no-filter .tasks-page .toolbar,:root:not([data-theme='dark']).glass-no-filter .tasks-page .task-aside,:root:not([data-theme='dark']).glass-no-filter .agent-shell,:root:not([data-theme='dark']).glass-no-filter .agent-context,:root:not([data-theme='dark']).glass-no-filter .chat-composer { background:#eef4f8; backdrop-filter:none; box-shadow:0 14px 32px rgba(41,69,98,.12) }
+html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass-no-filter .chat-composer { background:#eef4f8 !important; background-image:none !important; backdrop-filter:none !important; box-shadow:0 14px 32px rgba(41,69,98,.12) !important }
+.app-shell.glass-no-filter .agent-shell,.app-shell.glass-no-filter .agent-context,.app-shell.glass-no-filter .chat-composer { background:#eef4f8 !important; background-image:none !important; backdrop-filter:none !important; box-shadow:0 14px 32px rgba(41,69,98,.12) !important }

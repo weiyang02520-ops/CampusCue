@@ -1,6 +1,6 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.5 Visual Depth & Product Composition — External Review Request
+# CampusCue M6.5.1 REAL Glassmorphism Correction — External Review Request
 
 ## Gate state
 
@@ -13,6 +13,8 @@
 - M6.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
@@ -108,3 +110,12 @@
 - Glassmorphism is intentionally local, not global: inspect Agent context/composer, Home focus, dialogs/inspectors and connection status; verify text remains clear and solid fallbacks are acceptable when `backdrop-filter` is unavailable。
 - No backend/API/store/router/schema/business logic changes；dataset remains 5 tasks / 3 messages / 3 sources / 1 provider。
 - **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## M6.5.1 Glass review request
+
+- Starting HEAD: `524e4a13a2ba257fa5b04194219c17c9d6cd068c`；Glass evidence: `.ai-handoff/visual/m651/glass/`。
+- First phase only: App Shell, Home, Tasks and Agent. Review `glass-shell-1440`, `glass-home-1440`, `glass-tasks-1440`, `glass-agent-1440`, `glass-home-390`, `glass-agent-390` and `glass-agent-marker-1440`。
+- Hard checklist: Backdrop, Tint, Blur, Edge Light, Shadow, Text Contrast, Solid/Tinted Fallback. The test-only marker must remain perceptible through the Agent glass surface after tint + blur。
+- Confirm the three-plane relationship: Atmospheric Backdrop → Glass Workspace/Context → opaque readable content → Raised Composer. Task rows/message bubbles/calendar cells must not become individually blurred。
+- No Dark expansion, no Neumorphism expansion, no IA/data/API/store/router/backend/schema/business logic changes。
+- **M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

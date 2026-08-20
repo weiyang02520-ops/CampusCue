@@ -354,3 +354,11 @@
 - **玻璃拟态边界**：仅用于 Agent canvas/context/composer、Home focus、连接状态、inspector/diagnostics/dialog；任务正文、消息列表和设置表单保持实色或 tint；`backdrop-filter` 有 `@supports` 实色回退。
 - **验收**：typecheck/build PASS；Vitest 4；focused Playwright 16；axe 0；real integration 2；light/dark m65 screenshot capture PASS；prior evidence preserved。
 - **Gate**：**M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## 2026-08-20 · M6.5.1 REAL GLASSMORPHISM CORRECTION
+
+- **Starting HEAD**：`524e4a13a2ba257fa5b04194219c17c9d6cd068c`；不 amend M6.5 旧提交。
+- **范围**：只处理 Glass 核心四处 App Shell/Home/Tasks/Agent；Dark 与 Neumorphism 冻结；M6.4 Information Layering、demo dataset、IA 和业务逻辑保持不变。
+- **实现**：连续 Atmospheric Canvas；`glass-subtle/panel/raised/floating` 分级材质；Backdrop/Tint/Blur/Edge Light/Shadow；Text Contrast First；`@supports not (backdrop-filter)` 实色回退。
+- **验证**：Glass material Playwright 1 passed；M6 focused Playwright 16 passed；typecheck/build PASS；axe 0；390/599/768/1024/1440 responsive PASS；专用 evidence 在 `.ai-handoff/visual/m651/glass/`。
+- **Gate**：**M6.5.1 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
