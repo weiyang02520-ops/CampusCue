@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -492,3 +492,11 @@ User
 - **[REPO_CONFIRMED]**：Stage 1 仅 App Shell/Home/Tasks/Agent；新增 `.ai-handoff/visual/m652/glass/` 五张 evidence；`.ai-handoff/visual/m651/glass/` 从 `m6.5.1-glass-baseline` 恢复，旧 evidence 未覆盖；Settings backup preview 也改用共享本地化日期 formatter。
 - **[TEST_CONFIRMED]**：M6.5.2 focused 2 passed；M6 focused 16；M6.5.1 regression 1；real integration 2；WebUI typecheck/build/Vitest 4；fresh installed-package full V2 488；compileall/Anti-AstrBot/diff-check/Secret+PII/axe/overflow/console/theme/fallback PASS。
 - **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL NOT declared；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING；M6 FINAL NOT declared；M7 NOT authorized。STOP for external visual review。
+
+## 9AL. MEMORY DELTA（M6.5.3 Dark UI Stage 1，2026-08-21）
+
+- **[REPO_CONFIRMED]**：`m6.5.2-glass-baseline` 已推送并指向 `63d7aeb4177b61bc73bffa336d6743e50c780559`；M6.5.2 Glass evidence 未覆盖。
+- **[DESIGN_DECISION]**：Dark 独立于 Glass，采用低眩光 solid-surface productivity workspace；层级由 luminance/tint/spacing/elevation 表达，只有 focus/selected/primary/小 AI signal 使用克制 accent；Stage 1 只做 App Shell、Home、Tasks、Agent、Settings selector，Stage 2 暂缓。
+- **[REPO_CONFIRMED]**：新增 dark token system 与 Dark scoped CSS；Home/Tasks/Agent/Settings Dark surfaces 完成；selector 显示 Glass/Dark 但内部仍兼容 light/dark；无 backend/API/store/router/schema/business logic 变化。
+- **[TEST_CONFIRMED]**：Dark focused 2、M6 focused 16、M6.5.2 Glass focused 2、real integration 2；typecheck/build/Vitest/Axe/overflow/console/theme persistence/Glass fallback/mobile composer safety PASS；Dark evidence `.ai-handoff/visual/m653/dark/`。
+- **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；DARK FINAL、GLASS FINAL、M6 FINAL NOT declared；NEUMORPHISM pending；M7 NOT authorized。STOP for external visual review。

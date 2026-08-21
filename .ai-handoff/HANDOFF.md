@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6.5.2 Glass Refinement & Productization Checkpoint）
+## 当前（M6.5.3 Dark UI Stage 1 Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -15,8 +15,9 @@
 - **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**（方向与材质成立）
 - **M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
+- **M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **GLASS FINAL = NOT YET DECLARED**
-- **DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**
+- **DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = PENDING**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
 - 本 checkpoint：在 M6.4 信息分层上完成 controlled visual depth；玻璃拟态仅用于局部上下文/浮层/焦点层，并提供实色回退；未改 IA、数据结构、业务流程、API contract、store、router、backend 或 schema。
@@ -83,6 +84,15 @@
 - **证据**：新增 `.ai-handoff/visual/m652/glass/` 五张 Stage 1 refinement screenshots；M6.5.1 `.ai-handoff/visual/m651/glass/` 从 `m6.5.1-glass-baseline` 恢复，未覆盖。
 - **验证**：M6.5.2 focused Glass 2 passed；M6 focused Playwright 16 passed；M6.5.1 regression 1 passed；real integration 2 passed；typecheck/build/Vitest 4 passed；fresh installed-package full V2 488 passed；compileall/Anti-AstrBot/diff-check/Secret+PII scan PASS；axe 0、responsive overflow、console error、theme persistence、fallback PASS。
 
+## M6.5.3 Dark UI Stage 1
+
+- **基线**：创建并推送 annotated tag `m6.5.2-glass-baseline`，指向本轮起始 Glass commit `63d7aeb4177b61bc73bffa336d6743e50c780559`；M6.5.2 Glass evidence 保持未覆盖。
+- **实现**：新增独立 Dark solid-surface visual language；深色 canvas/elevated canvas、neutral/raised/floating surfaces、blue context、teal context、control borders、contrast-first text and focus tokens；不使用大面积 backdrop blur、透明玻璃、atmospheric cyan gradient 或白色 edge highlight。
+- **范围**：Stage 1 仅 App Shell、Home、Tasks、Agent、Settings Theme Selector；IA、layout、font、spacing、grid、responsive、API、store、router、backend、schema、business logic 保持不变；Stage 2 暂缓。
+- **证据**：新增 `.ai-handoff/visual/m653/dark/` 七张 Stage 1 screenshots。
+- **验证**：Dark focused Playwright 2 passed（Axe 0、responsive overflow 0、console/page error 0、theme persistence、Glass fallback、mobile composer safety）；M6 focused 16 passed；M6.5.2 Glass focused 2 passed；real integration 2 passed；typecheck/build/Vitest PASS。
+- **Gate**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
 ## Verification（Workspace Agent local evidence）
 
 - Full V2 pytest：**488 passed**（fresh installed-package `.venv-m511fresh` non-editable）
@@ -104,7 +114,7 @@
 
 ## Next gate
 
-External visual review of `.ai-handoff/visual/m652/glass/` against `.ai-handoff/visual/m651/glass/` is required。M6.5.2 is implementation-complete only；GLASS FINAL、M6 FINAL are not declared；Dark/Neumorphism remain pending；M7 remains unauthorized。
+External visual review of M6.5.2 Stage 1 Glass and M6.5.3 Stage 1 Dark evidence is required。GLASS FINAL、DARK FINAL、M6 FINAL must not be declared；Neumorphism remains pending；M7 remains unauthorized。
 
 ## Privacy / safety
 

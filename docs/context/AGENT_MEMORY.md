@@ -23,7 +23,7 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
+| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**：M1-M4 完成；M5 FastAPI REST + SSE + schema v3；M5.1.1 route cleanup complete locally；Legacy frozen。最新本地 checkpoint 证据：**488 tests passed**（2026-08-20，fresh `.venv-m511fresh` non-editable） |
@@ -33,7 +33,7 @@
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.4 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
 - **下一步**：External visual review of `.ai-handoff/visual/m652/glass/` against the preserved m651 baseline; do not expand Stage 2, Dark/Neumorphism, or declare GLASS FINAL/M6 FINAL from local evidence alone。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
@@ -219,6 +219,14 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **[REPO_CONFIRMED]**：新增 `.ai-handoff/visual/m652/glass/` 五张证据；m651 evidence 从 `m6.5.1-glass-baseline` 恢复，未覆盖；Tasks overview 与 Settings backup preview 统一走本地化 formatter。
 - **[TEST_CONFIRMED]**：M6.5.2 focused 2；M6 focused 16；M6.5.1 regression 1；real integration 2；WebUI typecheck/build/Vitest 4；fresh V2 488；compileall/Anti-AstrBot/diff-check/Secret+PII/axe/overflow/console/theme/fallback PASS。
 - **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL NOT declared；DARK/NEUMORPHISM review pending；M6 FINAL NOT declared；M7 NOT authorized。
+
+## 9AL. M6.5.3 DARK UI STAGE 1（2026-08-21）
+
+- **[REPO_CONFIRMED]**：创建并推送 `m6.5.2-glass-baseline` → `63d7aeb4177b61bc73bffa336d6743e50c780559`；M6.5.2 Glass evidence 保持未覆盖。
+- **[DESIGN_DECISION]**：Dark 是独立 solid-surface productivity language，不是 Glass Dark；使用 deep neutral canvas、raised/floating surfaces、blue context、teal context、contrast-first text；禁止大面积 blur/透明玻璃/atmospheric cyan gradient/white edge highlight。Stage 1 仅 App Shell/Home/Tasks/Agent/Settings selector。
+- **[REPO_CONFIRMED]**：新增 `--dark-*` token system、Dark-only CSS scopes、Glass/Dark visible selector；内部 schema/API/store/router/backend unchanged；mobile Agent composer 增加底栏安全间距。
+- **[VERIFIED]**：Dark focused Playwright **2 passed**（Axe 0、overflow 0、console/page error 0、theme persistence、Glass fallback、mobile composer safety）；M6 **16 passed**；Glass **2 passed**；real integration **2 passed**；typecheck/build/Vitest PASS；证据在 `.ai-handoff/visual/m653/dark/`。
+- **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；DARK FINAL NOT declared；NEUMORPHISM pending；M6 FINAL NOT declared；M7 NOT authorized。STOP for external visual review。
 
 - **M2a.1 运行时事实**：LLMRequest.timeout_s=None 默认（回落 provider 配置）；secret_reference 共享校验 providers/validation.py；Clock 注入 repository 时间戳；DB CHECK 约束（tasks/extractions/provider_configs）；schema 预检零变更（SchemaRefusedError）；186 tests 全绿。
 

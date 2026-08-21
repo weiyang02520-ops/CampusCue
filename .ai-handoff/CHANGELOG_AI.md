@@ -370,3 +370,11 @@
 - **证据**：Stage 1 新证据 `.ai-handoff/visual/m652/glass/` 五张；M6.5.1 `.ai-handoff/visual/m651/glass/` 从 `m6.5.1-glass-baseline` 恢复，旧 evidence 未覆盖。
 - **验收**：typecheck/build PASS；Vitest 4；M6.5.2 focused 2；M6 focused 16；M6.5.1 regression 1；real integration 2；fresh installed-package full V2 488；compileall/Anti-AstrBot/diff-check/Secret+PII PASS；axe 0；responsive overflow、console error、theme persistence、fallback PASS。
 - **Gate**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## 2026-08-21 · M6.5.3 DARK UI STAGE 1
+
+- **基线**：创建并推送 annotated tag `m6.5.2-glass-baseline`，保护 M6.5.2 Glass commit `63d7aeb4177b61bc73bffa336d6743e50c780559`；不 amend Glass commit。
+- **实现**：新增独立 Dark solid-surface productivity language 与 dark tokens；完成 App Shell、Home、Tasks、Agent、Settings Theme Selector；保留 Glass 视觉与内部 `light/dark` 兼容值，不改 API/schema/backend。
+- **证据**：`.ai-handoff/visual/m653/dark/` 七张 Stage 1 screenshots；新增 Dark route-level Playwright regression。
+- **验收**：Dark focused 2 passed；M6 focused 16；M6.5.2 Glass focused 2；real integration 2；typecheck/build/Vitest/Axe/overflow/console/theme persistence/Glass fallback/mobile composer safety PASS。
+- **Gate**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

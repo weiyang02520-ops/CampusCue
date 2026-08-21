@@ -608,3 +608,124 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
   :root:not([data-theme='dark']) .agent-head-actions .source-selector select { width:100% }
   :root:not([data-theme='dark']) .agent-shell .chat-composer { margin:0 10px 10px; }
 }
+
+/* M6.5.3 Dark UI — an independent solid-surface productivity language. */
+:root[data-theme='dark'] body { background:var(--dark-canvas); }
+:root[data-theme='dark'] .app-shell { position:relative; isolation:isolate; overflow-x:clip; background:var(--dark-canvas); background-image:none; }
+:root[data-theme='dark'] .main-column,:root[data-theme='dark'] .page-content { background:var(--dark-canvas); }
+:root[data-theme='dark'] .sidebar { background:var(--dark-surface-subtle); border-right:1px solid var(--dark-border-subtle); box-shadow:8px 0 26px rgba(0,0,0,.14); backdrop-filter:none; }
+:root[data-theme='dark'] .topbar { background:var(--dark-canvas-elevated); border-bottom:1px solid var(--dark-border-subtle); box-shadow:0 1px 0 rgba(255,255,255,.025); backdrop-filter:none; }
+:root[data-theme='dark'] .brand-mark { background:var(--dark-brand); color:#111923; box-shadow:0 4px 12px rgba(55,93,155,.18),inset 0 0 0 1px rgba(255,255,255,.14); }
+:root[data-theme='dark'] .sidebar-status { background:var(--dark-surface-raised); border-color:var(--dark-border-subtle); box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .sidebar nav a.router-link-active { color:var(--dark-focus); background:var(--dark-selected); font-weight:650; }
+:root[data-theme='dark'] .sidebar nav a.router-link-active::before { background:var(--dark-brand); }
+:root[data-theme='dark'] .topbar .connection-indicator { color:var(--success); background:var(--dark-surface-raised); border:1px solid var(--dark-border-subtle); box-shadow:none; backdrop-filter:none; }
+:root[data-theme='dark'] .mobile-nav { background:var(--dark-surface-raised); border-top:1px solid var(--dark-border-control); box-shadow:0 -12px 26px rgba(0,0,0,.22); backdrop-filter:none; }
+:root[data-theme='dark'] .mobile-nav a.router-link-active,:root[data-theme='dark'] .mobile-nav button.active { color:var(--dark-focus); background:var(--dark-selected); }
+:root[data-theme='dark'] .mobile-nav a.router-link-active::before,:root[data-theme='dark'] .mobile-nav button.active::before { background:var(--dark-brand); }
+:root[data-theme='dark'] .page-header::after { background:var(--dark-brand); box-shadow:10px 0 0 -0.25px var(--dark-teal); }
+:root[data-theme='dark'] .page-header .eyebrow,:root[data-theme='dark'] .page-content > .page-header .eyebrow { color:var(--dark-teal); }
+:root[data-theme='dark'] .panel { border-color:transparent; box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .button-primary { background:var(--dark-brand); color:#101722; box-shadow:0 5px 14px rgba(56,91,151,.18); }
+:root[data-theme='dark'] .button-primary:hover { background:var(--dark-focus); }
+:root[data-theme='dark'] .button-secondary { color:var(--dark-text-secondary); background:var(--dark-surface-raised); border-color:var(--dark-border-control); }
+:root[data-theme='dark'] .button-secondary:hover { color:var(--dark-text-primary); background:var(--dark-hover); }
+:root[data-theme='dark'] .icon-button:hover { color:var(--dark-text-primary); background:var(--dark-hover); }
+:root[data-theme='dark'] .button-danger { color:var(--dark-red); background:var(--dark-red-soft); border-color:rgba(229,140,137,.18); }
+:root[data-theme='dark'] .button-danger:hover { background:#4d2b2e; }
+
+/* Home: one neutral primary surface, one blue context surface, then flat rows. */
+:root[data-theme='dark'] .home-page .today-panel { background:var(--dark-surface); border:0; box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .home-page .focus-panel { background:var(--dark-context-blue); border:0; box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .home-page .today-panel::after,:root[data-theme='dark'] .home-page .focus-panel::after { display:none; }
+:root[data-theme='dark'] .home-page .today-panel .empty-state { min-height:166px; margin-top:12px; padding:18px 0 4px; border:0; border-radius:0; background:transparent; }
+:root[data-theme='dark'] .home-page .today-panel .empty-state .empty-icon { background:var(--dark-surface-raised); border-color:var(--dark-border-control); color:var(--dark-brand); }
+:root[data-theme='dark'] .home-page .focus-panel .quiet-icon { color:var(--dark-brand); }
+:root[data-theme='dark'] .home-page .focus-panel .week-line span { background:var(--dark-surface); }
+:root[data-theme='dark'] .home-page .focus-panel .week-line .week-active { background:var(--dark-selected); color:var(--dark-focus); border-color:rgba(100,144,224,.34); box-shadow:none; }
+:root[data-theme='dark'] .home-page .upcoming-panel { background:transparent; border:0; box-shadow:none; padding-inline:24px; }
+:root[data-theme='dark'] .home-page .upcoming-panel .task-list { margin-top:0; padding:8px 0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+:root[data-theme='dark'] .home-page .upcoming-panel .task-row,:root[data-theme='dark'] .home-page .home-lower .task-row { background:transparent; }
+:root[data-theme='dark'] .home-page .home-lower .compact-panel { background:var(--dark-surface-raised); border:0; box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .home-page .home-lower .compact-panel:last-child { background:var(--dark-context-teal); }
+:root[data-theme='dark'] .home-page .home-lower .compact-panel:last-child .quiet-icon { color:var(--dark-teal); }
+
+/* Tasks: workspace and rows, not a wall of dark cards. */
+:root[data-theme='dark'] .tasks-page .toolbar { background:var(--dark-surface-raised); border:0; box-shadow:var(--dark-shadow-floating); backdrop-filter:none; }
+:root[data-theme='dark'] .tasks-page .toolbar .segmented,:root[data-theme='dark'] .tasks-page .toolbar .search-box,:root[data-theme='dark'] .tasks-page .toolbar .filter-button { background:var(--dark-surface-subtle); border-color:var(--dark-border-control); box-shadow:none; }
+:root[data-theme='dark'] .tasks-page .toolbar .segmented button.active { color:var(--dark-focus); background:var(--dark-selected); }
+:root[data-theme='dark'] .tasks-page .task-list-panel .list-heading,:root[data-theme='dark'] .tasks-page .task-list-panel .task-list { background:var(--dark-surface); border-color:transparent; box-shadow:none; }
+:root[data-theme='dark'] .tasks-page .task-list-panel .task-list { padding-block:6px 12px; }
+:root[data-theme='dark'] .tasks-page .task-with-actions { margin:0; border-top:0; border-bottom:1px solid var(--dark-border-subtle); border-radius:0; background:transparent; }
+:root[data-theme='dark'] .tasks-page .task-with-actions:hover { background:var(--dark-hover); }
+:root[data-theme='dark'] .tasks-page .task-row:hover { background:transparent; }
+:root[data-theme='dark'] .tasks-page .task-aside { background:var(--dark-context-blue); border:0; box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .task-deadline { background:var(--dark-surface-subtle); border-color:var(--dark-border-control); }
+:root[data-theme='dark'] .task-category { background:var(--dark-surface-raised); color:var(--dark-text-secondary); }
+:root[data-theme='dark'] .task-category.competition,:root[data-theme='dark'] .task-category.exam { color:var(--dark-teal); background:var(--dark-teal-soft); }
+:root[data-theme='dark'] .task-status-badge { background:var(--dark-surface-subtle); border-color:var(--dark-border-subtle); color:var(--dark-text-tertiary); }
+:root[data-theme='dark'] .task-check { background:var(--dark-surface-subtle); border-color:var(--dark-border-control); }
+:root[data-theme='dark'] .task-check:hover { color:var(--dark-focus); border-color:var(--dark-brand); }
+
+/* Agent: deep neutral conversation, deep teal context, raised solid composer. */
+:root[data-theme='dark'] .agent-shell { background:var(--dark-surface); background-image:none; border:0; box-shadow:var(--dark-shadow-raised); backdrop-filter:none; }
+:root[data-theme='dark'] .agent-shell .chat-scroll { background:var(--dark-surface); }
+:root[data-theme='dark'] .chat-scroll::before { display:none; }
+:root[data-theme='dark'] .agent-context { background:var(--dark-context-teal); background-image:none; border:0; box-shadow:var(--dark-shadow-raised); backdrop-filter:none; }
+:root[data-theme='dark'] .agent-head-actions { background:var(--dark-surface-raised); border:1px solid var(--dark-border-subtle); box-shadow:var(--dark-shadow-raised); backdrop-filter:none; }
+:root[data-theme='dark'] .agent-head-actions > .button { background:transparent; border-color:transparent; box-shadow:none; }
+:root[data-theme='dark'] .agent-head-actions > .button:hover { background:var(--dark-hover); }
+:root[data-theme='dark'] .agent-page .source-selector select { color:var(--dark-text-primary); background:var(--dark-surface-subtle); border:1px solid var(--dark-border-control); color-scheme:dark; }
+:root[data-theme='dark'] .agent-source-context { background:var(--dark-surface-raised); border-color:var(--dark-border-subtle); box-shadow:none; backdrop-filter:none; }
+:root[data-theme='dark'] .agent-shell .prompt-chips button { color:var(--dark-text-secondary); background:var(--dark-surface-raised); border-color:var(--dark-border-control); box-shadow:none; backdrop-filter:none; }
+:root[data-theme='dark'] .agent-shell .prompt-chips button:hover:not(:disabled) { background:var(--dark-hover); border-color:var(--dark-brand); }
+:root[data-theme='dark'] .agent-shell .prompt-chips button.prompt-primary { color:var(--dark-focus); background:var(--dark-selected); border-color:rgba(100,144,224,.42); box-shadow:none; }
+:root[data-theme='dark'] .agent-shell .chat-bubble { background:var(--dark-surface-raised); border-color:var(--dark-border-subtle); box-shadow:none; backdrop-filter:none; }
+:root[data-theme='dark'] .agent-shell .chat-message.user .chat-bubble { background:var(--dark-brand-soft); border-color:rgba(100,144,224,.22); }
+:root[data-theme='dark'] .agent-shell .chat-composer { background:var(--dark-surface-raised); border:1px solid var(--dark-border-control); box-shadow:var(--dark-shadow-floating); backdrop-filter:none; }
+:root[data-theme='dark'] .agent-shell .chat-composer textarea { background:var(--dark-surface-subtle); border-color:var(--dark-border-control); color:var(--dark-text-primary); }
+:root[data-theme='dark'] .agent-shell .chat-composer textarea:focus { border-color:var(--dark-brand); box-shadow:0 0 0 3px rgba(100,144,224,.18); }
+:root[data-theme='dark'] .send-button { background:var(--dark-brand); color:#111923; box-shadow:none; }
+:root[data-theme='dark'] .send-button:hover { background:var(--dark-focus); }
+
+/* Settings and shared overlays: dark surfaces stay solid and legible. */
+:root[data-theme='dark'] .settings-rail button.active { color:var(--dark-focus); background:var(--dark-selected); }
+:root[data-theme='dark'] .settings-card { background:var(--dark-surface); border:0; box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .settings-side { background:var(--dark-context-teal); border:0; box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .settings-card input,:root[data-theme='dark'] .settings-card select,:root[data-theme='dark'] .filters input,:root[data-theme='dark'] .filters select { color:var(--dark-text-primary); background:var(--dark-surface-subtle); border-color:var(--dark-border-control); color-scheme:dark; }
+:root[data-theme='dark'] .settings-card input:focus,:root[data-theme='dark'] .settings-card select:focus { border-color:var(--dark-brand); box-shadow:0 0 0 3px rgba(100,144,224,.16); }
+:root[data-theme='dark'] .theme-picker { position:relative; padding-bottom:112px; }
+:root[data-theme='dark'] .theme-picker button { color:var(--dark-text-secondary); background:var(--dark-surface-raised); border-color:var(--dark-border-control); }
+:root[data-theme='dark'] .theme-picker button.active { color:var(--dark-focus); background:var(--dark-selected); border-color:rgba(100,144,224,.42); }
+:root[data-theme='dark'] .theme-picker::before { content:""; display:block; position:absolute; right:0; bottom:0; left:0; height:92px; border:1px solid var(--dark-border-control); border-radius:12px; background:var(--dark-canvas); box-shadow:inset 0 0 0 12px var(--dark-canvas-elevated),inset 86px 28px 0 -20px var(--dark-surface-raised),inset 214px 30px 0 -21px var(--dark-context-blue),inset 330px 62px 0 -28px var(--dark-brand-soft); }
+:root[data-theme='dark'] .theme-picker::after { content:"DARK UI  ·  DEEP CANVAS  /  RAISED SURFACE  /  BLUE + TEAL SIGNAL"; position:absolute; right:16px; bottom:19px; left:16px; color:var(--dark-text-secondary); font-size:10px; letter-spacing:.08em; }
+:root[data-theme='dark'] .dialog-backdrop { background:var(--overlay); backdrop-filter:blur(3px); }
+:root[data-theme='dark'] .dialog,:root[data-theme='dark'] .dialog-sheet { background:var(--dark-surface-floating); background-image:none; border:1px solid var(--dark-border-control); box-shadow:var(--dark-shadow-floating); backdrop-filter:none; }
+:root[data-theme='dark'] .toast { background:var(--dark-surface-floating); border-color:var(--dark-border-control); box-shadow:var(--dark-shadow-floating); }
+:root[data-theme='dark'] .mobile-more-list a:hover,:root[data-theme='dark'] .mobile-more-list a.active { color:var(--dark-focus); background:var(--dark-selected); }
+:root[data-theme='dark'] .calendar-hero,:root[data-theme='dark'] .calendar-agenda,:root[data-theme='dark'] .message-inspector,:root[data-theme='dark'] .connection-card,:root[data-theme='dark'] .provider-card { background:var(--dark-surface); background-image:none; border:0; box-shadow:var(--dark-shadow-raised); }
+:root[data-theme='dark'] .message-filters { background:var(--dark-surface-raised); border:0; }
+:root[data-theme='dark'] .month-cell { background:transparent; border-color:var(--dark-border-subtle); }
+:root[data-theme='dark'] .month-cell.muted { background:transparent; border-color:transparent; }
+:root[data-theme='dark'] .month-cell.today { background:var(--dark-brand-soft); border-color:var(--dark-brand); box-shadow:none; }
+:root[data-theme='dark'] .month-cell.selected { background:var(--dark-selected); border-color:var(--dark-focus); box-shadow:none; }
+:root[data-theme='dark'] .calendar-agenda { background:var(--dark-surface-raised); }
+
+/* Theme selector preview stays visible from either theme so Glass and Dark remain comparable. */
+.theme-picker { position:relative; padding-bottom:112px; }
+.theme-picker::before { content:""; display:block; position:absolute; right:0; bottom:0; left:0; height:92px; border:1px solid #3a4a5a; border-radius:12px; background:#11171e; box-shadow:inset 0 0 0 12px #151d25,inset 86px 28px 0 -20px #222d38,inset 214px 30px 0 -21px #182b40,inset 330px 62px 0 -28px #203755; }
+.theme-picker::after { content:"DARK UI  ·  DEEP CANVAS  /  RAISED SURFACE  /  BLUE + TEAL SIGNAL"; position:absolute; right:16px; bottom:19px; left:16px; color:#b8c6d2; font-size:10px; letter-spacing:.08em; }
+
+/* The persisted values stay light/dark for compatibility; the selector presents the product names. */
+.theme-picker button:nth-child(2),.theme-picker button:nth-child(3) { font-size:0; }
+.theme-picker button:nth-child(2)::after { content:"Glass"; font-size:13px; }
+.theme-picker button:nth-child(3)::after { content:"Dark"; font-size:13px; }
+
+@media (max-width:767px) {
+  :root[data-theme='dark'] .agent-shell { background:var(--dark-surface); box-shadow:var(--dark-shadow-raised); }
+  :root[data-theme='dark'] .agent-context { background:var(--dark-context-teal); }
+  :root[data-theme='dark'] .route-agent .page-content { padding-bottom:174px; }
+  :root[data-theme='dark'] .agent-shell .chat-composer { margin:0 10px 10px; }
+  :root[data-theme='dark'] .tasks-page .task-list-panel .task-list { padding-inline:12px; }
+  .theme-picker::before,.theme-picker::after { display:none; }
+}

@@ -1,6 +1,21 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.5.2 Glass Refinement & Productization — External Review Request
+# CampusCue M6.5.3 Dark UI Stage 1 — External Review Request
+
+## Current checkpoint
+
+- M6.5.2 Glass baseline tag: `m6.5.2-glass-baseline` → `63d7aeb4177b61bc73bffa336d6743e50c780559`。
+- M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
+- M6.5.3 Dark is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
+- Dark Final、Glass Final、M6 Final are **NOT YET DECLARED**；Neumorphism is **PENDING**；M7 is **NOT_AUTHORIZED**。
+
+## M6.5.3 Dark Stage 1 review target
+
+Review `.ai-handoff/visual/m653/dark/` at 1440 and 390 widths. Dark is intentionally an independent solid-surface productivity workspace, not Glass Dark: no large backdrop blur, transparent glass panels, atmospheric cyan gradients, or white edge highlights.
+
+Focus on low-glare hierarchy and information density: Today direct content, blue Week Focus, flat Upcoming rows, raised neutral Messages, teal AI context, raised Tasks toolbar, flat task rows, deep neutral Agent conversation, raised composer, dark Settings controls, and the visible Glass/Dark selector. Confirm the mobile bottom nav is solid/raised and the Agent composer is not obscured. Do not advance to Stage 2, Neumorphism, Dark Final, M6 Final, or M7 from this local checkpoint.
+
+Evidence: `dark-shell-1440.png`, `dark-home-1440.png`, `dark-tasks-1440.png`, `dark-agent-1440.png`, `dark-settings-1440.png`, `dark-home-390.png`, `dark-agent-390.png`。
 
 ## Gate state
 
@@ -15,6 +30,7 @@
 - M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS（方向与材质成立）
 - M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
