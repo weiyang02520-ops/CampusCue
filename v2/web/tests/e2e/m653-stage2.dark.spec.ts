@@ -66,7 +66,7 @@ test.describe('M6.5.3 Dark UI Stage 2', () => {
     fs.mkdirSync(darkEvidence, { recursive:true }); await page.setViewportSize({ width:1440, height:900 }); await page.goto('/tasks'); await page.getByRole('button', { name:'新建任务' }).click(); await expect(page.getByRole('dialog', { name:'新建任务' })).toBeVisible(); await page.screenshot({ path:path.join(darkEvidence, 'dark-dialog-1440.png'), fullPage:true })
     await page.setViewportSize({ width:390, height:844 }); await page.goto('/'); await page.getByRole('button', { name:'更多' }).click(); await expect(page.getByRole('dialog', { name:'更多' })).toBeVisible(); await page.screenshot({ path:path.join(darkEvidence, 'dark-more-sheet-390.png'), fullPage:false })
     await page.emulateMedia({ colorScheme:'dark' }); await page.goto('/settings'); await page.getByRole('button', { name:'跟随系统' }).click(); await page.getByRole('button', { name:'保存设置' }).click(); await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-    await page.emulateMedia({ colorScheme:'light' }); await expect.poll(() => page.locator('html').getAttribute('data-theme')).toBe('light'); await page.reload(); await expect(page.locator('html')).toHaveAttribute('data-theme', 'light'); await expect(page.locator('.appearance-picker button.active')).toHaveText('跟随系统')
+    await page.emulateMedia({ colorScheme:'light' }); await expect.poll(() => page.locator('html').getAttribute('data-theme')).toBe('light'); await page.reload(); await expect(page.locator('html')).toHaveAttribute('data-theme', 'light'); await expect(page.locator('.visual-style-option.active')).toHaveText(/跟随系统/)
     const axe = await new AxeBuilder({ page }).analyze(); expect(axe.violations).toEqual([])
   })
 

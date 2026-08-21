@@ -37,7 +37,7 @@ test.describe('M6.5.3 Dark UI Stage 1', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(({ initToken }) => {
       localStorage.setItem('campuscue-api-token', initToken)
-      if (!localStorage.getItem('campuscue-theme')) localStorage.setItem('campuscue-theme', 'dark')
+      if (!localStorage.getItem('campuscue-theme')) localStorage.setItem('campuscue-theme', 'dark'); if (!localStorage.getItem('campuscue-visual-style')) localStorage.setItem('campuscue-visual-style', 'dark')
     }, { initToken: token })
     await mockApi(page)
   })
@@ -107,14 +107,15 @@ test.describe('M6.5.3 Dark UI Stage 1', () => {
   })
 
   test('keeps Dark persistence and Glass fallback independent', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.getByRole('button', { name: '切换浅色模式' })).toBeVisible()
-    await page.reload()
+    await page.goto('/settings')
+    await page.getByRole('button', { name: '深色界面' }).click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-    await page.getByRole('button', { name: '切换浅色模式' }).click()
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark')
     await page.reload()
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark')
+    await expect(page.locator('html')).toHaveAttribute('data-visual-theme', 'dark')
+    await page.getByRole('button', { name: '玻璃拟态' }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+    await page.reload()
+    await expect(page.locator('html')).toHaveAttribute('data-visual-theme', 'glass')
     await page.goto('/agent')
     const lightMaterial = await page.locator('.agent-shell').evaluate(node => {
       const style = getComputedStyle(node)

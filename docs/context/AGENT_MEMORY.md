@@ -18,23 +18,23 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-21 · M6.5.3 Dark Stage 2 checkpoint）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-21 · M6.5.4.1 Theme UX checkpoint）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
+| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；NEUMORPHISM MATERIAL = PASS；M6.5.4.1 THEME UX = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**：M1-M4 完成；M5 FastAPI REST + SSE + schema v3；M5.1.1 route cleanup complete locally；Legacy frozen。最新本地 checkpoint 证据：**488 tests passed**（2026-08-20，fresh `.venv-m511fresh` non-editable） |
 | REAL ENV | 已验证：M1.2 + M2b.2 QQ 全链路；M4.2 Real Provider Tool Call PASS；M4.3 Real QQ Agent E2E PASS；M5 本地 uvicorn HTTP smoke PASS（2026-08-19） |
 
-## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-21 · M6.5.3 Dark Stage 2 checkpoint）
+## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-21 · M6.5.4.1 Theme UX checkpoint）
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
-- **下一步**：External visual review of `.ai-handoff/visual/m653-stage2/dark/` and comparison pairs against preserved Glass/Stage 1 evidence; do not declare DARK FINAL/GLASS FINAL/M6 FINAL, authorize Neumorphism or M7 from local evidence alone。
+- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**NEUMORPHISM MATERIAL = PASS**；**M6.5.4.1 THEME UX = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+- **下一步**：External review of `.ai-handoff/visual/m6541/` and theme semantics; do not declare any theme Final or M6 FINAL, and do not authorize M7 from local evidence alone。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
 - **M4.2 real provider fact**：真实 OpenAI 兼容端点（DeepSeek）tool-call 轮次可能同时返回辅助 content + tool_calls——tool_calls 权威、辅助文本丢弃（`_parse_ok` 最小修复，M4.2）。
@@ -246,3 +246,6 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **[REPO_CONFIRMED][M6.5.4]**：CampusCue 提供三套完整视觉材质：Glassmorphism、Dark UI、Neumorphism。前端 `data-visual-theme` 与后端 `system/light/dark` appearance contract 分离，Neumorphism 不新增 Settings schema/API enum；本地持久化仅保存视觉风格。
 - **[DESIGN_DECISION][M6.5.4]**：Neu 使用 controlled same-material raised/inset language；primary actions 保留明确 brand color；高频 task/message rows 与 calendar cells 大部分 flat，触感集中在 shell、workspace、controls、context 和 selected/pressed surfaces。
 - **[TEST_CONFIRMED][M6.5.4]**：Neu focused Playwright 4；Dark Stage 2 4；Dark Stage 1 2；M6 16；Glass 2；real integration 2；WebUI typecheck/build/Vitest；fresh installed-package V2 488；compileall/Anti-AstrBot/diff-check/secret+PII/axe/overflow/console/system-theme PASS。当前仅等待外部视觉审核，任何主题 Final 与 M6 Final 均未声明，M7 未授权。
+- **[EXTERNAL_REVIEW][M6.5.4.1]**：Neumorphism material implementation = PASS；Final blocker 是双重 Appearance/Visual Style 控件造成的语义冲突。
+- **[PRODUCT_DECISION][THEME_UX]**：CampusCue 只暴露一个用户选择器：System / Glassmorphism / Dark UI / Neumorphism。System 在 OS light 下解析为 Glass、OS dark 下解析为 Dark；显式材质不随 OS 改变。
+- **[ARCHITECTURE_DECISION][THEME_UX]**：backend canonical theme 仍为 `system/light/dark`；frontend `campuscue-visual-style` 永不发送 `neumorphism`，映射为 System→system、Glass→light、Dark→dark、Neu→light。

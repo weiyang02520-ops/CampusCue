@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6.5.4 Neumorphism Checkpoint）
+## 当前（M6.5.4.1 Theme UX Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -18,11 +18,13 @@
 - **M6.5.3 DARK STAGE 1 = PASS**（本地回归与基线保留）
 - **M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（Stage 2 implementation complete）
 - **M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（Stage 1/2 implementation complete）
+- **NEUMORPHISM MATERIAL = PASS**（source/architecture review）
+- **M6.5.4.1 THEME UX = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 - **GLASS FINAL = NOT YET DECLARED**
 - **DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM FINAL = NOT YET DECLARED**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
-- 本 checkpoint：完成 Neu 的独立前端材质系统与 Calendar/Messages/Connections/Providers/Settings/Dialog/Bottom Sheet/Toast/Empty/Loading/Offline/Reconnecting 的 1440/1024/390 证据；保留 Glass/Dark 基线，不改 IA、数据结构、业务流程、API contract、router、backend 或 schema。`data-theme` 继续承载 `system/light/dark`，`data-visual-theme` 承载 `glass/dark/neumorphism`。
+- 本 checkpoint：修复主题语义冲突。用户只选择 `跟随系统 / 玻璃拟态 / 深色界面 / 新拟态`；System 解析为 Glass/Dark，显式材质形成确定的 `data-theme` + `data-visual-theme` 组合；保留三套材质与证据，不改 IA、业务流程、API contract、router、backend 或 schema。
 
 ## M6.1 修复范围
 

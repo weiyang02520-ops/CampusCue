@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-21 · M6.5.3 Dark Stage 2 checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-21 · M6.5.4.1 Theme UX checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；NEUMORPHISM MATERIAL = PASS；M6.5.4.1 THEME UX = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -511,3 +511,7 @@ User
 - **[REPO_CONFIRMED][M6.5.4]**：Neumorphism implementation complete awaiting external visual review。三材质切换与本地持久化已覆盖；Neu 生产样式无 Glass 核心依赖，使用不透明同材质 canvas、统一光源、克制 raised/inset 阴影，并保持内容密度与对比度优先。
 - **[ARCHITECTURE_DECISION][THEMES]**：前端视觉风格与 canonical backend appearance contract 分离：`data-theme` 继续表达 `system/light/dark`，`data-visual-theme` 表达 `glass/dark/neumorphism`；不为 Neumorphism 发明后端 theme enum，不改 API/schema。
 - **[CURRENT_GATE][M6.5.4]**：`M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW`；`NEUMORPHISM FINAL`、`GLASS FINAL`、`DARK FINAL`、`M6 FINAL` 均 `NOT YET DECLARED`；`M7 = NOT_AUTHORIZED`。
+- **[EXTERNAL_REVIEW][M6.5.4.1]**：Neumorphism material implementation = PASS；Final blocker was conflicting user-facing Appearance Mode and Visual Style controls，已收敛为单一 System / Glass / Dark / Neumorphism selector。
+- **[PRODUCT_DECISION][THEME_UX]**：System resolves to Glass on light OS appearance and Dark on dark OS appearance；explicit Glass/Dark/Neu are OS-independent；reload persistence and live System OS switching are required.
+- **[ARCHITECTURE_DECISION][THEME_UX]**：Canonical backend enum remains `system/light/dark`; frontend-only material preference persists locally and never sends `theme=neumorphism`。
+- **[CURRENT_GATE][M6.5.4.1]**：`M6.5.4.1 THEME UX = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`NEUMORPHISM MATERIAL = PASS`；`GLASS FINAL`、`DARK FINAL`、`NEUMORPHISM FINAL`、`M6 FINAL` 均 `NOT YET DECLARED`；`M7 = NOT_AUTHORIZED`。

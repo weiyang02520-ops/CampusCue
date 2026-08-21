@@ -85,12 +85,13 @@ test.describe('M6.5.2 Glass refinement', () => {
   })
 
   test('keeps theme persistence and local fallback behavior intact', async ({ page }) => {
-    await page.goto('/')
-    await page.getByRole('button', { name: '切换深色模式' }).click()
+    await page.goto('/settings')
+    await page.getByRole('button', { name: '深色界面' }).click()
     await expect.poll(() => page.locator('html').getAttribute('data-theme')).toBe('dark')
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-    await page.getByRole('button', { name: '切换浅色模式' }).click()
+    await page.getByRole('button', { name: '玻璃拟态' }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
     await page.goto('/agent')
     await page.locator('.app-shell').evaluate(node => node.classList.add('glass-no-filter'))
     const fallback = await page.locator('.agent-shell').evaluate(node => {

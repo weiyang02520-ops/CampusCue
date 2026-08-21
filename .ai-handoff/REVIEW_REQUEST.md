@@ -1,18 +1,18 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.5.4 Neumorphism — External Review Request
+# CampusCue M6.5.4.1 Theme UX — External Review Request
 
 ## Current checkpoint
 
 - M6.5.2 Glass baseline tag: `m6.5.2-glass-baseline` → `63d7aeb4177b61bc73bffa336d6743e50c780559`。
 - M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
 - M6.5.3 Dark Stage 1 is **PASS**；Dark implementation remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
-- M6.5.4 Neumorphism is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
+- M6.5.4 Neumorphism material implementation is **PASS**；M6.5.4.1 Theme UX is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**。
 - Neumorphism Final、Dark Final、Glass Final、M6 Final are **NOT YET DECLARED**；M7 is **NOT_AUTHORIZED**。
 
-## M6.5.4 Neumorphism review target
+## M6.5.4.1 Theme UX review target
 
-Review `.ai-handoff/visual/m654/neumorphism/` at 1440, 1024 and 390 widths, plus `.ai-handoff/visual/m654/compare/` three-material pairs. Confirm the opaque same-material canvas, consistent top-left light / bottom-right dark shadow direction, restrained raised/inset hierarchy, flat task/message/calendar content layers, solid blue primary actions, and clear focus/selected/danger states. Neu production surfaces must have no `backdrop-filter`, transparent glass tint, atmospheric gradient, or glass edge highlight.
+Review `.ai-handoff/visual/m6541/` for the single user-facing selector and resolved-state screenshots. Confirm System resolves to Glass on OS light and Dark on OS dark; explicit Glass, Dark and Neu remain stable when OS preference changes; reload persists; backend payloads remain `system/light/dark` and never contain `neumorphism`. The prior `.ai-handoff/visual/m654/neumorphism/` and `.ai-handoff/visual/m654/compare/` evidence remains the material review set.
 
 Confirm frontend `data-visual-theme` is independent from backend `data-theme` (`system | light | dark`), and that style selection persists locally without changing the Settings API schema. Do not declare Neumorphism Final, Glass Final, Dark Final, M6 Final, or M7 from this checkpoint.
 
