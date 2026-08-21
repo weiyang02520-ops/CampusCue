@@ -18,23 +18,23 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-20 · M6.5.2 Glass checkpoint）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-21 · M6.5.3 Dark Stage 2 checkpoint）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
+| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**：M1-M4 完成；M5 FastAPI REST + SSE + schema v3；M5.1.1 route cleanup complete locally；Legacy frozen。最新本地 checkpoint 证据：**488 tests passed**（2026-08-20，fresh `.venv-m511fresh` non-editable） |
 | REAL ENV | 已验证：M1.2 + M2b.2 QQ 全链路；M4.2 Real Provider Tool Call PASS；M4.3 Real QQ Agent E2E PASS；M5 本地 uvicorn HTTP smoke PASS（2026-08-19） |
 
-## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-20 · M6.5.2 Glass checkpoint）
+## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-21 · M6.5.3 Dark Stage 2 checkpoint）
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
-- **下一步**：External visual review of `.ai-handoff/visual/m652/glass/` against the preserved m651 baseline; do not expand Stage 2, Dark/Neumorphism, or declare GLASS FINAL/M6 FINAL from local evidence alone。
+- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+- **下一步**：External visual review of `.ai-handoff/visual/m653-stage2/dark/` and comparison pairs against preserved Glass/Stage 1 evidence; do not declare DARK FINAL/GLASS FINAL/M6 FINAL, authorize Neumorphism or M7 from local evidence alone。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
 - **M4.2 real provider fact**：真实 OpenAI 兼容端点（DeepSeek）tool-call 轮次可能同时返回辅助 content + tool_calls——tool_calls 权威、辅助文本丢弃（`_parse_ok` 最小修复，M4.2）。
@@ -226,7 +226,15 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **[DESIGN_DECISION]**：Dark 是独立 solid-surface productivity language，不是 Glass Dark；使用 deep neutral canvas、raised/floating surfaces、blue context、teal context、contrast-first text；禁止大面积 blur/透明玻璃/atmospheric cyan gradient/white edge highlight。Stage 1 仅 App Shell/Home/Tasks/Agent/Settings selector。
 - **[REPO_CONFIRMED]**：新增 `--dark-*` token system、Dark-only CSS scopes、Glass/Dark visible selector；内部 schema/API/store/router/backend unchanged；mobile Agent composer 增加底栏安全间距。
 - **[VERIFIED]**：Dark focused Playwright **2 passed**（Axe 0、overflow 0、console/page error 0、theme persistence、Glass fallback、mobile composer safety）；M6 **16 passed**；Glass **2 passed**；real integration **2 passed**；typecheck/build/Vitest PASS；证据在 `.ai-handoff/visual/m653/dark/`。
-- **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；DARK FINAL NOT declared；NEUMORPHISM pending；M6 FINAL NOT declared；M7 NOT authorized。STOP for external visual review。
+- **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；DARK FINAL NOT declared；NEUMORPHISM NOT_AUTHORIZED；M6 FINAL NOT declared；M7 NOT authorized。STOP for external visual review。
+
+## 9AM. M6.5.3 DARK UI STAGE 2（2026-08-21）
+
+- **[REPO_CONFIRMED]**：新增 `m6.5.3-dark-stage1-baseline` → `5572811843d3bf5fb3bab5fc6d81f1955ffac7ce`；Stage 1 与 Glass evidence 均保留。
+- **[DESIGN_DECISION]**：Dark Stage 2 扩展至全产品页面和 transient states，继续 solid-surface、contrast-first、无 Dark Glass/neon/glow；Calendar 用连续 grid，Messages 用 list + inspector/sheet，Connections/Providers 收敛低频 actions。
+- **[REPO_CONFIRMED]**：Theme Selector 改为真实 Vue labels `跟随系统 / 玻璃拟态 / 深色界面`；backend contract 仍为 `system/light/dark`；`system` 通过 `prefers-color-scheme` 解析和监听。
+- **[EVIDENCE]**：`.ai-handoff/visual/m653-stage2/dark/` 与 `.ai-handoff/visual/m653-stage2/compare/`，不覆盖 `.ai-handoff/visual/m653/dark/`。
+- **[CURRENT]**：Stage 1 = PASS；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；DARK FINAL/GLASS FINAL/M6 FINAL 未声明；NEUMORPHISM/M7 未授权。STOP for external visual review。
 
 - **M2a.1 运行时事实**：LLMRequest.timeout_s=None 默认（回落 provider 配置）；secret_reference 共享校验 providers/validation.py；Clock 注入 repository 时间戳；DB CHECK 约束（tasks/extractions/provider_configs）；schema 预检零变更（SchemaRefusedError）；186 tests 全绿。
 

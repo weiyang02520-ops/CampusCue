@@ -1,21 +1,21 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.5.3 Dark UI Stage 1 — External Review Request
+# CampusCue M6.5.3 Dark UI Stage 2 — External Review Request
 
 ## Current checkpoint
 
 - M6.5.2 Glass baseline tag: `m6.5.2-glass-baseline` → `63d7aeb4177b61bc73bffa336d6743e50c780559`。
 - M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
-- M6.5.3 Dark is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
-- Dark Final、Glass Final、M6 Final are **NOT YET DECLARED**；Neumorphism is **PENDING**；M7 is **NOT_AUTHORIZED**。
+- M6.5.3 Dark Stage 1 is **PASS**；Stage 2 is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
+- Dark Final、Glass Final、M6 Final are **NOT YET DECLARED**；Neumorphism is **NOT_AUTHORIZED**；M7 is **NOT_AUTHORIZED**。
 
-## M6.5.3 Dark Stage 1 review target
+## M6.5.3 Dark Stage 2 review target
 
-Review `.ai-handoff/visual/m653/dark/` at 1440 and 390 widths. Dark is intentionally an independent solid-surface productivity workspace, not Glass Dark: no large backdrop blur, transparent glass panels, atmospheric cyan gradients, or white edge highlights.
+Review `.ai-handoff/visual/m653-stage2/dark/` at 1440, 1024 and 390 widths, plus `.ai-handoff/visual/m653-stage2/compare/` pairs. Dark is intentionally an independent solid-surface productivity workspace, not Glass Dark: no large backdrop blur, transparent glass panels, atmospheric cyan gradients, neon or white edge highlights.
 
-Focus on low-glare hierarchy and information density: Today direct content, blue Week Focus, flat Upcoming rows, raised neutral Messages, teal AI context, raised Tasks toolbar, flat task rows, deep neutral Agent conversation, raised composer, dark Settings controls, and the visible Glass/Dark selector. Confirm the mobile bottom nav is solid/raised and the Agent composer is not obscured. Do not advance to Stage 2, Neumorphism, Dark Final, M6 Final, or M7 from this local checkpoint.
+Focus on low-glare hierarchy and information density across Home/Tasks/Calendar/Messages/Agent/Connections/Providers/Settings. Confirm Calendar’s continuous grid and selected/today states, Messages list + raised inspector/sheet, restrained connection/provider actions, solid Dialog/Bottom Sheet/Toast, and Empty/Loading/Offline/Reconnecting states. Confirm the Theme Selector has real labels `跟随系统 / 玻璃拟态 / 深色界面`, and `跟随系统` follows `prefers-color-scheme` and persists. Do not declare Dark Final, M6 Final, Neumorphism, or M7 from this local checkpoint.
 
-Evidence: `dark-shell-1440.png`, `dark-home-1440.png`, `dark-tasks-1440.png`, `dark-agent-1440.png`, `dark-settings-1440.png`, `dark-home-390.png`, `dark-agent-390.png`。
+Evidence: `.ai-handoff/visual/m653-stage2/dark/` includes 1440 Home/Tasks/Calendar/Messages/Agent empty+conversation/Connections/Providers/Settings/Dialog, 1024 Tasks/Calendar/Messages/Agent/Settings, and 390 Home/Tasks/Calendar/Messages/Agent empty+conversation/Connections/Providers/Settings/More/Dialog. Comparison pairs are in `.ai-handoff/visual/m653-stage2/compare/`.
 
 ## Gate state
 
@@ -30,8 +30,8 @@ Evidence: `dark-shell-1440.png`, `dark-home-1440.png`, `dark-tasks-1440.png`, `d
 - M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS（方向与材质成立）
 - M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
-- M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
-- GLASS FINAL = NOT YET DECLARED；DARK REVIEW = PENDING；NEUMORPHISM REVIEW = PENDING
+- M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 

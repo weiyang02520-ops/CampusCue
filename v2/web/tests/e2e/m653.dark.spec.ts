@@ -99,8 +99,8 @@ test.describe('M6.5.3 Dark UI Stage 1', () => {
     expect(await page.locator('.theme-picker').count()).toBe(0)
 
     await page.goto('/settings')
-    const labels = await page.locator('.theme-picker button').evaluateAll(buttons => buttons.slice(1).map(button => getComputedStyle(button, '::after').content))
-    expect(labels).toEqual(['"Glass"', '"Dark"'])
+    await expect(page.getByRole('button', { name: '玻璃拟态' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '深色界面' })).toBeVisible()
     const axe = await new AxeBuilder({ page }).analyze()
     expect(axe.violations).toEqual([])
     expect(errors).toEqual([])

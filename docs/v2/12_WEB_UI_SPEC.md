@@ -1,7 +1,14 @@
 # 12_WEB_UI_SPEC.md
 
 > CampusCue V2 WebUI 规格。M0 只设计：信息架构、页面职责、状态归属、交互与响应式规则、设计系统原则。
-> **禁止**：拍具体颜色/渐变/声称视觉漂亮。最终视觉审核由外部模型完成（VISUAL REVIEW REQUIRED BY EXTERNAL MODEL）。
+> **禁止**：拍具体颜色/渐变/声称视觉漂亮。最终视觉审核由外部模型完成（VISUAL REVIEW REQUIRED BY EXTERNAL MODEL）。M6.5.3 Dark Stage 2 的实现记录在交接文档中；本规格只记录行为与状态约束。
+
+## M6.5.3 Dark Stage 2 implementation notes
+
+- Dark 是独立的 solid-surface productivity language，不是 Glass Dark；高频正文保持实色可读，Dialog、Bottom Sheet、Toast、Empty/Loading/Offline/Reconnecting 都必须有清楚的层级和回退。
+- Calendar 使用连续月历 surface，selected/today/outside-month 状态可区分；Messages 使用列表优先，桌面 inspector、移动端 sheet；Connections/Providers 将低频操作收进次级层级。
+- Theme Selector 使用真实语义标签 `跟随系统 / 玻璃拟态 / 深色界面`；持久化值仍为后端 contract `system | light | dark`，`system` 根据 `prefers-color-scheme` 解析并监听变化。
+- Dark Stage 2 不改变 API、schema、backend、业务流程或 Glass evidence；证据写入独立 `.ai-handoff/visual/m653-stage2/`。
 
 ## 信息架构
 

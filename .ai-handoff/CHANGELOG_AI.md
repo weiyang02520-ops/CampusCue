@@ -378,3 +378,12 @@
 - **证据**：`.ai-handoff/visual/m653/dark/` 七张 Stage 1 screenshots；新增 Dark route-level Playwright regression。
 - **验收**：Dark focused 2 passed；M6 focused 16；M6.5.2 Glass focused 2；real integration 2；typecheck/build/Vitest/Axe/overflow/console/theme persistence/Glass fallback/mobile composer safety PASS。
 - **Gate**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## 2026-08-21 · M6.5.3 DARK UI STAGE 2
+
+- **基线**：创建并推送 annotated tag `m6.5.3-dark-stage1-baseline`，保护 Stage 1 commit `5572811843d3bf5fb3bab5fc6d81f1955ffac7ce`；Glass baseline `m6.5.2-glass-baseline` 保持不变。
+- **实现**：Dark solid language 扩展至 Calendar、Messages、Connections、Providers、Settings、Dialog、Bottom Sheet、Toast、Empty/Loading/Offline/Reconnecting；补齐连续 Calendar grid、Messages master-detail/sheet、低频 action hierarchy 与 1440/1024/390 responsive 状态。
+- **主题语义**：移除 Theme Selector 的 nth-child CSS 文本伪装，使用真实 `跟随系统 / 玻璃拟态 / 深色界面` 标签；保留后端 `system/light/dark` contract；`system` 通过 `prefers-color-scheme` 解析并监听变化。
+- **证据**：`.ai-handoff/visual/m653-stage2/dark/` 与 `.ai-handoff/visual/m653-stage2/compare/`，不覆盖 `.ai-handoff/visual/m653/dark/`。
+- **验收**：Stage 2 Playwright 4；Stage 1 Dark 2；M6 16；Glass 2；real M5 integration 2；WebUI typecheck/build/Vitest；fresh installed-package V2 488；compileall/Anti-AstrBot/diff-check/secret+PII/axe/overflow/console/system-theme PASS。
+- **Gate**：**M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = NOT_AUTHORIZED**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。

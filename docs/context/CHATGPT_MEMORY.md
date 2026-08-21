@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-20 · M6.5.2 Glass checkpoint）
+## 1. CURRENT TRUTH（Last Updated 2026-08-21 · M6.5.3 Dark Stage 2 checkpoint）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = PENDING；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -499,4 +499,12 @@ User
 - **[DESIGN_DECISION]**：Dark 独立于 Glass，采用低眩光 solid-surface productivity workspace；层级由 luminance/tint/spacing/elevation 表达，只有 focus/selected/primary/小 AI signal 使用克制 accent；Stage 1 只做 App Shell、Home、Tasks、Agent、Settings selector，Stage 2 暂缓。
 - **[REPO_CONFIRMED]**：新增 dark token system 与 Dark scoped CSS；Home/Tasks/Agent/Settings Dark surfaces 完成；selector 显示 Glass/Dark 但内部仍兼容 light/dark；无 backend/API/store/router/schema/business logic 变化。
 - **[TEST_CONFIRMED]**：Dark focused 2、M6 focused 16、M6.5.2 Glass focused 2、real integration 2；typecheck/build/Vitest/Axe/overflow/console/theme persistence/Glass fallback/mobile composer safety PASS；Dark evidence `.ai-handoff/visual/m653/dark/`。
-- **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；DARK FINAL、GLASS FINAL、M6 FINAL NOT declared；NEUMORPHISM pending；M7 NOT authorized。STOP for external visual review。
+- **[CURRENT]**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；DARK FINAL、GLASS FINAL、M6 FINAL NOT declared；NEUMORPHISM/M7 NOT_AUTHORIZED。STOP for external visual review。
+
+## 9AM. MEMORY DELTA（M6.5.3 Dark UI Stage 2，2026-08-21）
+
+- **[REPO_CONFIRMED]**：Stage 2 基于 `5572811843d3bf5fb3bab5fc6d81f1955ffac7ce`，并创建 `m6.5.3-dark-stage1-baseline` rollback tag；Glass 与 Stage 1 evidence 不覆盖。
+- **[DESIGN_DECISION]**：Dark Stage 2 完成 Calendar/Messages/Connections/Providers/Settings、Dialog/Sheet/Toast/Empty/Loading/Offline/Reconnecting；Dark 继续独立于 Glass，不进入 Neumorphism。
+- **[REPO_CONFIRMED]**：Theme Selector 不再依赖 nth-child CSS 伪文案；实际 labels 为 `跟随系统 / 玻璃拟态 / 深色界面`；`system` media sync 与 persistence 已覆盖。
+- **[EVIDENCE]**：`.ai-handoff/visual/m653-stage2/dark/` 和 `.ai-handoff/visual/m653-stage2/compare/`。
+- **[CURRENT]**：Stage 1 PASS；M6.5.3 Dark implementation complete awaiting external visual review；Dark Final、Glass Final、M6 Final 未声明；Neumorphism/M7 未授权。STOP。

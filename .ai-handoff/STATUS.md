@@ -2,7 +2,7 @@
 
 > 当前状态摘要。详细内容见 canonical HANDOFF.md 与 PROJECT_STATE.md。
 
-- 阶段：**M6.5.3 DARK UI STAGE 1（IMPLEMENTATION COMPLETE，AWAITING EXTERNAL VISUAL REVIEW）**
+- 阶段：**M6.5.3 DARK UI STAGE 2（IMPLEMENTATION COMPLETE，AWAITING EXTERNAL VISUAL REVIEW）**
 - **M4 FINAL = PASS**
 - **M5 FINAL = PASS**（External ChatGPT）
 - **M6 = CHANGES_REQUESTED（已按外部审核修复）**
@@ -14,8 +14,8 @@
 - **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**（方向与材质成立）
 - **M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
-- **M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
-- **GLASS FINAL = NOT YET DECLARED**；**DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = PENDING**
+- **M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
+- **GLASS FINAL = NOT YET DECLARED**；**DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = NOT_AUTHORIZED**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
 - M5 REST/SSE：PASS（Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System/Backup/Restore/Import/Export/Auth/Health）
@@ -32,3 +32,4 @@
 - M6.5.1 Glass（historical）：只返工 App Shell/Home/Tasks/Agent；Atmospheric Canvas + `glass-subtle/panel/raised/floating` + Backdrop/Tint/Blur/Edge/Shadow/Contrast/Fallback；Glass material test 1 passed；证据 `.ai-handoff/visual/m651/glass/`；方向已通过外部视觉审核。
 - M6.5.2 Glass：降低 backdrop、统一 Base/Primary/Context/Raised/Floating semantic tiers；Home Today 去嵌套白卡；Tasks toolbar/context/rows 与本地化日期；Agent utility/prompt/composer/mobile refinement；Stage 1 证据 `.ai-handoff/visual/m652/glass/`；等待外部 Glass 视觉审核。
 - M6.5.3 Dark：Stage 1 独立 solid-surface Dark UI 覆盖 App Shell/Home/Tasks/Agent/Settings selector；7 张 evidence 位于 `.ai-handoff/visual/m653/dark/`；Dark focused 2、M6 focused 16、Glass focused 2、real integration 2、Axe/overflow/console/theme/mobile composer PASS；等待外部 Dark 视觉审核。基线 `m6.5.2-glass-baseline` 已推送。
+- M6.5.3 Dark Stage 2：完成 Calendar/Messages/Connections/Providers/Settings、Dialog/Bottom Sheet/Toast/Empty/Loading/Offline/Reconnecting 与 1440/1024/390 responsive evidence；新增 `.ai-handoff/visual/m653-stage2/dark/` 和 `.ai-handoff/visual/m653-stage2/compare/`，语义 Theme Selector + `system` media sync；Stage 1 = PASS，Dark implementation complete awaiting external visual review。

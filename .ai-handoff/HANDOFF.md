@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6.5.3 Dark UI Stage 1 Checkpoint）
+## 当前（M6.5.3 Dark UI Stage 2 Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -15,12 +15,13 @@
 - **M6.5 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**（方向与材质成立）
 - **M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
-- **M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
+- **M6.5.3 DARK STAGE 1 = PASS**（本地回归与基线保留）
+- **M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（Stage 2 implementation complete）
 - **GLASS FINAL = NOT YET DECLARED**
-- **DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = PENDING**
+- **DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = NOT_AUTHORIZED**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
-- 本 checkpoint：在 M6.4 信息分层上完成 controlled visual depth；玻璃拟态仅用于局部上下文/浮层/焦点层，并提供实色回退；未改 IA、数据结构、业务流程、API contract、store、router、backend 或 schema。
+- 本 checkpoint：完成 Dark Stage 2 的 Calendar/Messages/Connections/Providers/Settings/Dialog/Bottom Sheet/Toast/Empty/Loading/Offline/Reconnecting 与 1440/1024/390 响应式证据；保留 Glass 基线，不改 IA、数据结构、业务流程、API contract、router、backend 或 schema。主题选择器使用真实语义标签，`system` 按 `prefers-color-scheme` 解析。
 
 ## M6.1 修复范围
 
@@ -92,6 +93,14 @@
 - **证据**：新增 `.ai-handoff/visual/m653/dark/` 七张 Stage 1 screenshots。
 - **验证**：Dark focused Playwright 2 passed（Axe 0、responsive overflow 0、console/page error 0、theme persistence、Glass fallback、mobile composer safety）；M6 focused 16 passed；M6.5.2 Glass focused 2 passed；real integration 2 passed；typecheck/build/Vitest PASS。
 - **Gate**：**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## M6.5.3 Dark UI Stage 2
+
+- **实现**：Calendar、Messages、Connections、Providers、Settings、Dialog、Bottom Sheet、Toast、Empty/Loading/Offline/Reconnecting 的 Dark solid-surface 收口；补齐 1440/1024/390 evidence 与 Glass/Dark comparison。
+- **主题**：Theme Selector 使用真实 `跟随系统 / 玻璃拟态 / 深色界面` 标签；后端值保持 `system/light/dark`；`system` 由 `prefers-color-scheme` 解析、监听并持久化。
+- **证据**：`.ai-handoff/visual/m653-stage2/dark/`、`.ai-handoff/visual/m653-stage2/compare/`；不覆盖 Stage 1 或 Glass evidence。
+- **验证**：Stage 2 Playwright **4 passed**；Stage 1 Dark **2 passed**；M6 **16 passed**；Glass **2 passed**；real M5 integration **2 passed**；typecheck/build/Vitest **4 passed**；fresh installed-package V2 **488 passed**；compileall/Anti-AstrBot/diff-check/secret+PII/axe/overflow/console/system-theme PASS。
+- **Gate**：Stage 1 = **PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = NOT_AUTHORIZED**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
 
 ## Verification（Workspace Agent local evidence）
 
