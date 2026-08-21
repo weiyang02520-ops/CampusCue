@@ -1,13 +1,20 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.5.3 Dark UI Stage 2 — External Review Request
+# CampusCue M6.5.4 Neumorphism — External Review Request
 
 ## Current checkpoint
 
 - M6.5.2 Glass baseline tag: `m6.5.2-glass-baseline` → `63d7aeb4177b61bc73bffa336d6743e50c780559`。
 - M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
-- M6.5.3 Dark Stage 1 is **PASS**；Stage 2 is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
-- Dark Final、Glass Final、M6 Final are **NOT YET DECLARED**；Neumorphism is **NOT_AUTHORIZED**；M7 is **NOT_AUTHORIZED**。
+- M6.5.3 Dark Stage 1 is **PASS**；Dark implementation remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
+- M6.5.4 Neumorphism is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
+- Neumorphism Final、Dark Final、Glass Final、M6 Final are **NOT YET DECLARED**；M7 is **NOT_AUTHORIZED**。
+
+## M6.5.4 Neumorphism review target
+
+Review `.ai-handoff/visual/m654/neumorphism/` at 1440, 1024 and 390 widths, plus `.ai-handoff/visual/m654/compare/` three-material pairs. Confirm the opaque same-material canvas, consistent top-left light / bottom-right dark shadow direction, restrained raised/inset hierarchy, flat task/message/calendar content layers, solid blue primary actions, and clear focus/selected/danger states. Neu production surfaces must have no `backdrop-filter`, transparent glass tint, atmospheric gradient, or glass edge highlight.
+
+Confirm frontend `data-visual-theme` is independent from backend `data-theme` (`system | light | dark`), and that style selection persists locally without changing the Settings API schema. Do not declare Neumorphism Final, Glass Final, Dark Final, M6 Final, or M7 from this checkpoint.
 
 ## M6.5.3 Dark Stage 2 review target
 
@@ -31,7 +38,7 @@ Evidence: `.ai-handoff/visual/m653-stage2/dark/` includes 1440 Home/Tasks/Calend
 - M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS（方向与材质成立）
 - M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
-- GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED
+- GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 

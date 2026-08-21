@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -508,3 +508,6 @@ User
 - **[REPO_CONFIRMED]**：Theme Selector 不再依赖 nth-child CSS 伪文案；实际 labels 为 `跟随系统 / 玻璃拟态 / 深色界面`；`system` media sync 与 persistence 已覆盖。
 - **[EVIDENCE]**：`.ai-handoff/visual/m653-stage2/dark/` 和 `.ai-handoff/visual/m653-stage2/compare/`。
 - **[CURRENT]**：Stage 1 PASS；M6.5.3 Dark implementation complete awaiting external visual review；Dark Final、Glass Final、M6 Final 未声明；Neumorphism/M7 未授权。STOP。
+- **[REPO_CONFIRMED][M6.5.4]**：Neumorphism implementation complete awaiting external visual review。三材质切换与本地持久化已覆盖；Neu 生产样式无 Glass 核心依赖，使用不透明同材质 canvas、统一光源、克制 raised/inset 阴影，并保持内容密度与对比度优先。
+- **[ARCHITECTURE_DECISION][THEMES]**：前端视觉风格与 canonical backend appearance contract 分离：`data-theme` 继续表达 `system/light/dark`，`data-visual-theme` 表达 `glass/dark/neumorphism`；不为 Neumorphism 发明后端 theme enum，不改 API/schema。
+- **[CURRENT_GATE][M6.5.4]**：`M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW`；`NEUMORPHISM FINAL`、`GLASS FINAL`、`DARK FINAL`、`M6 FINAL` 均 `NOT YET DECLARED`；`M7 = NOT_AUTHORIZED`。

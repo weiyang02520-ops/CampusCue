@@ -25,7 +25,8 @@
 - M6.5.3 DARK STAGE 1 = PASS
 - M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW (Stage 2 implementation complete)
 - GLASS FINAL = NOT YET DECLARED
-- DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED
+- M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
+- NEUMORPHISM FINAL = NOT YET DECLARED；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED
 - M6 FINAL = NOT YET DECLARED
 - M7 = NOT_AUTHORIZED
 
@@ -45,6 +46,7 @@
 - **M6.5.2 Glass Refinement & Productization（本轮）**：按外部 Glass PASS 收口 backdrop、semantic material tiers、Agent utility/composer、Home empty state、Tasks toolbar/context/ISO date、mobile separation；新增 `.ai-handoff/visual/m652/glass/`，不改 backend/API/store/router/schema/business logic。
 - **M6.5.3 Dark UI Stage 1（本轮）**：以独立 solid-surface productivity language 完成 App Shell、Home、Tasks、Agent、Settings selector；新增 dark token system、Dark evidence 与 route-level visual regression；不改 backend/API/store/router/schema/business logic。基线 tag：`m6.5.2-glass-baseline`。
 - **M6.5.3 Dark UI Stage 2（本轮）**：扩展 Calendar、Messages、Connections、Providers、Settings、Dialog、Bottom Sheet、Toast、Empty/Loading/Offline/Reconnecting，并补齐 1440/1024/390 evidence 与 Glass/Dark comparison；移除 Theme Selector CSS nth-child 文本伪装，`system` 正确跟随 `prefers-color-scheme`；不改 backend/API/store/router/schema/business logic。Stage 1 = PASS；Dark implementation complete awaiting external visual review。
+- **M6.5.4 Neumorphism（本轮）**：新增前端独立 `data-visual-theme` 材质选择，与后端 `data-theme` 的 `system/light/dark` 外观契约分离；完成同材质 canvas、定向双阴影、raised/inset hierarchy、平坦高频内容层、Settings 风格选择器与全页面响应式 Neu implementation；不改 backend/API/schema/Agent/tasks logic/IA。
 
 ## verified (Workspace Agent local evidence)
 
@@ -63,6 +65,7 @@
 - M6.5.1 Glass：typecheck/build PASS；focused Playwright **16 passed**；Glass material test **1 passed**；axe 0；m651 core evidence PASS；prior m65/m64 evidence preserved。
 - M6.5.2 Glass：typecheck/build PASS；Vitest **4 passed**；focused refinement **2 passed**；M6 focused **16 passed**；M6.5.1 regression **1 passed**；real integration **2 passed**；fresh V2 **488 passed**；axe 0；responsive overflow/console/theme/fallback PASS；Stage 1 evidence `.ai-handoff/visual/m652/glass/`；m651 evidence restored from annotated baseline tag。
 - M6.5.3 Dark：Stage 1 = PASS；Stage 2 Playwright **4 passed** covers 1440/1024/390, dialog/sheet, system-theme sync, Axe, overflow and console errors；Stage 1 evidence `.ai-handoff/visual/m653/dark/` 与 Stage 2 evidence `.ai-handoff/visual/m653-stage2/` 独立保留；m652 Glass evidence restored after regression capture。
+- M6.5.4 Neumorphism：focused Playwright **4 passed**；Stage 1/2 evidence 位于 `.ai-handoff/visual/m654/neumorphism/`，三主题对比位于 `.ai-handoff/visual/m654/compare/`；M6 16、Dark Stage 2 4、Dark Stage 1 2、Glass 2、real integration 2；typecheck/build/Vitest 4；fresh installed-package V2 **488 passed**；compileall/Anti-AstrBot/diff-check/secret+PII/axe/overflow/console/system-theme PASS。
 
 ## real_environment
 
@@ -77,7 +80,7 @@
 
 ## next_gate
 
-External visual review of M6.5.2 Glass and M6.5.3 Dark Stage 2 evidence is required。GLASS FINAL、DARK FINAL、M6 FINAL must not be declared by this checkpoint；Neumorphism and M7 are not authorized。
+External visual review of M6.5.4 Neumorphism evidence is required。NEUMORPHISM FINAL、GLASS FINAL、DARK FINAL、M6 FINAL must not be declared by this checkpoint；M7 is not authorized。
 
 ## architecture_decisions
 

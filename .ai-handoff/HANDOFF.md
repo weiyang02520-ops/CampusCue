@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6.5.3 Dark UI Stage 2 Checkpoint）
+## 当前（M6.5.4 Neumorphism Checkpoint）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -17,11 +17,12 @@
 - **M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**
 - **M6.5.3 DARK STAGE 1 = PASS**（本地回归与基线保留）
 - **M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（Stage 2 implementation complete）
+- **M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（Stage 1/2 implementation complete）
 - **GLASS FINAL = NOT YET DECLARED**
-- **DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM = NOT_AUTHORIZED**
+- **DARK FINAL = NOT YET DECLARED**；**NEUMORPHISM FINAL = NOT YET DECLARED**
 - **M6 FINAL = NOT YET DECLARED**
 - **M7 = NOT_AUTHORIZED**
-- 本 checkpoint：完成 Dark Stage 2 的 Calendar/Messages/Connections/Providers/Settings/Dialog/Bottom Sheet/Toast/Empty/Loading/Offline/Reconnecting 与 1440/1024/390 响应式证据；保留 Glass 基线，不改 IA、数据结构、业务流程、API contract、router、backend 或 schema。主题选择器使用真实语义标签，`system` 按 `prefers-color-scheme` 解析。
+- 本 checkpoint：完成 Neu 的独立前端材质系统与 Calendar/Messages/Connections/Providers/Settings/Dialog/Bottom Sheet/Toast/Empty/Loading/Offline/Reconnecting 的 1440/1024/390 证据；保留 Glass/Dark 基线，不改 IA、数据结构、业务流程、API contract、router、backend 或 schema。`data-theme` 继续承载 `system/light/dark`，`data-visual-theme` 承载 `glass/dark/neumorphism`。
 
 ## M6.1 修复范围
 

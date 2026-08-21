@@ -23,7 +23,7 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
+| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.1 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**：M1-M4 完成；M5 FastAPI REST + SSE + schema v3；M5.1.1 route cleanup complete locally；Legacy frozen。最新本地 checkpoint 证据：**488 tests passed**（2026-08-20，fresh `.venv-m511fresh` non-editable） |
@@ -33,7 +33,7 @@
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM = NOT_AUTHORIZED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
+- **当前状态**：M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.3 DARK STAGE 1 = PASS**；**M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED；M6 FINAL = NOT YET DECLARED；M7 = NOT_AUTHORIZED。
 - **下一步**：External visual review of `.ai-handoff/visual/m653-stage2/dark/` and comparison pairs against preserved Glass/Stage 1 evidence; do not declare DARK FINAL/GLASS FINAL/M6 FINAL, authorize Neumorphism or M7 from local evidence alone。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
@@ -243,3 +243,6 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **M2b.1.1 Hardening 事实（外部 PASS_WITH_FIXES 修复轮）**：secret env 缺失 → CONFIG_ERROR 0 transport；Extraction 审计带 provider_type+model（BaseProvider.model 公共属性）；model_said_none 保留 confidence/reason 不存输入 context；fallback 仅 STRUCTURED_OUTPUT_UNSUPPORTED（新错误码）；ContextCollector resize；显式年份不 auto-roll；CAMPUSCUE_ENV=test + pipeline + 无 DB_PATH → ConfigError；TaskService 无 threshold/死函数；dedup_key 唯一 helper build_dedup_key()；prompt-injection 防御纵深（消息永在 user role）。
 
 - **M2b.1.2 Fallback 契约事实（外部最终复核修复轮）**：400 分类——STRUCTURED_OUTPUT_UNSUPPORTED 仅结构化特定证据（json_schema/response_format/structured_output 显式引用），generic "unsupported" 单独出现 → INVALID_REQUEST 不 fallback；主/回退共享单一 canonical `build_system_prompt(json_only)`（语义+安全契约相同，仅输出强制不同）；fallback user 消息 == primary（上下文/信号/时间戳/当前消息保留）；whitespace-only secret → CONFIG_ERROR 0 transport（strip 只用于判空，合法 secret 不 strip）；no-deadline 双方课程已知不同 → 不 dedup（`build_dedup_key` course 已知才入键）。
+- **[REPO_CONFIRMED][M6.5.4]**：CampusCue 提供三套完整视觉材质：Glassmorphism、Dark UI、Neumorphism。前端 `data-visual-theme` 与后端 `system/light/dark` appearance contract 分离，Neumorphism 不新增 Settings schema/API enum；本地持久化仅保存视觉风格。
+- **[DESIGN_DECISION][M6.5.4]**：Neu 使用 controlled same-material raised/inset language；primary actions 保留明确 brand color；高频 task/message rows 与 calendar cells 大部分 flat，触感集中在 shell、workspace、controls、context 和 selected/pressed surfaces。
+- **[TEST_CONFIRMED][M6.5.4]**：Neu focused Playwright 4；Dark Stage 2 4；Dark Stage 1 2；M6 16；Glass 2；real integration 2；WebUI typecheck/build/Vitest；fresh installed-package V2 488；compileall/Anti-AstrBot/diff-check/secret+PII/axe/overflow/console/system-theme PASS。当前仅等待外部视觉审核，任何主题 Final 与 M6 Final 均未声明，M7 未授权。

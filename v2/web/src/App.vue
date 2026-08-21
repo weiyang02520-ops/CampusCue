@@ -7,7 +7,7 @@ import { useResourcesStore } from './stores/resources'
 import { useSse } from './composables/useSse'
 import AppShell from './components/AppShell.vue'
 const app = useAppStore(); const tasks = useTasksStore(); const resources = useResourcesStore(); const route = useRoute(); useSse()
-watch(() => app.resolvedTheme, value => document.documentElement.dataset.theme = value, { immediate: true })
+watch(() => [app.surfaceTheme, app.visualStyle], ([surfaceTheme, visualStyle]) => { document.documentElement.dataset.theme = surfaceTheme; document.documentElement.dataset.visualTheme = visualStyle }, { immediate: true })
 let stopSystemThemeSync: () => void = () => undefined
 onMounted(() => { stopSystemThemeSync = app.startSystemThemeSync(); void tasks.load(); void resources.loadAll() })
 onUnmounted(() => stopSystemThemeSync())

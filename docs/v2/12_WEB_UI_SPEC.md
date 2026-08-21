@@ -1,7 +1,13 @@
 # 12_WEB_UI_SPEC.md
 
 > CampusCue V2 WebUI 规格。M0 只设计：信息架构、页面职责、状态归属、交互与响应式规则、设计系统原则。
-> **禁止**：拍具体颜色/渐变/声称视觉漂亮。最终视觉审核由外部模型完成（VISUAL REVIEW REQUIRED BY EXTERNAL MODEL）。M6.5.3 Dark Stage 2 的实现记录在交接文档中；本规格只记录行为与状态约束。
+> **禁止**：拍具体颜色/渐变/声称视觉漂亮。最终视觉审核由外部模型完成（VISUAL REVIEW REQUIRED BY EXTERNAL MODEL）。M6.5.4 Neumorphism 的实现记录在交接文档中；本规格只记录行为与状态约束。
+
+## M6.5.4 Neumorphism implementation notes
+
+- 前端视觉材质通过 `data-visual-theme="glass|dark|neumorphism"` 独立选择；后端 `data-theme="system|light|dark"` 契约保持不变，视觉风格偏好只在本地持久化。
+- Neumorphism 使用不透明同材质 canvas、统一左上光源、raised/inset 状态和克制阴影；任务行、消息正文、Calendar 网格等高频内容保持大部分 flat，避免 Card wall 与性能成本。
+- Primary CTA 保留 CampusCue brand blue；输入框采用 inset + focus ring；移动端减弱阴影；Neu production surface 不依赖 `backdrop-filter`、透明玻璃 tint、atmospheric gradient 或 glass edge highlight。
 
 ## M6.5.3 Dark Stage 2 implementation notes
 
