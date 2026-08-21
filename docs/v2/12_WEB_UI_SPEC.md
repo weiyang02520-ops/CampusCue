@@ -9,6 +9,12 @@
 - 正式 DOM 组合只有 Glass + `data-theme="light"`、Dark + `data-theme="dark"`、Neumorphism + `data-theme="light"`；不得出现 Glass/Neu 与 `data-theme="dark"` 的未验收混合状态。
 - 前端偏好持久化为 `campuscue-visual-style`；发送后端时映射为 `system | light | dark`，Neumorphism 永不作为后端 theme 值。
 
+## M6 Final Closure Candidate notes
+
+- Settings 只保留一个四项视觉风格选择器；旧 Appearance section、`themeOptions`、`appearance-picker` 和隐藏兼容 CSS 已删除。
+- Final candidate evidence 位于 `.ai-handoff/visual/m6-final-candidate/`，覆盖三主题八路由、1440/1024/768/390 响应式检查、System OS resolution、persistence、Axe、overflow、dialog 与 mobile More sheet smoke。
+- 本地回归完成后，Glass/Dark/Neumorphism Final 与 M6 Final 仍须 External ChatGPT 最终审核；M7 未授权。
+
 ## M6.5.4 Neumorphism implementation notes
 
 - 前端视觉材质通过 `data-visual-theme="glass|dark|neumorphism"` 独立选择；后端 appearance preference `system|light|dark` 契约保持不变，视觉风格偏好只在本地持久化。

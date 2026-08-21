@@ -26,10 +26,10 @@
 - M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW (Stage 2 implementation complete)
 - GLASS FINAL = NOT YET DECLARED
 - M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
-- M6.5.4.1 THEME UX = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M6.5.4.1 THEME UX = PASS
 - NEUMORPHISM MATERIAL = PASS
-- NEUMORPHISM FINAL = NOT YET DECLARED；GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED
-- M6 FINAL = NOT YET DECLARED
+- GLASS FINAL = AWAITING_EXTERNAL_FINAL_REVIEW；DARK FINAL = AWAITING_EXTERNAL_FINAL_REVIEW；NEUMORPHISM FINAL = AWAITING_EXTERNAL_FINAL_REVIEW
+- M6 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW
 - M7 = NOT_AUTHORIZED
 
 ## completed
@@ -50,6 +50,7 @@
 - **M6.5.3 Dark UI Stage 2（本轮）**：扩展 Calendar、Messages、Connections、Providers、Settings、Dialog、Bottom Sheet、Toast、Empty/Loading/Offline/Reconnecting，并补齐 1440/1024/390 evidence 与 Glass/Dark comparison；移除 Theme Selector CSS nth-child 文本伪装，`system` 正确跟随 `prefers-color-scheme`；不改 backend/API/store/router/schema/business logic。Stage 1 = PASS；Dark implementation complete awaiting external visual review。
 - **M6.5.4 Neumorphism（本轮）**：新增前端独立 `data-visual-theme` 材质选择，与后端 `data-theme` 的 `system/light/dark` 外观契约分离；完成同材质 canvas、定向双阴影、raised/inset hierarchy、平坦高频内容层、Settings 风格选择器与全页面响应式 Neu implementation；不改 backend/API/schema/Agent/tasks logic/IA。
 - **M6.5.4.1 Theme UX Cleanup（本轮）**：将用户选择收敛为单一 `system | glass | dark | neumorphism` 视觉风格；System 按 OS 解析为 Glass/Dark，显式三套材质不受 OS 变化影响；backend 仍只接收 `system/light/dark`，不发送 `neumorphism`。
+- **M6 Final Closure Candidate（本轮）**：删除 Settings 旧 Appearance section、`themeOptions`、`appearance-picker` 及隐藏兼容 CSS；补充三主题全路由/响应式/可访问性回归与最终 candidate evidence `.ai-handoff/visual/m6-final-candidate/`；仅修复 Dark dialog description 的 WCAG 对比度边界，不改变材质、布局、API 或业务逻辑。
 
 ## verified (Workspace Agent local evidence)
 
@@ -70,6 +71,7 @@
 - M6.5.3 Dark：Stage 1 = PASS；Stage 2 Playwright **4 passed** covers 1440/1024/390, dialog/sheet, system-theme sync, Axe, overflow and console errors；Stage 1 evidence `.ai-handoff/visual/m653/dark/` 与 Stage 2 evidence `.ai-handoff/visual/m653-stage2/` 独立保留；m652 Glass evidence restored after regression capture。
 - M6.5.4 Neumorphism：focused Playwright **4 passed**；Stage 1/2 evidence 位于 `.ai-handoff/visual/m654/neumorphism/`，三主题对比位于 `.ai-handoff/visual/m654/compare/`；M6 16、Dark Stage 2 4、Dark Stage 1 2、Glass 2、real integration 2；typecheck/build/Vitest 4；fresh installed-package V2 **488 passed**；compileall/Anti-AstrBot/diff-check/secret+PII/axe/overflow/console/system-theme PASS。
 - M6.5.4.1 Theme UX：focused Playwright **2 passed**；System light→Glass、System dark→Dark、explicit Glass/Dark/Neu OS independence、reload persistence、backend payload mapping、Axe/overflow/console PASS；evidence 位于 `.ai-handoff/visual/m6541/`。
+- M6 Final Candidate：candidate Playwright **1 passed**；M6/real integration **18 passed**；theme/material focused **14 passed**；WebUI typecheck/build/Vitest **4 passed**；1440/1024/768/390 overflow、System resolution、explicit-style OS independence、persistence、Axe Home/Settings/Agent/Dialog/More sheet、console/page errors PASS；evidence 位于 `.ai-handoff/visual/m6-final-candidate/`。
 
 ## real_environment
 
@@ -84,7 +86,7 @@
 
 ## next_gate
 
-External review of M6.5.4.1 Theme UX is required。NEUMORPHISM MATERIAL = PASS；NEUMORPHISM FINAL、GLASS FINAL、DARK FINAL、M6 FINAL must not be declared by this checkpoint；M7 is not authorized。
+External final review of `.ai-handoff/visual/m6-final-candidate/` is required。GLASS FINAL、DARK FINAL、NEUMORPHISM FINAL 均 awaiting external final review；M6 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW；M7 is not authorized。
 
 ## architecture_decisions
 

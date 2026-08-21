@@ -1,14 +1,21 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6.5.4.1 Theme UX — External Review Request
+# CampusCue M6 Final Closure Candidate — External Final Review Request
+
+## Current candidate
+
+- Legacy Appearance UI cleanup is complete: the old section, `themeOptions`, `appearance-picker`, and compatibility CSS are gone.
+- `M6.5.4.1 THEME UX = PASS`; final candidate evidence is under `.ai-handoff/visual/m6-final-candidate/` with the screenshot index at `.ai-handoff/visual/m6-final-candidate/README.md`.
+- Candidate regression passed: frontend typecheck/build, Vitest 4, M6/real integration 18, focused theme/material 14, final candidate 1; responsive overflow, System resolution, persistence, Axe, console/page errors, and backend payload mapping passed.
+- Review only the final candidate evidence and confirm the three visual identities. Do not declare a Final gate from implementation evidence until this external review is complete.
 
 ## Current checkpoint
 
 - M6.5.2 Glass baseline tag: `m6.5.2-glass-baseline` → `63d7aeb4177b61bc73bffa336d6743e50c780559`。
 - M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
 - M6.5.3 Dark Stage 1 is **PASS**；Dark implementation remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
-- M6.5.4 Neumorphism material implementation is **PASS**；M6.5.4.1 Theme UX is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**。
-- Neumorphism Final、Dark Final、Glass Final、M6 Final are **NOT YET DECLARED**；M7 is **NOT_AUTHORIZED**。
+- M6.5.4 Neumorphism material implementation is **PASS**；M6.5.4.1 Theme UX is **PASS**。
+- Neumorphism Final、Dark Final、Glass Final are **AWAITING_EXTERNAL_FINAL_REVIEW**；M6 Final is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**；M7 is **NOT_AUTHORIZED**。
 
 ## M6.5.4.1 Theme UX review target
 
@@ -38,8 +45,8 @@ Evidence: `.ai-handoff/visual/m653-stage2/dark/` includes 1440 Home/Tasks/Calend
 - M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS（方向与材质成立）
 - M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
-- GLASS FINAL = NOT YET DECLARED；DARK FINAL = NOT YET DECLARED；NEUMORPHISM FINAL = NOT YET DECLARED
-- M6 FINAL = NOT YET DECLARED
+- GLASS FINAL = AWAITING_EXTERNAL_FINAL_REVIEW；DARK FINAL = AWAITING_EXTERNAL_FINAL_REVIEW；NEUMORPHISM FINAL = AWAITING_EXTERNAL_FINAL_REVIEW
+- M6 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW
 - M7 = NOT_AUTHORIZED
 
 ## M6.2 scope

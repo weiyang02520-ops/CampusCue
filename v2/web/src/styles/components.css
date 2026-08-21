@@ -29,8 +29,8 @@
 /* M6.2 subtle visual polish: keep the existing calm workspace, add depth through rhythm. */
 body { background:var(--bg) }
 .panel { border-color:var(--border-subtle); box-shadow:0 1px 0 color-mix(in srgb,var(--surface) 72%,transparent); transition:background 150ms var(--ease),border-color 150ms var(--ease),box-shadow 150ms var(--ease) }
-.button,.icon-button,.segmented button,.calendar-view-switch button,.prompt-chips button,.theme-picker button { transition:background 150ms var(--ease),border-color 150ms var(--ease),color 150ms var(--ease),transform 120ms var(--ease) }
-.button:active,.icon-button:active,.segmented button:active,.calendar-view-switch button:active,.prompt-chips button:active,.theme-picker button:active { transform:scale(.98) }
+.button,.icon-button,.segmented button,.calendar-view-switch button,.prompt-chips button { transition:background 150ms var(--ease),border-color 150ms var(--ease),color 150ms var(--ease),transform 120ms var(--ease) }
+.button:active,.icon-button:active,.segmented button:active,.calendar-view-switch button:active,.prompt-chips button:active { transform:scale(.98) }
 .brand-mark { width:30px; height:30px; border-radius:9px; color:var(--surface); background:var(--primary); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--surface) 24%,transparent),0 3px 8px color-mix(in srgb,var(--primary) 18%,transparent); letter-spacing:-.04em }
 .sidebar { border-right-color:var(--border-subtle) }
 .sidebar nav a { position:relative }
@@ -136,7 +136,6 @@ body { background:var(--bg) }
 .brand-copy small { margin-top:5px; color:var(--text-3); font-size:9px; font-weight:500; letter-spacing:.08em; text-transform:uppercase }
 .sidebar-status { display:grid; gap:4px; padding:8px 6px; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-soft) }
 .sidebar-status .system-pill { padding:7px 6px }
-.sidebar-status .theme-toggle { min-height:38px; padding-inline:6px }
 .empty-state { min-height:168px; position:relative; gap:8px; padding:22px 16px; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-soft) }
 .empty-icon { display:grid; place-items:center; width:42px; height:42px; border:1px solid color-mix(in srgb,var(--cue-line) 16%,var(--border-subtle)); border-radius:12px; color:var(--cue-line); background:var(--surface) }
 .empty-cue { position:absolute; top:18px; right:20px; display:flex; align-items:center; gap:4px; opacity:.8 }
@@ -694,11 +693,6 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
 :root[data-theme='dark'] .settings-side { background:var(--dark-context-teal); border:0; box-shadow:var(--dark-shadow-raised); }
 :root[data-theme='dark'] .settings-card input,:root[data-theme='dark'] .settings-card select,:root[data-theme='dark'] .filters input,:root[data-theme='dark'] .filters select { color:var(--dark-text-primary); background:var(--dark-surface-subtle); border-color:var(--dark-border-control); color-scheme:dark; }
 :root[data-theme='dark'] .settings-card input:focus,:root[data-theme='dark'] .settings-card select:focus { border-color:var(--dark-brand); box-shadow:0 0 0 3px rgba(100,144,224,.16); }
-:root[data-theme='dark'] .theme-picker { position:relative; padding-bottom:112px; }
-:root[data-theme='dark'] .theme-picker button { color:var(--dark-text-secondary); background:var(--dark-surface-raised); border-color:var(--dark-border-control); }
-:root[data-theme='dark'] .theme-picker button.active { color:var(--dark-focus); background:var(--dark-selected); border-color:rgba(100,144,224,.42); }
-:root[data-theme='dark'] .theme-picker::before { content:""; display:block; position:absolute; right:0; bottom:0; left:0; height:92px; border:1px solid var(--dark-border-control); border-radius:12px; background:var(--dark-canvas); box-shadow:inset 0 0 0 12px var(--dark-canvas-elevated),inset 86px 28px 0 -20px var(--dark-surface-raised),inset 214px 30px 0 -21px var(--dark-context-blue),inset 330px 62px 0 -28px var(--dark-brand-soft); }
-:root[data-theme='dark'] .theme-picker::after { content:"DARK UI  ·  DEEP CANVAS  /  RAISED SURFACE  /  BLUE + TEAL SIGNAL"; position:absolute; right:16px; bottom:19px; left:16px; color:var(--dark-text-secondary); font-size:10px; letter-spacing:.08em; }
 :root[data-theme='dark'] .dialog-backdrop { background:var(--overlay); backdrop-filter:blur(3px); }
 :root[data-theme='dark'] .dialog,:root[data-theme='dark'] .dialog-sheet { background:var(--dark-surface-floating); background-image:none; border:1px solid var(--dark-border-control); box-shadow:var(--dark-shadow-floating); backdrop-filter:none; }
 :root[data-theme='dark'] .toast { background:var(--dark-surface-floating); border-color:var(--dark-border-control); box-shadow:var(--dark-shadow-floating); }
@@ -711,18 +705,12 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
 :root[data-theme='dark'] .month-cell.selected { background:var(--dark-selected); border-color:var(--dark-focus); box-shadow:none; }
 :root[data-theme='dark'] .calendar-agenda { background:var(--dark-surface-raised); }
 
-/* Theme selector preview stays visible from either theme so Glass and Dark remain comparable. */
-.theme-picker { position:relative; padding-bottom:112px; }
-.theme-picker::before { content:""; display:block; position:absolute; right:0; bottom:0; left:0; height:92px; border:1px solid #3a4a5a; border-radius:12px; background:#11171e; box-shadow:inset 0 0 0 12px #151d25,inset 86px 28px 0 -20px #222d38,inset 214px 30px 0 -21px #182b40,inset 330px 62px 0 -28px #203755; }
-.theme-picker::after { content:"DARK UI  ·  DEEP CANVAS  /  RAISED SURFACE  /  BLUE + TEAL SIGNAL"; position:absolute; right:16px; bottom:19px; left:16px; color:#b8c6d2; font-size:10px; letter-spacing:.08em; }
-
 @media (max-width:767px) {
   :root[data-theme='dark'] .agent-shell { background:var(--dark-surface); box-shadow:var(--dark-shadow-raised); }
   :root[data-theme='dark'] .agent-context { background:var(--dark-context-teal); }
   :root[data-theme='dark'] .route-agent .page-content { padding-bottom:174px; }
   :root[data-theme='dark'] .agent-shell .chat-composer { margin:0 10px 10px; }
   :root[data-theme='dark'] .tasks-page .task-list-panel .task-list { padding-inline:12px; }
-  .theme-picker::before,.theme-picker::after { display:none; }
 }
 
 /* M6.5.3 Dark Stage 2 — product-wide dark language and responsive states. */
@@ -804,6 +792,7 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
 :root[data-theme='dark'] .dialog,
 :root[data-theme='dark'] .dialog-sheet { background:var(--dark-surface-floating); background-image:none; border-color:var(--dark-border-control); box-shadow:var(--dark-shadow-floating); backdrop-filter:none; }
 :root[data-theme='dark'] .dialog-header { border-bottom-color:var(--dark-border-subtle); }
+:root[data-theme='dark'] .dialog-header p { color:var(--dark-text-secondary); }
 :root[data-theme='dark'] .dialog-footer { border-top-color:var(--dark-border-subtle); background:var(--dark-surface-raised); }
 :root[data-theme='dark'] .mobile-more-list { background:var(--dark-surface-floating); }
 :root[data-theme='dark'] .toast { display:flex; align-items:center; gap:9px; background:var(--dark-surface-floating); border-color:var(--dark-border-control); box-shadow:var(--dark-shadow-floating); }
@@ -837,8 +826,6 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
   :root[data-theme='dark'] .provider-safe { order:4; width:100%; }
   :root[data-theme='dark'] .settings-layout { display:block; }
   :root[data-theme='dark'] .settings-side { margin-top:14px; }
-  :root[data-theme='dark'] .theme-picker { padding-bottom:104px; gap:6px; }
-  :root[data-theme='dark'] .theme-picker button { flex:1; min-width:0; padding-inline:8px; justify-content:center; }
   :root[data-theme='dark'] .dialog-sheet { max-height:82dvh; }
 }
 
@@ -922,8 +909,6 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
 :root[data-visual-theme='neumorphism'] .filter-button,
 :root[data-visual-theme='neumorphism'] .segmented,
 :root[data-visual-theme='neumorphism'] .calendar-view-switch,
-:root[data-visual-theme='neumorphism'] .theme-picker button,
-:root[data-visual-theme='neumorphism'] .appearance-picker button,
 :root[data-visual-theme='neumorphism'] .visual-style-option { color:var(--neu-text-secondary); background:var(--neu-surface-raised); border-color:var(--neu-border-control); box-shadow:var(--neu-shadow-raised-small); }
 :root[data-visual-theme='neumorphism'] .button-secondary:hover,
 :root[data-visual-theme='neumorphism'] .icon-button:hover,
@@ -995,9 +980,6 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
 :root[data-visual-theme='neumorphism'] .connection-card-top { border-color:var(--neu-border-subtle); }
 
 /* Real style previews and overlays. */
-.appearance-picker { display:flex; flex-wrap:wrap; gap:8px; }
-.appearance-picker button { min-height:44px; display:flex; align-items:center; gap:8px; padding:0 14px; border:1px solid var(--border); border-radius:8px; color:var(--text-2); background:var(--surface); font-size:13px; }
-.appearance-picker button.active { border-color:var(--primary); color:var(--primary-strong); background:var(--primary-soft); }
 .visual-style-picker { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
 .visual-style-option { min-width:0; display:grid; gap:10px; padding:10px; text-align:left; border:1px solid var(--border); border-radius:12px; color:var(--text-2); background:var(--surface); }
 .visual-style-option.active { border-color:var(--primary); color:var(--primary-strong); }
@@ -1057,7 +1039,6 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
   :root[data-visual-theme='neumorphism'] .style-preview { min-height:52px; }
   :root[data-visual-theme='neumorphism'] .agent-shell .chat-composer { margin:0 10px 10px; }
 }
-:root .settings-card #settings-appearance { display:none; }
 .style-preview-system { background:linear-gradient(135deg,#dfe8f7 0 48%,#18212b 49% 100%); }
 .style-preview-system::before { inset:12px 18px 10px; border-radius:8px; background:linear-gradient(135deg,#f6f9ff 0 48%,#27333f 49% 100%); box-shadow:0 8px 12px rgba(54,82,120,.16); }
 .style-preview-system i { left:28px; bottom:19px; width:28px; height:4px; border-radius:4px; background:#2f6fdb; }
