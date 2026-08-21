@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M6 Final Closure Candidate）
+## 当前（M6 Final）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -20,11 +20,11 @@
 - **M6.5.4 NEUMORPHISM = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（Stage 1/2 implementation complete）
 - **NEUMORPHISM MATERIAL = PASS**（source/architecture review）
 - **M6.5.4.1 THEME UX = PASS**
-- **GLASS FINAL = AWAITING_EXTERNAL_FINAL_REVIEW**
-- **DARK FINAL = AWAITING_EXTERNAL_FINAL_REVIEW**；**NEUMORPHISM FINAL = AWAITING_EXTERNAL_FINAL_REVIEW**
-- **M6 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**
+- **GLASS FINAL = PASS**
+- **DARK FINAL = PASS**；**NEUMORPHISM FINAL = PASS**
+- **M6 FINAL = PASS**（CampusCue WebUI completed）
 - **M7 = NOT_AUTHORIZED**
-- 本 checkpoint：删除旧 Appearance section、`themeOptions`、`appearance-picker` 和隐藏兼容 CSS；保留单一 `跟随系统 / 玻璃拟态 / 深色界面 / 新拟态` 选择器，完成三主题全路由/响应式/可访问性回归，证据位于 `.ai-handoff/visual/m6-final-candidate/`。仅修复 Dark dialog description 的 WCAG 对比度边界，不改材质、布局、IA、业务流程、API contract、router、backend 或 schema。
+- 本 checkpoint：删除旧 Appearance section、`themeOptions`、`appearance-picker` 和隐藏兼容 CSS；保留单一 `跟随系统 / 玻璃拟态 / 深色界面 / 新拟态` 选择器，完成三主题全路由/响应式/可访问性回归，证据位于 `.ai-handoff/visual/m6-final-candidate/`。External final visual review 已通过 Glass、Dark、Neumorphism、Theme switching、persistence、backend contract、responsive、accessibility 与 regression；仅修复 Dark dialog description 的 WCAG 对比度边界，不改材质、布局、IA、业务流程、API contract、router、backend 或 schema。
 
 ## M6.1 修复范围
 

@@ -1,13 +1,13 @@
 # REVIEW_REQUEST.md
 
-# CampusCue M6 Final Closure Candidate — External Final Review Request
+# CampusCue M6 Final — External Final Review Result
 
 ## Current candidate
 
 - Legacy Appearance UI cleanup is complete: the old section, `themeOptions`, `appearance-picker`, and compatibility CSS are gone.
 - `M6.5.4.1 THEME UX = PASS`; final candidate evidence is under `.ai-handoff/visual/m6-final-candidate/` with the screenshot index at `.ai-handoff/visual/m6-final-candidate/README.md`.
 - Candidate regression passed: frontend typecheck/build, Vitest 4, M6/real integration 18, focused theme/material 14, final candidate 1; responsive overflow, System resolution, persistence, Axe, console/page errors, and backend payload mapping passed.
-- Review only the final candidate evidence and confirm the three visual identities. Do not declare a Final gate from implementation evidence until this external review is complete.
+- External final visual review completed against the final candidate evidence; all requested visual and product gates PASS.
 
 ## Current checkpoint
 
@@ -15,9 +15,9 @@
 - M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
 - M6.5.3 Dark Stage 1 is **PASS**；Dark implementation remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
 - M6.5.4 Neumorphism material implementation is **PASS**；M6.5.4.1 Theme UX is **PASS**。
-- Neumorphism Final、Dark Final、Glass Final are **AWAITING_EXTERNAL_FINAL_REVIEW**；M6 Final is **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**；M7 is **NOT_AUTHORIZED**。
+- Neumorphism Final、Dark Final、Glass Final are **PASS**；M6 Final is **PASS**；M7 is **NOT_AUTHORIZED**。
 
-## M6.5.4.1 Theme UX review target
+## Historical review targets (superseded by the M6 Final result)
 
 Review `.ai-handoff/visual/m6541/` for the single user-facing selector and resolved-state screenshots. Confirm System resolves to Glass on OS light and Dark on OS dark; explicit Glass, Dark and Neu remain stable when OS preference changes; reload persists; backend payloads remain `system/light/dark` and never contain `neumorphism`. The prior `.ai-handoff/visual/m654/neumorphism/` and `.ai-handoff/visual/m654/compare/` evidence remains the material review set.
 
@@ -45,8 +45,8 @@ Evidence: `.ai-handoff/visual/m653-stage2/dark/` includes 1440 Home/Tasks/Calend
 - M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS（方向与材质成立）
 - M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
-- GLASS FINAL = AWAITING_EXTERNAL_FINAL_REVIEW；DARK FINAL = AWAITING_EXTERNAL_FINAL_REVIEW；NEUMORPHISM FINAL = AWAITING_EXTERNAL_FINAL_REVIEW
-- M6 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW
+- GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS
+- M6 FINAL = PASS
 - M7 = NOT_AUTHORIZED
 
 ## M6.2 scope
