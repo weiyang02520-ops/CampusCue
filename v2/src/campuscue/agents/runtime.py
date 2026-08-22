@@ -71,6 +71,7 @@ UX_DUPLICATE_CALLS = "连续重复操作已中止，请换一种说法重新描�
 UX_CONTEXT_OVERFLOW = "当前对话内容过长，请开启新对话后重试。"
 UX_NO_PROVIDER = "未配置模型服务"
 UX_EMPTY_REPLY = "抱歉，我暂时无法回答这个问题。"
+UX_SOURCE_CHANGED = "当前对话来源已变化，请开启新对话。原对话未继续使用。"
 
 _CONFIRM_WORDS = {"确认", "可以", "是", "好", "执行", "改吧", "完成吧"}
 _REJECT_WORDS = {"取消", "不要", "算了", "不改", "否"}
@@ -230,15 +231,33 @@ class CampusAgentRuntime:
         if not text:
             return AgentTurnResult(UX_EMPTY_REPLY, [])
 
-        conversation, lock = self._conversation_for_thread(context.thread)
+        # A client must never be able to reuse a conversation's history under
+        # another source. Check before acquiring/reading the old Conversation,
+        # before beginning a turn, and before invoking the provider.
+        thread = context.thread
+        if thread in self._conversations:
+            bound_source = self._conversation_sources.get(thread)
+            if thread not in self._conversation_sources or bound_source != context.source_id:
+                had_pending = self._pending_approvals.pop(thread, None) is not None
+                return AgentTurnResult(
+                    (
+                        "当前对话来源已变化，原操作已取消，未做修改。请开启新对话。"
+                        if had_pending
+                        else UX_SOURCE_CHANGED
+                    ),
+                    ["已阻止跨来源对话复用"],
+                    "cancelled" if had_pending else None,
+                )
+
+        conversation, lock = self._conversation_for_thread(thread)
         async with lock:
-            self._conversation_sources[context.thread] = context.source_id
+            self._conversation_sources[thread] = context.source_id
             conversation.begin_turn(LLMMessage(role="user", content=text))
 
-            pending = self._pending_approvals.get(context.thread)
+            pending = self._pending_approvals.get(thread)
             if pending is not None:
                 if pending.source_id != context.source_id:
-                    self._pending_approvals.pop(context.thread, None)
+                    self._pending_approvals.pop(thread, None)
                     result = AgentTurnResult("当前对话来源已变化，原操作已取消，未做修改。", ["已取消待确认操作"], "cancelled")
                     conversation.append_to_current_turn([LLMMessage(role="assistant", content=result.message)])
                     return result

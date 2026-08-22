@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { Sparkles, Send, RotateCcw, Clock3, ListTodo, CalendarDays, CheckCircle2, ArrowUpRight } from 'lucide-vue-next'
 import PageHeader from '../components/PageHeader.vue'
 import AppDialog from '../components/AppDialog.vue'
@@ -19,6 +19,7 @@ const messages = ref<Message[]>([])
 const scroller = ref<HTMLElement>()
 const contextCollapsed = ref(false)
 const mobileContextOpen = ref(false)
+let sourceEpoch = 0
 const activeSource = computed(() => resources.sources.find(source => source.id === sourceId.value) || null)
 
 onMounted(async () => {
@@ -31,15 +32,27 @@ function openContext() {
   else contextCollapsed.value = !contextCollapsed.value
 }
 
+function resetConversation() {
+  conversation.value = ''
+  messages.value = []
+}
+
+watch(sourceId, () => {
+  sourceEpoch += 1
+  resetConversation()
+})
+
 async function send() {
   const source = resources.sources.find(item => item.id === sourceId.value && item.enabled)
   if (!source || !text.value.trim() || sending.value) return
   const prompt = text.value.trim()
+  const requestEpoch = sourceEpoch
   text.value = ''
   messages.value.push({ role: 'user', text: prompt })
   sending.value = true
   try {
     const result = await api.agentChat({ source_id: source.id, conversation_id: conversation.value || undefined, message: prompt })
+    if (requestEpoch !== sourceEpoch || sourceId.value !== source.id) return
     conversation.value = result.conversation_id
     messages.value.push({ role: 'assistant', text: result.message, tools: result.tool_activity, confirmation: result.confirmation_state || undefined })
   } catch (error) {
@@ -63,7 +76,7 @@ function sendConfirmation(value: '确认' | '取消') {
       <div class="agent-head-actions">
         <label v-if="resources.sources.filter(source => source.enabled).length > 1" class="source-selector"><span>当前来源</span><select v-model="sourceId"><option v-for="source in resources.sources.filter(item => item.enabled)" :key="source.id" :value="source.id">{{ source.name || source.conversation_id }}</option></select></label>
         <button class="button button-secondary context-toggle" :aria-label="contextCollapsed ? '显示上下文' : '隐藏上下文'" @click="openContext">{{ contextCollapsed ? '显示上下文' : '上下文' }}</button>
-        <button class="button button-secondary" @click="messages = []; conversation = ''"><RotateCcw :size="16" />新对话</button>
+        <button class="button button-secondary" @click="resetConversation"><RotateCcw :size="16" />新对话</button>
       </div>
     </PageHeader>
     <div class="agent-workspace" :class="{ 'context-collapsed': contextCollapsed }">

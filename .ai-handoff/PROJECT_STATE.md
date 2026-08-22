@@ -101,6 +101,7 @@
 
 - **[AUTHORIZED]**：M7.2 external review = `PASS`；M7.3 bounded Agent Copilot implementation was explicitly authorized。
 - **[IMPLEMENTED]**：All mutation tools require code-enforced confirmation; pending state is in-memory, source-scoped, thread-scoped, frozen, replay-safe and restart-cleared；actual high-level tool activity uses the existing Agent API field；WebUI confirmation actions are text-compatible。
+- **[SECURITY_FIX]**：External review blocker fixed：existing Agent threads are source-bound in runtime and fail closed before old history/provider use on source mismatch；same-source continuity remains intact；WebUI source changes clear local messages and conversation ID；thread summaries retain the original source binding。
 - **[A10]**：Official fixture runs through real TaskPipeline/TaskService/ReminderService/AgentRuntime and synthetic reminder sink in local deterministic Step 0–16；duration/evidence at `.ai-handoff/evidence/m73/`。
 - **[BOUNDARY]**：Schema changes = `NONE`；new API endpoint = `NONE`；Fake NapCat = `PASS`；Real QQ M7 E2E = `NOT_RUN`；no M7.4。
 - **[CURRENT_GATE]**：`M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。

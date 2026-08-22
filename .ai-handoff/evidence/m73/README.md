@@ -18,6 +18,21 @@ Status: implementation candidate; awaiting external review.
 - The scheduled reminder copy is truthful in default `delivery=noop` mode:
   “提醒已计划，等待触发。”
 
+## SOURCE-BOUND THREAD FINAL FIX
+
+The external review found one blocker in cross-source conversation reuse. The
+backend now binds an in-memory Agent thread to its first source and fails closed
+before reading old history, beginning a new turn, or invoking the provider when
+an existing thread is presented under another source. Pending cross-source
+confirmation remains cancelled with zero mutation. `thread_summary` keeps the
+original source binding. The WebUI also clears `conversation` and `messages`
+when the selected source changes, so the next request starts a fresh context.
+
+- Same-source continuity = PASS.
+- Cross-source conversation history leakage = 0.
+- Cross-source pending mutation = 0.
+- WebUI source switch reset = PASS.
+
 ## M7-A10 local deterministic loop
 
 Command:

@@ -171,6 +171,50 @@ async def test_m73_cross_source_confirmation_is_rejected(env):
 
 
 @pytest.mark.asyncio
+async def test_m73_source_bound_thread_blocks_foreign_history_reuse(env):
+    task = await env["task_service"].create_manual_task(
+        title="A_SOURCE_ONLY_SECRET_TASK", source_id=env["source_a"].id,
+    )
+    provider = ScriptProvider(
+        _tool("task_list", {"scope": "open"}),
+        LLMResponse(
+            role="assistant", content="A_SOURCE_ONLY_SECRET_TASK", usage={}, raw={}
+        ),
+        LLMResponse(
+            role="assistant", content="我还记得当前来源的任务。", usage={}, raw={}
+        ),
+    )
+    runtime = _runtime(env, provider)
+    thread = "shared-source-bound-thread"
+
+    first = await runtime.chat_with_trace(
+        context=_ctx(env["source_a"].id, conversation_id=thread),
+        user_text="查一下任务",
+    )
+    assert first.message == "A_SOURCE_ONLY_SECRET_TASK"
+    second = await runtime.chat_with_trace(
+        context=_ctx(env["source_a"].id, conversation_id=thread, message_id="m73-same"),
+        user_text="继续",
+    )
+    assert second.message == "我还记得当前来源的任务。"
+    same_source_request = provider.requests[-1]
+    assert any("A_SOURCE_ONLY_SECRET_TASK" in (message.content or "") for message in same_source_request.messages)
+
+    history_count = runtime.conversations[_ctx(env["source_a"].id, conversation_id=thread).thread].message_count()
+    blocked = await runtime.chat_with_trace(
+        context=_ctx(env["source_b"].id, conversation_id=thread, message_id="m73-cross-context"),
+        user_text="查一下任务",
+    )
+    assert "开启新对话" in blocked.message
+    assert "已阻止跨来源对话复用" in blocked.tool_activity
+    assert len(provider.requests) == 3
+    assert runtime.conversations[_ctx(env["source_a"].id, conversation_id=thread).thread].message_count() == history_count
+    summary = next(item for item in runtime.thread_summary() if item["conversation_id"] == _ctx(env["source_a"].id, conversation_id=thread).thread)
+    assert summary["source_id"] == env["source_a"].id
+    assert task.id > 0
+
+
+@pytest.mark.asyncio
 async def test_m73_read_activity_is_real_and_private(env):
     task = await env["task_service"].create_manual_task(title="可见任务", source_id=env["source_a"].id)
     provider = ScriptProvider(

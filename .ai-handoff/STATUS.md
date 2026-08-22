@@ -42,6 +42,7 @@
 - M7.2 external source review = **PASS**; Real QQ M7 reminder E2E = **NOT_RUN**。
 - M7.3 implemented: metadata-driven mutation classification, in-memory source/thread-scoped frozen confirmation, deterministic confirmation parser, replay/restart/cross-source protection, actual safe `tool_activity`, existing Agent API response reuse, WebUI confirmation actions, truthful scheduled-reminder copy。
 - M7-A10 = **LOCAL DETERMINISTIC FULL LOOP PASS**; official fixture → real TaskPipeline → SQLite Task/Reminder → Agent read/activity → pending mutation → explicit confirmation → TaskService mutation → reminder lifecycle；duration/evidence in `.ai-handoff/evidence/m73/`。
-- M7.3 focused backend **6 passed**；M4/M7.1/M7.2/M5/runtime combined **63 passed**；fresh installed-package full V2 **512 passed**；Web typecheck/build/Vitest **4 passed**；full Chromium Playwright **40 passed**。
+- External review blocker fix：backend source-bound thread fail-closed guard runs before old history/provider use；WebUI source switch resets conversation/messages；same-source continuity and thread-summary source integrity are covered。
+- M7.3 focused backend **7 passed**；relevant M4/M7.1/M7.2/M7.3 backend regression **47 passed**；fresh installed-package full V2 **513 passed**；Web typecheck/build/Vitest **4 passed**；full Chromium Playwright **41 passed**。
 - Schema changes = **NONE**；new API endpoint = **NONE**；Fake NapCat = **PASS**；Real QQ = **NOT_RUN**。
 - Current gate: **M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**；no M7.4。

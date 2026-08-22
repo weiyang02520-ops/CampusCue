@@ -210,6 +210,18 @@ Required review questions:
 4. Does M7-A10 reproduce Step 0–16 locally with the official fixture and a real pipeline/service/runtime chain?
 5. Is the boundary honest about Fake NapCat PASS and Real QQ E2E NOT_RUN?
 
+The prior external review raised one security blocker: a reused Agent
+conversation could carry Source A history into a Source B request. This
+candidate includes the narrow final blocker fix. Also review:
+
+6. Does runtime reject source-mismatched existing threads before reading old
+   Conversation history or invoking the provider?
+7. Does same-source multi-turn continuity remain intact, with `thread_summary`
+   retaining the original source binding?
+8. Does the WebUI clear `messages` and `conversation_id` on source change?
+9. Does the direct runtime bypass test prove foreign-source history leakage is
+   zero while pending cross-source mutation remains zero?
+
 Do not declare M7 FINAL from local evidence alone. Do not authorize M7.4; this is the final planned M7 implementation milestone。
 
 **CURRENT GATE**：`M7.0 = PASS`；`M7.1 = PASS`；`M7.2 = PASS`；`M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。

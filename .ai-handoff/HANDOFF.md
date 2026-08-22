@@ -215,6 +215,7 @@ External review of the M7.3 implementation candidate is required. Review `.ai-ha
 - Pending arguments are frozen, in-memory, source-scoped and thread-scoped；reject/ambiguous/replay/cross-source/restart cases are covered. Confirmation executes the frozen proposal directly through `ToolRegistry` and `TaskService`。
 - Existing `/api/v1/agent/chat` now returns actual high-level `tool_activity` and `confirmation_state`; no `/agent/confirm`, schema migration, or durable approval storage was added。
 - WebUI displays safe activity and explicit `确认`/`取消` actions；scheduled reminder copy is truthful under default Noop delivery。
+- External blocker fix：runtime now fails closed before old Conversation history/provider use when a thread is presented under another source；same-source continuity remains intact，`thread_summary` retains the original binding；WebUI source switching clears messages and conversation ID。
 - M7-A10 local deterministic Step 0–16 uses the official fixture and real pipeline/service/runtime chain; evidence and screenshots are in `.ai-handoff/evidence/m73/`。
-- Focused backend 6, combined M4/M7.1/M7.2/M5/runtime 63, fresh installed-package full V2 512, frontend typecheck/build/Vitest 4, and full Chromium Playwright 40 passed. Real QQ M7 E2E remains `NOT_RUN`。
+- Focused M7.3 backend 7, relevant M4/M7.1/M7.2/M7.3 backend regression 47, fresh installed-package full V2 513, frontend typecheck/build/Vitest 4, and full Chromium Playwright 41 passed. Real QQ M7 E2E remains `NOT_RUN`。
 - **Current gate**: `M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`; `M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。

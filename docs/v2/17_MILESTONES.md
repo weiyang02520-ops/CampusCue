@@ -160,4 +160,4 @@
 - **A10**：官方 fixture 通过真实 TaskPipeline、SQLite、TaskService、ReminderService、AgentRuntime 和 synthetic reminder sink 完成 local deterministic Step 0–16；不使用真实 secrets，不宣称 Real QQ。
 - **交付**：`docs/demo/QUICKSTART.md`、`DEMO_SCRIPT.md`、`DEMO_TROUBLESHOOTING.md`、`v2/.env.example`、`.ai-handoff/evidence/m73/`。
 - **边界**：Schema changes = `NONE`；new API endpoint = `NONE`；no durable approval framework、automatic retry、extra channel 或 M7.4。
-- **验证**：M7.3 focused 6 passed；M4/M7.1/M7.2/M5/runtime combined 63 passed；fresh installed-package full V2 512 passed；frontend typecheck/build/Vitest 4；full Chromium Playwright 40 passed；Fake NapCat = `PASS`；Real QQ M7 E2E = `NOT_RUN`。
+- **验证**：External source-bound thread blocker fix completed；M7.3 focused 7 passed；relevant M4/M7.1/M7.2/M7.3 backend regression 47 passed；fresh installed-package full V2 513 passed；frontend typecheck/build/Vitest 4；full Chromium Playwright 41 passed；Fake NapCat = `PASS`；Real QQ M7 E2E = `NOT_RUN`。

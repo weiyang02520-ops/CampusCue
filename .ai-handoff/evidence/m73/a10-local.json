@@ -1,9 +1,9 @@
 {
   "kind": "LOCAL DETERMINISTIC FULL LOOP",
   "fixture": "official M7 fixture",
-  "started_at": "2026-08-22T11:35:22.004214+00:00",
-  "ended_at": "2026-08-22T11:35:22.004219+00:00",
-  "duration_seconds": 0.3044,
+  "started_at": "2026-08-22T12:07:54.966305+00:00",
+  "ended_at": "2026-08-22T12:07:54.966318+00:00",
+  "duration_seconds": 0.2912,
   "steps": [
     "Step 0 clean start",
     "Step 1 source configured",

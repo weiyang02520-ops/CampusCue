@@ -2,17 +2,19 @@ import path from 'node:path'
 import { test, expect, type Page, type Route } from '@playwright/test'
 
 const source = { id: 1, platform: 'onebot', conversation_id: 'm73-demo-group', name: '高数课程群', enabled: true, auto_extract: true, context_window: 5, privacy_policy: 'default', created_at: '2026-08-20T00:00:00Z', updated_at: '2026-08-20T00:00:00Z', deleted_at: null }
+const sourceB = { ...source, id: 2, conversation_id: 'm73-other-group', name: '另一门课程群' }
 const task = { id: 1, title: '高等数学第三章作业', description: null, category: 'homework', course: '高等数学', deadline: '2026-08-28T14:00:00Z', status: 'pending', priority: 'normal', confidence: .96, source_id: 1, source_message_id: 'm73-demo-message', source_text_reference: null, created_at: '2026-08-20T00:00:00Z', updated_at: '2026-08-20T00:00:00Z' }
 
-async function mockApi(page: Page, scheduled = false) {
+async function mockApi(page: Page, scheduled = false, includeSecondSource = false) {
   await page.route('**/api/v1/**', async (route: Route) => {
     const path = new URL(route.request().url()).pathname.replace('/api/v1', '')
     const json = (body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
-    if (path === '/sources') return json({ items: [source], total: 1, limit: 50, offset: 0 })
+    if (path === '/sources') return json({ items: includeSecondSource ? [source, sourceB] : [source], total: includeSecondSource ? 2 : 1, limit: 50, offset: 0 })
     if (path === '/tasks' || path.startsWith('/tasks?')) return json({ items: [task], total: 1, limit: 200, offset: 0 })
     if (path === '/agent/threads') return json([{ conversation_id: 'm73-thread', source_id: 1, message_count: 2, last_activity: 1 }])
     if (path === '/agent/chat') {
       const body = JSON.parse(route.request().postData() || '{}')
+      if (body.message === 'A来源问题') return json({ conversation_id: 'm73-thread', message: 'A 来源回答', tool_activity: [], confirmation_state: null })
       if (body.message === '确认') return json({ conversation_id: 'm73-thread', message: '已更新任务，提醒已重新安排。', tool_activity: ['已修改任务'], confirmation_state: 'confirmed' })
       if (body.message === '取消') return json({ conversation_id: 'm73-thread', message: '已取消，这次不会修改任务。', tool_activity: ['已取消待确认操作'], confirmation_state: 'cancelled' })
       return json({ conversation_id: 'm73-thread', message: '准备修改「高等数学第三章作业」：截止时间→2026年8月29日22:00。确认吗？', tool_activity: ['已查看任务详情', '等待确认：修改任务'], confirmation_state: 'pending' })
@@ -55,4 +57,27 @@ test('scheduled reminder copy does not promise external delivery in Noop mode', 
   await page.goto('/')
   await expect(page.getByText('提醒已计划，等待触发。')).toBeVisible()
   await expect(page.getByText('届时会按来源发送', { exact: false })).toHaveCount(0)
+})
+
+test('M7-A07 source switching clears the old conversation and request identity', async ({ page }) => {
+  const chatBodies: Record<string, unknown>[] = []
+  page.on('request', request => {
+    if (new URL(request.url()).pathname.endsWith('/agent/chat')) {
+      chatBodies.push(JSON.parse(request.postData() || '{}'))
+    }
+  })
+  await mockApi(page, false, true)
+  await page.goto('/agent')
+  await page.getByLabel('对 AI 助手说').fill('A来源问题')
+  await page.getByRole('button', { name: '发送' }).click()
+  await expect(page.getByText('A 来源回答')).toBeVisible()
+
+  await page.locator('select').selectOption('2')
+  await expect(page.getByText('A 来源回答')).toHaveCount(0)
+  await page.getByLabel('对 AI 助手说').fill('B来源问题')
+  await page.getByRole('button', { name: '发送' }).click()
+  await expect(page.getByText('准备修改「高等数学第三章作业」')).toBeVisible()
+  expect(chatBodies).toHaveLength(2)
+  expect(chatBodies[0].conversation_id).toBeUndefined()
+  expect(chatBodies[1].conversation_id).toBeUndefined()
 })
