@@ -34,8 +34,9 @@
 - M7.0 PRODUCT CONTRACT = PASS
 - M7.1 FIRST-USE ACTIVATION = PASS
 - M7.2 ONEBOT REMINDER DELIVERY = PASS
-- M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
-- M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW
+- M7.3 BOUNDED AGENT COPILOT = PASS
+- M7 FINAL = PASS
+- M7.4 = NOT NEEDED / NOT AUTHORIZED
 
 ## completed
 
@@ -104,11 +105,11 @@
 - **[SECURITY_FIX]**：External review blocker fixed：existing Agent threads are source-bound in runtime and fail closed before old history/provider use on source mismatch；same-source continuity remains intact；WebUI source changes clear local messages and conversation ID；thread summaries retain the original source binding。
 - **[A10]**：Official fixture runs through real TaskPipeline/TaskService/ReminderService/AgentRuntime and synthetic reminder sink in local deterministic Step 0–16；duration/evidence at `.ai-handoff/evidence/m73/`。
 - **[BOUNDARY]**：Schema changes = `NONE`；new API endpoint = `NONE`；Fake NapCat = `PASS`；Real QQ M7 E2E = `NOT_RUN`；no M7.4。
-- **[CURRENT_GATE]**：`M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。
+- **[CURRENT_GATE]**：External Final Review = `PASS`；`M7.3 = PASS`；`M7 FINAL = PASS`；`M7.4 = NOT NEEDED / NOT AUTHORIZED`。
 
 ## next_gate
 
-[M7.3_EXTERNAL_REVIEW] Review `.ai-handoff/evidence/m73/`, M7-A08 confirmation traces, M7-A10 local deterministic loop, and the implementation mapping. Do not declare M7 FINAL from local evidence alone。
+M7 is complete. Do not start M7.4 or an automatic M8; choose the next product direction only after a fresh product review。
 
 ## architecture_decisions
 

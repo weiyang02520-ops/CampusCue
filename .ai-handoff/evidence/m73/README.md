@@ -1,6 +1,6 @@
 # M7.3 Bounded Agent Copilot Evidence
 
-Status: implementation candidate; awaiting external review.
+Status: final evidence; External Final Review PASS.
 
 ## What is proven
 
@@ -65,5 +65,6 @@ provider or QQ delivery.
 ## Explicit limits
 
 - M7.2 Fake NapCat reminder E2E = PASS; Real QQ M7 E2E = NOT_RUN.
+- Real QQ M7 E2E = NOT_RUN is an accepted limitation, not a Final Gate blocker.
 - No durable approval memory, approval table, new API endpoint, schema
   migration, additional channel, automatic retry, or M7.4.

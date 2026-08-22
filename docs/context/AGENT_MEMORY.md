@@ -18,23 +18,23 @@
 
 避免每轮重读整个仓库 / AstrBot。
 
-## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-22 · M7.3 Candidate）
+## 2. CURRENT PROJECT TRUTH（Last Updated 2026-08-22 · M7 Final）
 
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M5 FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 FIRST-USE ACTIVATION = PASS；M7.2 ONEBOT REMINDER DELIVERY = PASS；M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW** |
+| 当前门 | **M5 FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 FIRST-USE ACTIVATION = PASS；M7.2 ONEBOT REMINDER DELIVERY = PASS；M7.3 BOUNDED AGENT COPILOT = PASS；M7 FINAL = PASS；M7.4 = NOT NEEDED / NOT AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**：M1-M4 完成；M5 FastAPI REST + SSE + schema v3；M5.1.1 route cleanup complete locally；Legacy frozen。最新本地 checkpoint 证据：**488 tests passed**（2026-08-20，fresh `.venv-m511fresh` non-editable） |
 | REAL ENV | 已验证：M1.2 + M2b.2 QQ 全链路；M4.2 Real Provider Tool Call PASS；M4.3 Real QQ Agent E2E PASS；M5 本地 uvicorn HTTP smoke PASS（2026-08-19） |
 
-## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-22 · M7.3 Candidate）
+## 3. CURRENT MILESTONE / GATE（Last Updated 2026-08-22 · M7 Final）
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M5 FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 = PASS；M7.2 = PASS；M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW。
-- **下一步**：等待 External ChatGPT 审核 `docs/v2/M7_PRODUCT_CONTRACT.md`；未经明确授权不得实现 M7.1+。
+- **当前状态**：M5 FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 = PASS；M7.2 = PASS；M7.3 BOUNDED AGENT COPILOT = PASS；M7 FINAL = PASS；M7.4 = NOT NEEDED / NOT AUTHORIZED。
+- **下一步**：不要自动开始 M7.4/M8；先重新评估真实 QQ 最终验证、部署交付、比赛展示、开源发布或下一轮产品能力。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
 - **M4.2 real provider fact**：真实 OpenAI 兼容端点（DeepSeek）tool-call 轮次可能同时返回辅助 content + tool_calls——tool_calls 权威、辅助文本丢弃（`_parse_ok` 最小修复，M4.2）。
@@ -253,4 +253,4 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **[M7.2_ONEBOT_REMINDER_DELIVERY][PASS]**：M7.2 external source review = PASS；默认 Noop、显式 OneBot opt-in、GROUP source-scoped target、deterministic privacy-safe template、safe failure taxonomy、duplicate guard、runtime lifecycle ordering；Fake NapCat PASS；REAL QQ E2E = NOT_RUN。
 
 - **[M7.3_BOUNDED_AGENT_COPILOT][CURRENT]**：所有 Agent mutation 先经 ToolRegistry metadata 分类并等待明确确认；pending proposal 为 source/thread-scoped、in-memory、冻结参数、replay-safe、restart-cleared；实际高层 tool activity 复用 `/agent/chat` 既有字段；M7-A10 local deterministic Step 0–16 evidence 位于 `.ai-handoff/evidence/m73/`；Schema/API changes = NONE；no M7.4。
-- **[M7.3_SOURCE_BOUND_THREAD_FIX][CURRENT]**：外部审核发现的跨 Source conversation history leakage 已修复：runtime 在读取旧 Conversation 或调用 Provider 前 fail closed；same-source continuity PASS；pending cross-source mutation = 0；WebUI 切换 source 自动清空 conversation/messages；thread summary 保留原 source binding。M7.3 仍等待 External Review，M7 Final 未声明。
+- **[M7.3_SOURCE_BOUND_THREAD_FIX][PASS]**：外部审核发现的跨 Source conversation history leakage 已修复：runtime 在读取旧 Conversation 或调用 Provider 前 fail closed；same-source continuity PASS；pending cross-source mutation = 0；WebUI 切换 source 自动清空 conversation/messages；thread summary 保留原 source binding。External Final Review = PASS；M7 Final = PASS。

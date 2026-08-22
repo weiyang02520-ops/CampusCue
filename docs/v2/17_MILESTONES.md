@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M5 FINAL = **PASS**；M6 FINAL = **PASS**（CampusCue WebUI completed）；M7 ROADMAP DESIGN = **PASS**；M7.0 PRODUCT CONTRACT = **PASS**；M7.1 FIRST-USE ACTIVATION = **PASS**；M7.2 ONEBOT REMINDER DELIVERY = **PASS**；M7.3 BOUNDED AGENT COPILOT = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M7 FINAL = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**；M7.4 = **NOT_AUTHORIZED**。
+> **当前 active gate**：M5 FINAL = **PASS**；M6 FINAL = **PASS**（CampusCue WebUI completed）；M7 ROADMAP DESIGN = **PASS**；M7.0 PRODUCT CONTRACT = **PASS**；M7.1 FIRST-USE ACTIVATION = **PASS**；M7.2 ONEBOT REMINDER DELIVERY = **PASS**；M7.3 BOUNDED AGENT COPILOT = **PASS**；M7 FINAL = **PASS**；M7.4 = **NOT NEEDED / NOT AUTHORIZED**。
 
 ## M1：Independent QQ Runtime
 
@@ -155,9 +155,15 @@
 
 ### M7.3 Bounded Agent Copilot & Demonstration Package（2026-08-22）
 
-- **状态**：`IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；M7.0/M7.1/M7.2 = `PASS`；M7 Final not yet declared。
+- **状态**：`PASS`；M7.0/M7.1/M7.2 = `PASS`；M7 Final = `PASS`（External Final Review）。
 - **范围**：代码强制 Agent mutation confirmation；pending proposal 是 source/thread-scoped、in-memory、冻结参数、可拒绝、不可重放、重启清除；实际高层 tool activity 复用现有 Agent API 字段；WebUI 提供确认按钮并保留文本确认。
 - **A10**：官方 fixture 通过真实 TaskPipeline、SQLite、TaskService、ReminderService、AgentRuntime 和 synthetic reminder sink 完成 local deterministic Step 0–16；不使用真实 secrets，不宣称 Real QQ。
 - **交付**：`docs/demo/QUICKSTART.md`、`DEMO_SCRIPT.md`、`DEMO_TROUBLESHOOTING.md`、`v2/.env.example`、`.ai-handoff/evidence/m73/`。
 - **边界**：Schema changes = `NONE`；new API endpoint = `NONE`；no durable approval framework、automatic retry、extra channel 或 M7.4。
 - **验证**：External source-bound thread blocker fix completed；M7.3 focused 7 passed；relevant M4/M7.1/M7.2/M7.3 backend regression 47 passed；fresh installed-package full V2 513 passed；frontend typecheck/build/Vitest 4；full Chromium Playwright 41 passed；Fake NapCat = `PASS`；Real QQ M7 E2E = `NOT_RUN`。
+
+### M7 FINAL Closure（2026-08-22）
+
+- **External Gate**：M7.0、M7.1、M7.2、M7.3、M7 FINAL 全部 `PASS`。
+- **Accepted limitation**：Real QQ M7 E2E = `NOT_RUN`；Fake NapCat、deterministic local pipeline、source isolation、confirmation and full-loop evidence accepted。
+- **M7.4**：`NOT NEEDED / NOT AUTHORIZED`。

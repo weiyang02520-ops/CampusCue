@@ -15,7 +15,7 @@
 - M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（historical）。
 - M6.5.3 Dark Stage 1 is **PASS**；Dark implementation remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
 - M6.5.4 Neumorphism material implementation is **PASS**；M6.5.4.1 Theme UX is **PASS**。
-- Neumorphism Final、Dark Final、Glass Final are **PASS**；M6 Final is **PASS**；M7.2 external source review is **PASS**；M7.3 is the current implementation candidate。
+- Neumorphism Final、Dark Final、Glass Final are **PASS**；M6 Final is **PASS**；M7.0、M7.1、M7.2、M7.3 与 M7 Final 均 **PASS**。
 
 ## Historical review targets (superseded by the M6 Final result)
 
@@ -47,7 +47,7 @@ Evidence: `.ai-handoff/visual/m653-stage2/dark/` includes 1440 Home/Tasks/Calend
 - M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS
 - M6 FINAL = PASS
-- M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 = PASS；M7.2 = PASS；M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW
+- M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 = PASS；M7.2 = PASS；M7.3 = PASS；M7 FINAL = PASS；M7.4 = NOT NEEDED / NOT AUTHORIZED
 
 ## M7.0 Product Contract review
 
@@ -187,13 +187,13 @@ Review scope is limited to M7-A01～A07: source activation and safe failure copy
 
 Do not review or approve production QQ reminder delivery, Agent memory/planning, schema/API redesign, full Step 0–16 five-minute completion, or M7.2/M7.3.
 
-**HISTORICAL GATE**：`M7.0 PRODUCT CONTRACT = PASS`；`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 ONEBOT REMINDER DELIVERY = PASS`；M7.3 is the current candidate below。
+**HISTORICAL GATE**：`M7.0 PRODUCT CONTRACT = PASS`；`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 ONEBOT REMINDER DELIVERY = PASS`；M7.3 was the candidate reviewed in the closed section below。
 
 ## M7.2 OneBot Reminder Delivery — External Review Result
 
 External source review passed against `.ai-handoff/evidence/m72/`, the M7.2 mapping, and the focused delivery/runtime tests. Fake NapCat = PASS；Real QQ E2E = NOT_RUN。
 
-## M7.3 Bounded Agent Copilot — External Review Request
+## M7.3 Bounded Agent Copilot — External Review Record（closed）
 
 Review:
 
@@ -222,10 +222,30 @@ candidate includes the narrow final blocker fix. Also review:
 9. Does the direct runtime bypass test prove foreign-source history leakage is
    zero while pending cross-source mutation remains zero?
 
-Do not declare M7 FINAL from local evidence alone. Do not authorize M7.4; this is the final planned M7 implementation milestone。
+External Final Review passed. M7.4 is not needed and is not authorized; this is the final planned M7 implementation milestone。
 
-**CURRENT GATE**：`M7.0 = PASS`；`M7.1 = PASS`；`M7.2 = PASS`；`M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。
+**CURRENT GATE**：`M7.0 = PASS`；`M7.1 = PASS`；`M7.2 = PASS`；`M7.3 = PASS`；`M7 FINAL = PASS`；`M7.4 = NOT NEEDED / NOT AUTHORIZED`。
 
 Review only: explicit `noop|onebot` opt-in, source-scoped OneBot GROUP target resolution, deterministic privacy-safe message, safe failure persistence, duplicate suppression, scheduler/adapter lifecycle ordering, fake NapCat success/failure traces, and minimal reminder status UX.
 
-Do not approve real QQ delivery from this evidence: `REAL QQ E2E = NOT_RUN`. Do not authorize M7.4, Agent memory/planning, extra notification channels, schema/API redesign, or claims beyond the bounded M7.3 scope.
+Real QQ delivery remains outside this evidence: `REAL QQ E2E = NOT_RUN` — accepted limitation. No Agent memory/planning, extra notification channels, schema/API redesign, or M7.4 is authorized.
+
+## M7 FINAL Closure（2026-08-22）
+
+External ChatGPT independently reviewed the final candidate and passed M7.3 and
+the M7 Final Gate. The accepted product loop is:
+
+`Source → Message → AI-first Extraction → Provenance/Confidence → Canonical Task → Reminder → Source-scoped Agent → Explicit Mutation Confirmation → Canonical Mutation → Reminder Lifecycle`
+
+Security and scope boundaries are closed: Agent threads are source-bound;
+cross-source history/tool/task leakage is zero; writes require explicit
+confirmation; pending proposals are in-memory, source/thread scoped and
+non-durable; reminder delivery defaults to Noop and OneBot requires opt-in;
+there is no durable Agent memory, generic autonomous Agent, automatic reminder
+retry, or additional notification channel.
+
+Workspace Agent local verification: fresh V2 **513 passed**; Chromium
+Playwright **41 passed**; M7.3 focused **PASS**; typecheck/build/Vitest,
+compileall, Anti-AstrBot, Secret/PII and diff-check **PASS**. The first 4173
+full-run failure was a dev-server lifecycle/ownership issue; the stable-server
+rerun passed 41/41 and is not a product regression.

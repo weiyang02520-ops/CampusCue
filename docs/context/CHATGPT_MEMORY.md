@@ -22,12 +22,12 @@
 
 ---
 
-## 1. CURRENT TRUTH（Last Updated 2026-08-22 · M7 Roadmap Design）
+## 1. CURRENT TRUTH（Last Updated 2026-08-22 · M7 Final）
 
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 FIRST-USE ACTIVATION = PASS；M7.2 ONEBOT REMINDER DELIVERY = PASS；M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 FIRST-USE ACTIVATION = PASS；M7.2 ONEBOT REMINDER DELIVERY = PASS；M7.3 BOUNDED AGENT COPILOT = PASS；M7 FINAL = PASS；M7.4 = NOT NEEDED / NOT AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -519,4 +519,4 @@ User
 - **[M7.2_ONEBOT_REMINDER_DELIVERY][PASS]**：显式 `noop|onebot` delivery mode，默认 Noop；只支持 enabled/non-deleted OneBot GROUP，严格从 `Task.source_id` 解析；复用 `OutgoingMessage`/`OneBotAdapter.send()`；safe `Reminder.error`、一次性 fire guard、scheduler/adapter lifecycle ordering 已实现。Fake NapCat evidence 在 `.ai-handoff/evidence/m72/`；REAL QQ E2E = `NOT_RUN`。
 
 - **[M7.3_BOUNDED_AGENT_COPILOT][CURRENT]**：Agent 的 `task_create/task_update/task_complete/task_dismiss` 均由代码强制确认；pending 状态只在内存中按 source/thread 保存并冻结参数；现有 `/agent/chat` 返回实际高层 `tool_activity` 与 `confirmation_state`；M7-A10 local deterministic Step 0–16 与 demo evidence 在 `.ai-handoff/evidence/m73/`；Schema/API changes = NONE；M7 Final 未声明。
-- **[M7.3_SOURCE_BOUND_THREAD_FIX][CURRENT]**：修复外部审核指出的跨 Source Agent history leakage：runtime 对 source-mismatched existing thread 在读取历史/Provider 前 fail closed；same-source continuity 保持；pending cross-source mutation = 0；WebUI source switch 清空 conversation/messages；thread summary 不改写旧 source binding。M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW，M7 Final 未声明。
+- **[M7.3_SOURCE_BOUND_THREAD_FIX][PASS]**：修复外部审核指出的跨 Source Agent history leakage：runtime 对 source-mismatched existing thread 在读取历史/Provider 前 fail closed；same-source continuity 保持；pending cross-source mutation = 0；WebUI source switch 清空 conversation/messages；thread summary 不改写旧 source binding。M7.3 = PASS；M7 Final = PASS；Real QQ M7 E2E = NOT_RUN（accepted limitation）。

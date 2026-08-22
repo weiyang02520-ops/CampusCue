@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M7.3 Bounded Agent Copilot）
+## 当前（M7 Final Closure）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -27,15 +27,16 @@
 - **M7.0 PRODUCT CONTRACT = PASS**
 - **M7.1 FIRST-USE ACTIVATION = PASS**
 - **M7.2 ONEBOT REMINDER DELIVERY = PASS**（External source review；Real QQ E2E = NOT_RUN）
-- **M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
-- **M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**
+- **M7.3 BOUNDED AGENT COPILOT = PASS**（External source/architecture review）
+- **M7 FINAL = PASS**（External Final Review）
+- **M7.4 = NOT NEEDED / NOT AUTHORIZED**
 - 本 checkpoint：删除旧 Appearance section、`themeOptions`、`appearance-picker` 和隐藏兼容 CSS；保留单一 `跟随系统 / 玻璃拟态 / 深色界面 / 新拟态` 选择器，完成三主题全路由/响应式/可访问性回归，证据位于 `.ai-handoff/visual/m6-final-candidate/`。External final visual review 已通过 Glass、Dark、Neumorphism、Theme switching、persistence、backend contract、responsive、accessibility 与 regression；仅修复 Dark dialog description 的 WCAG 对比度边界，不改材质、布局、IA、业务流程、API contract、router、backend 或 schema。
 
 ### M7.0 Product Contract
 
-- `docs/v2/M7_PRODUCT_CONTRACT.md` 已完成，当前仅等待 External ChatGPT review。
+- `docs/v2/M7_PRODUCT_CONTRACT.md` 已完成并通过 External ChatGPT review；M7 Final Closure 已记录。
 - 已锁定官方 deterministic fixture、OneBot/NapCat source scope、Primary Reminder Delivery = QQ/OneBot outbound、Test Fallback = fake delivery sink、Agent boundary、Trust Contract、M7.1 Required/Optional/Forbidden 和 M7-A01～M7-A10。
-- M7.1/M7.2 implementation details and evidence are recorded below；M7.3 implementation candidate evidence is in `.ai-handoff/evidence/m73/`。
+- M7.1/M7.2/M7.3 implementation details and evidence are recorded below；final evidence is in `.ai-handoff/evidence/m73/`。
 
 ## M6.1 修复范围
 
@@ -137,7 +138,7 @@
 
 ## Next gate
 
-External review of the M7.3 implementation candidate is required. Review `.ai-handoff/evidence/m73/`, then decide the M7 Final Gate. Do not declare M7 FINAL from local evidence alone; do not open M7.4。
+External Final Review completed: M7.3 and the M7 Final Gate are PASS. Do not open M7.4 or automatically start M8。
 
 ## Privacy / safety
 
@@ -207,9 +208,9 @@ External review of the M7.3 implementation candidate is required. Review `.ai-ha
 - Reminder failure categories are safe `delivery:*` values in the existing `Reminder.error` field；no automatic retry。
 - Runtime installs delivery before scheduler start and stops scheduler before adapter；duplicate fire produces zero duplicate outbound actions。
 - Evidence: `.ai-handoff/evidence/m72/`；fake NapCat PASS；REAL QQ E2E = `NOT_RUN`。
-- Schema/API changes = `NONE`；M7.3 is the separately authorized current implementation candidate below。
+- Schema/API changes = `NONE`；M7.3 implementation mapping is recorded in the closed section below。
 
-## M7.3 Bounded Agent Copilot（current）
+## M7.3 Bounded Agent Copilot（closed）
 
 - All Agent mutations are code-enforced confirmation writes: `task_create`, `task_update`, `task_complete`, `task_dismiss` are metadata-classified in `ToolRegistry` and never execute on the proposal turn。
 - Pending arguments are frozen, in-memory, source-scoped and thread-scoped；reject/ambiguous/replay/cross-source/restart cases are covered. Confirmation executes the frozen proposal directly through `ToolRegistry` and `TaskService`。
@@ -218,4 +219,4 @@ External review of the M7.3 implementation candidate is required. Review `.ai-ha
 - External blocker fix：runtime now fails closed before old Conversation history/provider use when a thread is presented under another source；same-source continuity remains intact，`thread_summary` retains the original binding；WebUI source switching clears messages and conversation ID。
 - M7-A10 local deterministic Step 0–16 uses the official fixture and real pipeline/service/runtime chain; evidence and screenshots are in `.ai-handoff/evidence/m73/`。
 - Focused M7.3 backend 7, relevant M4/M7.1/M7.2/M7.3 backend regression 47, fresh installed-package full V2 513, frontend typecheck/build/Vitest 4, and full Chromium Playwright 41 passed. Real QQ M7 E2E remains `NOT_RUN`。
-- **Current gate**: `M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`; `M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。
+- **Current gate**: `M7.3 = PASS`; `M7 FINAL = PASS`; `M7.4 = NOT NEEDED / NOT AUTHORIZED`。
