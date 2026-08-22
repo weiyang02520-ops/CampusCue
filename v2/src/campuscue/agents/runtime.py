@@ -27,7 +27,10 @@ reach the DB through TaskService only.
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import asyncio
@@ -40,7 +43,8 @@ from campuscue.providers.errors import ProviderError, ProviderErrorCode
 from campuscue.providers.models import LLMMessage, LLMRequest, LLMResponse, LLMToolCall
 from campuscue.storage.clock import Clock, SystemClock
 from campuscue.tools.context import ToolContext
-from campuscue.tools.registry import ToolRegistry, canonical_call_identity
+from campuscue.tools.registry import ToolRegistry, ToolResult, canonical_call_identity
+from campuscue.tools.task_tools import _resolve_phrase
 
 logger = logging.getLogger("campuscue.agents.runtime")
 
@@ -67,6 +71,33 @@ UX_DUPLICATE_CALLS = "连续重复操作已中止，请换一种说法重新描�
 UX_CONTEXT_OVERFLOW = "当前对话内容过长，请开启新对话后重试。"
 UX_NO_PROVIDER = "未配置模型服务"
 UX_EMPTY_REPLY = "抱歉，我暂时无法回答这个问题。"
+
+_CONFIRM_WORDS = {"确认", "可以", "是", "好", "执行", "改吧", "完成吧"}
+_REJECT_WORDS = {"取消", "不要", "算了", "不改", "否"}
+_AMBIGUOUS_WORDS = {"嗯", "嗯嗯", "看看吧", "随便", "好吧"}
+
+
+@dataclass(frozen=True)
+class AgentTurnResult:
+    """Safe per-turn result; the legacy ``chat`` API still returns a string."""
+
+    message: str
+    tool_activity: list[str]
+    confirmation_state: str | None = None
+
+
+@dataclass(frozen=True)
+class PendingToolApproval:
+    """One non-durable, source/thread-bound frozen mutation proposal."""
+
+    thread: str
+    source_id: int | None
+    tool_name: str
+    arguments: dict[str, Any]
+    summary: str
+    created_turn: int
+    message_id: str
+    user_text: str
 
 
 class CampusAgentRuntime:
@@ -114,6 +145,8 @@ class CampusAgentRuntime:
         self._conversations: dict[str, Conversation] = {}
         self._conversation_locks: dict[str, asyncio.Lock] = {}
         self._conversation_last_used: dict[str, int] = {}
+        self._conversation_sources: dict[str, int | None] = {}
+        self._pending_approvals: dict[str, PendingToolApproval] = {}
         self._usage_counter = 0
         self._system_prompt_builder = system_prompt_builder or build_agent_system_prompt
         # deterministic call identity -> consecutive streak counter
@@ -127,6 +160,7 @@ class CampusAgentRuntime:
         return [
             {
                 "conversation_id": thread,
+                "source_id": self._conversation_sources.get(thread),
                 "message_count": conv.message_count(),
                 "last_activity": self._conversation_last_used.get(thread),
             }
@@ -154,6 +188,8 @@ class CampusAgentRuntime:
                 self._conversations.pop(oldest, None)
                 self._conversation_locks.pop(oldest, None)
                 self._conversation_last_used.pop(oldest, None)
+                self._conversation_sources.pop(oldest, None)
+                self._pending_approvals.pop(oldest, None)
             conversation = Conversation(self._conversation_max_messages)
             self._conversations[thread] = conversation
             self._conversation_locks[thread] = asyncio.Lock()
@@ -184,31 +220,65 @@ class CampusAgentRuntime:
         )
 
     async def chat(self, *, context: AgentContext, user_text: str) -> str:
-        """One agent turn for one user message. Returns the final reply text.
-        NEVER raises on provider/tool failures — always a safe user message."""
+        """Compatibility wrapper used by QQ handlers and older callers."""
+        result = await self.chat_with_trace(context=context, user_text=user_text)
+        return result.message
+
+    async def chat_with_trace(self, *, context: AgentContext, user_text: str) -> AgentTurnResult:
+        """Run one bounded turn and return safe activity/confirmation state."""
         text = (user_text or "").strip()
         if not text:
-            return UX_EMPTY_REPLY
-        if self._provider is None:
-            return UX_NO_PROVIDER
+            return AgentTurnResult(UX_EMPTY_REPLY, [])
 
         conversation, lock = self._conversation_for_thread(context.thread)
         async with lock:
+            self._conversation_sources[context.thread] = context.source_id
             conversation.begin_turn(LLMMessage(role="user", content=text))
+
+            pending = self._pending_approvals.get(context.thread)
+            if pending is not None:
+                if pending.source_id != context.source_id:
+                    self._pending_approvals.pop(context.thread, None)
+                    result = AgentTurnResult("当前对话来源已变化，原操作已取消，未做修改。", ["已取消待确认操作"], "cancelled")
+                    conversation.append_to_current_turn([LLMMessage(role="assistant", content=result.message)])
+                    return result
+                decision = _parse_confirmation(text)
+                if decision == "confirm":
+                    self._pending_approvals.pop(context.thread, None)
+                    result = await self._execute_pending(pending, context)
+                    conversation.append_to_current_turn([LLMMessage(role="assistant", content=result.message)])
+                    return result
+                if decision == "reject":
+                    self._pending_approvals.pop(context.thread, None)
+                    result = AgentTurnResult("已取消，这次不会修改任务。", ["已取消待确认操作"], "cancelled")
+                    conversation.append_to_current_turn([LLMMessage(role="assistant", content=result.message)])
+                    return result
+                if decision == "ambiguous":
+                    result = AgentTurnResult("如果要执行，请明确回复“确认”或“取消”。", ["等待你的明确确认"], "pending")
+                    conversation.append_to_current_turn([LLMMessage(role="assistant", content=result.message)])
+                    return result
+                # A changed topic invalidates the old proposal. Continue this
+                # turn normally; the old frozen arguments are discarded.
+                self._pending_approvals.pop(context.thread, None)
+
+            if self._provider is None:
+                result = AgentTurnResult(UX_NO_PROVIDER, [])
+                conversation.append_to_current_turn([LLMMessage(role="assistant", content=result.message)])
+                return result
 
             system_prompt = self._system_prompt(context.timestamp)
             try:
-                reply = await self._run_loop(conversation, system_prompt, text, context)
+                result = await self._run_loop(conversation, system_prompt, text, context)
             except ProviderError as e:
                 logger.warning(
                     "agent provider error; thread=%s trace=%s code=%s",
                     context.thread[:8], context.trace_id[:8], e.code.value,
                 )
-                reply = self._provider_ux(e)
+                result = AgentTurnResult(self._provider_ux(e), [])
             conversation.append_to_current_turn(
-                [LLMMessage(role="assistant", content=reply)]
+                [LLMMessage(role="assistant", content=result.message)]
             )
-            return reply
+            return result
 
     async def _run_loop(
         self,
@@ -216,7 +286,7 @@ class CampusAgentRuntime:
         system_prompt: str,
         user_text: str,
         context: AgentContext,
-    ) -> str:
+    ) -> AgentTurnResult:
         tools_tokens = sum(
             estimate_tokens(s.name)
             + estimate_tokens(s.description)
@@ -231,11 +301,12 @@ class CampusAgentRuntime:
             tools_tokens=tools_tokens,
         )
         if overflow:
-            return UX_CONTEXT_OVERFLOW
+            return AgentTurnResult(UX_CONTEXT_OVERFLOW, [])
 
         last_identity: str | None = None
         streak = 0
         pending: list[LLMMessage] = []
+        activities: list[str] = []
 
         for step in range(1, self._max_steps + 1):
             request_messages = (
@@ -254,7 +325,7 @@ class CampusAgentRuntime:
             )
             if not response.tool_calls:
                 reply = (response.content or "").strip()
-                return reply or UX_EMPTY_REPLY
+                return AgentTurnResult(reply or UX_EMPTY_REPLY, activities)
 
             # ---- execute all tool calls deterministically (sequential, §31) ----
             assistant_msg = LLMMessage(
@@ -273,13 +344,46 @@ class CampusAgentRuntime:
                     logger.warning(
                         "agent duplicate tool calls stopped; tool=%s", call.name
                     )
-                    return UX_DUPLICATE_CALLS
-                result = await self._tools.execute(
-                    call.name,
-                    arguments=call.arguments,
-                    context=tool_ctx,
-                    timeout_s=self._tool_timeout_s,
-                )
+                    return AgentTurnResult(UX_DUPLICATE_CALLS, activities)
+                if self._tools.requires_confirmation(call.name):
+                    if call.name in {"task_update", "task_complete", "task_dismiss"}:
+                        # Grounding is a real source-scoped read through the
+                        # registry, performed before the write can be proposed.
+                        activities.append(self._tools.activity_label("task_get"))
+                    proposal, proposal_error = await self._propose_mutation(
+                        call.name, call.arguments, tool_ctx, context
+                    )
+                    if proposal_error is not None:
+                        result = proposal_error
+                        activities.append("未创建待确认操作")
+                    else:
+                        assert proposal is not None
+                        self._pending_approvals[context.thread] = proposal
+                        activities.append(f"等待确认：{proposal.summary}")
+                        result = ToolResult(
+                            ok=False,
+                            content="需要用户明确确认后才能执行。",
+                            error="confirmation_required",
+                        )
+                        tool_results.append(
+                            LLMMessage(role="tool", content=result.content, tool_call_id=call.id)
+                        )
+                        pending.append(assistant_msg)
+                        pending.extend(tool_results)
+                        conversation.append_to_current_turn(pending)
+                        return AgentTurnResult(
+                            proposal.summary + "确认吗？",
+                            activities,
+                            "pending",
+                        )
+                else:
+                    result = await self._tools.execute(
+                        call.name,
+                        arguments=call.arguments,
+                        context=tool_ctx,
+                        timeout_s=self._tool_timeout_s,
+                    )
+                    activities.append(self._tools.activity_label(call.name))
                 tool_results.append(
                     LLMMessage(
                         role="tool",
@@ -299,7 +403,108 @@ class CampusAgentRuntime:
                 tools_tokens=tools_tokens,
             )
             if _overflow:
-                return UX_CONTEXT_OVERFLOW
+                return AgentTurnResult(UX_CONTEXT_OVERFLOW, activities)
 
         logger.warning("agent max_steps exceeded")
-        return UX_STEPS_EXCEEDED
+        return AgentTurnResult(UX_STEPS_EXCEEDED, activities)
+
+    async def _propose_mutation(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        tool_ctx: ToolContext,
+        context: AgentContext,
+    ) -> tuple[PendingToolApproval | None, ToolResult | None]:
+        validation = self._tools.validate_arguments(name, arguments)
+        if validation is not None:
+            return None, validation
+        frozen = deepcopy(arguments)
+        task_data: dict[str, Any] = {}
+        if name in {"task_update", "task_complete", "task_dismiss"}:
+            task_id = int(arguments["task_id"])
+            grounded = await self._tools.execute(
+                "task_get", arguments={"task_id": task_id}, context=tool_ctx, timeout_s=self._tool_timeout_s
+            )
+            if not grounded.ok:
+                return None, grounded
+            task_data = grounded.data or {}
+        if name in {"task_create", "task_update"} and "deadline_phrase" in frozen:
+            resolved, error = _resolve_phrase(frozen["deadline_phrase"], context=tool_ctx)
+            if error is not None:
+                return None, ToolResult(ok=False, content="", error=error)
+            assert resolved is not None
+            local = resolved.astimezone(tool_ctx.timezone)
+            frozen["deadline_phrase"] = f"{local.year}年{local.month}月{local.day}日{local:%H:%M}"
+        if name == "task_create":
+            summary = f"准备创建任务「{str(frozen['title']).strip()}」"
+            if frozen.get("course"):
+                summary += f"（{frozen['course']}）"
+            if frozen.get("deadline_phrase"):
+                summary += f"，截止 {frozen['deadline_phrase']}"
+        elif name == "task_update":
+            if not any(key in frozen for key in ("title", "course", "deadline_phrase")):
+                return None, ToolResult(ok=False, content="", error="至少提供一个要修改的字段")
+            title = task_data.get("title") or "当前任务"
+            changes: list[str] = []
+            if "title" in frozen:
+                changes.append(f"标题“{title}”→“{frozen['title']}”")
+            if "course" in frozen:
+                changes.append(f"课程“{task_data.get('course') or '未设置'}”→“{frozen['course'] or '未设置'}”")
+            if "deadline_phrase" in frozen:
+                changes.append(f"截止时间→{frozen['deadline_phrase']}")
+            summary = f"准备修改「{title}」：" + "；".join(changes)
+        elif name == "task_complete":
+            summary = f"准备完成「{task_data.get('title') or '当前任务'}」。完成后未触发的提醒会取消"
+        else:
+            summary = f"准备忽略「{task_data.get('title') or '当前任务'}」。未触发的提醒会取消"
+        return PendingToolApproval(
+            thread=context.thread,
+            source_id=context.source_id,
+            tool_name=name,
+            arguments=frozen,
+            summary=summary,
+            created_turn=self._usage_counter,
+            message_id=tool_ctx.message_id,
+            user_text=tool_ctx.user_text,
+        ), None
+
+    async def _execute_pending(self, pending: PendingToolApproval, context: AgentContext) -> AgentTurnResult:
+        tool_ctx = self._to_tool_context(
+            context,
+            user_text=pending.user_text,
+        )
+        tool_ctx = ToolContext(
+            platform=tool_ctx.platform,
+            source_id=tool_ctx.source_id,
+            conversation_id=tool_ctx.conversation_id,
+            conversation_type=tool_ctx.conversation_type,
+            message_id=pending.message_id,
+            timestamp=tool_ctx.timestamp,
+            trace_id=tool_ctx.trace_id,
+            timezone=tool_ctx.timezone,
+            user_text=pending.user_text,
+        )
+        result = await self._tools.execute(
+            pending.tool_name,
+            arguments=deepcopy(pending.arguments),
+            context=tool_ctx,
+            timeout_s=self._tool_timeout_s,
+        )
+        if result.ok:
+            return AgentTurnResult(result.content, [self._tools.activity_label(pending.tool_name)], "confirmed")
+        return AgentTurnResult(
+            "操作未完成，未成功修改任务。" if result.error else "操作未完成。",
+            ["操作未完成"],
+            "confirmed",
+        )
+
+
+def _parse_confirmation(text: str) -> str | None:
+    normalized = "".join((text or "").strip().split()).rstrip("。.!！？，,")
+    if normalized in _CONFIRM_WORDS:
+        return "confirm"
+    if normalized in _REJECT_WORDS:
+        return "reject"
+    if normalized in _AMBIGUOUS_WORDS:
+        return "ambiguous"
+    return None

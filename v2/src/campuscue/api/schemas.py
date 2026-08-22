@@ -206,6 +206,7 @@ class AgentChatResponse(BaseModel):
     conversation_id: str
     message: str
     tool_activity: list[str] = Field(default_factory=list)
+    confirmation_state: str | None = None
 
 
 class AgentThreadOut(BaseModel):

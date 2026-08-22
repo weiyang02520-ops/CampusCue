@@ -12,10 +12,10 @@
 ## Current checkpoint
 
 - M6.5.2 Glass baseline tag: `m6.5.2-glass-baseline` → `63d7aeb4177b61bc73bffa336d6743e50c780559`。
-- M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
+- M6.5.2 Glass remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**（historical）。
 - M6.5.3 Dark Stage 1 is **PASS**；Dark implementation remains **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**。
 - M6.5.4 Neumorphism material implementation is **PASS**；M6.5.4.1 Theme UX is **PASS**。
-- Neumorphism Final、Dark Final、Glass Final are **PASS**；M6 Final is **PASS**；M7 is **NOT_AUTHORIZED**。
+- Neumorphism Final、Dark Final、Glass Final are **PASS**；M6 Final is **PASS**；M7.2 external source review is **PASS**；M7.3 is the current implementation candidate。
 
 ## Historical review targets (superseded by the M6 Final result)
 
@@ -47,7 +47,7 @@ Evidence: `.ai-handoff/visual/m653-stage2/dark/` includes 1440 Home/Tasks/Calend
 - M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS
 - M6 FINAL = PASS
-- M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7.1 / M7.2 / M7.3 IMPLEMENTATION = NOT_AUTHORIZED
+- M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 = PASS；M7.2 = PASS；M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW
 
 ## M7.0 Product Contract review
 
@@ -187,12 +187,33 @@ Review scope is limited to M7-A01～A07: source activation and safe failure copy
 
 Do not review or approve production QQ reminder delivery, Agent memory/planning, schema/API redesign, full Step 0–16 five-minute completion, or M7.2/M7.3.
 
-**CURRENT GATE**：`M7.0 PRODUCT CONTRACT = PASS`；`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.3 = NOT_AUTHORIZED`。
+**HISTORICAL GATE**：`M7.0 PRODUCT CONTRACT = PASS`；`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 ONEBOT REMINDER DELIVERY = PASS`；M7.3 is the current candidate below。
 
-## M7.2 OneBot Reminder Delivery — External Review Request
+## M7.2 OneBot Reminder Delivery — External Review Result
 
-Review `.ai-handoff/evidence/m72/`, `docs/v2/M7_PRODUCT_CONTRACT.md` M7.2 mapping, and the focused delivery/runtime tests.
+External source review passed against `.ai-handoff/evidence/m72/`, the M7.2 mapping, and the focused delivery/runtime tests. Fake NapCat = PASS；Real QQ E2E = NOT_RUN。
+
+## M7.3 Bounded Agent Copilot — External Review Request
+
+Review:
+
+- `.ai-handoff/evidence/m73/README.md` and `a10-local.json`;
+- M7-A08 focused confirmation tests and `v2/web/tests/e2e/m73-agent-copilot.spec.ts`;
+- `CampusAgentRuntime`, `ToolRegistry`, task tools, Agent API response, and WebUI confirmation/activity presentation;
+- current handoff/state mapping and demo docs.
+
+Required review questions:
+
+1. Do all four Agent mutation tools stop before TaskService on the proposal turn?
+2. Are frozen arguments source-scoped, thread-scoped, replay-safe, rejection-safe, and cleared on restart/eviction?
+3. Is grounding performed through existing source-scoped reads, with deterministic deadline normalization and no raw/private activity leakage?
+4. Does M7-A10 reproduce Step 0–16 locally with the official fixture and a real pipeline/service/runtime chain?
+5. Is the boundary honest about Fake NapCat PASS and Real QQ E2E NOT_RUN?
+
+Do not declare M7 FINAL from local evidence alone. Do not authorize M7.4; this is the final planned M7 implementation milestone。
+
+**CURRENT GATE**：`M7.0 = PASS`；`M7.1 = PASS`；`M7.2 = PASS`；`M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。
 
 Review only: explicit `noop|onebot` opt-in, source-scoped OneBot GROUP target resolution, deterministic privacy-safe message, safe failure persistence, duplicate suppression, scheduler/adapter lifecycle ordering, fake NapCat success/failure traces, and minimal reminder status UX.
 
-Do not approve real QQ delivery from this evidence: `REAL QQ E2E = NOT_RUN`. Do not authorize M7.3, Agent memory/planning, extra notification channels, schema/API redesign, or a full Step 0–16 M7 claim.
+Do not approve real QQ delivery from this evidence: `REAL QQ E2E = NOT_RUN`. Do not authorize M7.4, Agent memory/planning, extra notification channels, schema/API redesign, or claims beyond the bounded M7.3 scope.

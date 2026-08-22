@@ -88,6 +88,7 @@ def _resolve_phrase(phrase: str | None, *, context: ToolContext) -> tuple[dateti
 
 class TaskListTool(ToolDefinition):
     name = "task_list"
+    activity_label = "已查询当前来源的任务"
     description = (
         "查询当前会话的任务列表。scope 取值：open（未完成，默认）、pending（已接受）、"
         "today（今天截止）、week（未来7天）、overdue（已过期）、done（已完成）"
@@ -134,6 +135,7 @@ class TaskListTool(ToolDefinition):
 
 class TaskGetTool(ToolDefinition):
     name = "task_get"
+    activity_label = "已查看任务详情"
     description = "查看单个任务的详细信息（需提供任务 ID）"
     input_schema = {
         "type": "object",
@@ -173,11 +175,24 @@ class TaskGetTool(ToolDefinition):
         if task.source_text_reference:
             # same-source task content is in-conversation; NEVER logged (M4 §19)
             lines.append(f"- 来源：{task.source_text_reference[:200]}")
-        return ToolResult(ok=True, content="\n".join(lines), data={"task_id": task.id})
+        return ToolResult(
+            ok=True,
+            content="\n".join(lines),
+            data={
+                "task_id": task.id,
+                "title": task.title,
+                "course": task.course,
+                "deadline": _fmt_dt(task.deadline, self._tz) if task.deadline else None,
+                "status": task.status,
+            },
+        )
 
 
 class TaskCreateTool(ToolDefinition):
     name = "task_create"
+    mutation = True
+    requires_confirmation = True
+    activity_label = "已创建任务"
     description = (
         "用户口述创建任务（当前会话）。title 必填；category 取值：homework（作业）/exam（考试）"
         "/competition（比赛）/activity（活动）/notice（通知）/other（其他）；"
@@ -250,6 +265,9 @@ class TaskCreateTool(ToolDefinition):
 
 class TaskUpdateTool(ToolDefinition):
     name = "task_update"
+    mutation = True
+    requires_confirmation = True
+    activity_label = "已修改任务"
     description = (
         "更新任务（当前会话，仅 pending 状态可改）。可改字段：title、course、deadline_phrase"
         "（自然语言截止时间）。至少提供一个字段"
@@ -275,6 +293,8 @@ class TaskUpdateTool(ToolDefinition):
         if isinstance(sid, ToolResult):
             return sid
         task_id = int(kwargs["task_id"])
+        if not any(key in kwargs for key in ("title", "course", "deadline_phrase")):
+            return ToolResult(ok=False, content="", error="至少提供一个要修改的字段")
         deadline = None
         if "deadline_phrase" in kwargs:
             resolved, err = _resolve_phrase(kwargs["deadline_phrase"], context=context)
@@ -304,6 +324,9 @@ class TaskUpdateTool(ToolDefinition):
 
 class TaskCompleteTool(ToolDefinition):
     name = "task_complete"
+    mutation = True
+    requires_confirmation = True
+    activity_label = "已完成任务"
     description = "将任务标记为已完成（当前会话；会取消该任务的提醒）"
     input_schema = {
         "type": "object",
@@ -337,6 +360,9 @@ class TaskCompleteTool(ToolDefinition):
 
 class TaskDismissTool(ToolDefinition):
     name = "task_dismiss"
+    mutation = True
+    requires_confirmation = True
+    activity_label = "已忽略任务"
     description = "忽略/放弃一个任务（当前会话；会取消该任务的提醒）"
     input_schema = {
         "type": "object",
@@ -370,6 +396,7 @@ class TaskDismissTool(ToolDefinition):
 
 class ReminderListTool(ToolDefinition):
     name = "reminder_list"
+    activity_label = "已读取提醒安排"
     description = "查询当前会话任务的提醒安排（trigger 时间、类型、状态）"
     input_schema = {
         "type": "object",

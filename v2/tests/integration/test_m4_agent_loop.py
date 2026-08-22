@@ -207,7 +207,9 @@ class TestAgentLoop:
             timezone=ctx.timezone, user_text="请创建一个任务",
         )
         rt = _runtime(services, clock, scripted)
-        await rt.chat(context=ctx, user_text="请创建一个任务")
+        proposal = await rt.chat(context=ctx, user_text="请创建一个任务")
+        assert "确认" in proposal
+        await rt.chat(context=ctx, user_text="确认")
         task = (await services["tasks"].list_for_source(services["source_id"]))[0]
         assert task.source_text_reference == "请创建一个任务"
 
@@ -231,15 +233,13 @@ class TestAgentLoop:
         rt = _runtime(services, clock, scripted)
         ctx = _agent_context(source_id=services["source_id"], message_id="one-user-message")
         reply = await rt.chat(context=ctx, user_text="帮我添加英语作文和高数作业两个任务")
-        assert reply == "第一个已创建，第二个未创建。"
+        assert "确认" in reply
         tasks = await services["tasks"].list_for_source(services["source_id"])
-        assert len(tasks) == 1
-        tool_messages = scripted.seen[1]["messages"][-2:]
-        assert tool_messages[0]["tool_call_id"] == "create-1"
-        assert '已创建任务' in tool_messages[0]["content"]
-        assert tool_messages[1]["tool_call_id"] == "create-2"
-        assert "任务未创建" in tool_messages[1]["content"]
-        assert '英语作文' in tasks[0].title
+        assert tasks == []
+        await rt.chat(context=ctx, user_text="确认")
+        tasks = await services["tasks"].list_for_source(services["source_id"])
+        assert len(tasks) == 1 and tasks[0].title == "英语作文"
+        assert len(scripted.seen) == 1
 
     @pytest.mark.asyncio
     async def test_32_multiple_tool_calls_in_one_response(self, services, clock):

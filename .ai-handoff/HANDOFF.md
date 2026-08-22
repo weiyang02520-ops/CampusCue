@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M7.2 OneBot Reminder Delivery）
+## 当前（M7.3 Bounded Agent Copilot）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -26,15 +26,16 @@
 - **M7 ROADMAP DESIGN = PASS**
 - **M7.0 PRODUCT CONTRACT = PASS**
 - **M7.1 FIRST-USE ACTIVATION = PASS**
-- **M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
-- **M7.3 IMPLEMENTATION = NOT_AUTHORIZED**
+- **M7.2 ONEBOT REMINDER DELIVERY = PASS**（External source review；Real QQ E2E = NOT_RUN）
+- **M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+- **M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**
 - 本 checkpoint：删除旧 Appearance section、`themeOptions`、`appearance-picker` 和隐藏兼容 CSS；保留单一 `跟随系统 / 玻璃拟态 / 深色界面 / 新拟态` 选择器，完成三主题全路由/响应式/可访问性回归，证据位于 `.ai-handoff/visual/m6-final-candidate/`。External final visual review 已通过 Glass、Dark、Neumorphism、Theme switching、persistence、backend contract、responsive、accessibility 与 regression；仅修复 Dark dialog description 的 WCAG 对比度边界，不改材质、布局、IA、业务流程、API contract、router、backend 或 schema。
 
 ### M7.0 Product Contract
 
 - `docs/v2/M7_PRODUCT_CONTRACT.md` 已完成，当前仅等待 External ChatGPT review。
 - 已锁定官方 deterministic fixture、OneBot/NapCat source scope、Primary Reminder Delivery = QQ/OneBot outbound、Test Fallback = fake delivery sink、Agent boundary、Trust Contract、M7.1 Required/Optional/Forbidden 和 M7-A01～M7-A10。
-- M7.1/M7.2 implementation details and evidence are recorded below；M7.3 remains NOT_AUTHORIZED。
+- M7.1/M7.2 implementation details and evidence are recorded below；M7.3 implementation candidate evidence is in `.ai-handoff/evidence/m73/`。
 
 ## M6.1 修复范围
 
@@ -136,7 +137,7 @@
 
 ## Next gate
 
-External visual review of M6.5.2 Stage 1 Glass and M6.5.3 Stage 1 Dark evidence is required。GLASS FINAL、DARK FINAL、M6 FINAL must not be declared；Neumorphism remains pending；M7 remains unauthorized。
+External review of the M7.3 implementation candidate is required. Review `.ai-handoff/evidence/m73/`, then decide the M7 Final Gate. Do not declare M7 FINAL from local evidence alone; do not open M7.4。
 
 ## Privacy / safety
 
@@ -196,7 +197,7 @@ External visual review of M6.5.2 Stage 1 Glass and M6.5.3 Stage 1 Dark evidence 
 - `pending_confirm` canonical support = YES；Connection-test canonical support = YES；API changes = NONE；Schema changes = NONE。
 - Explicit date+clock normalization now preserves the official fixture deadline as `2026-08-28T14:00:00Z` while preserving bare-date behavior.
 - M7.1 evidence: `.ai-handoff/evidence/m71/`；external source review = `PASS`。
-- **CURRENT GATE**：`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.3 = NOT_AUTHORIZED`。Do not declare M7 complete or full five-minute E2E PASS。
+- **HISTORICAL GATE**：`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 ONEBOT REMINDER DELIVERY = PASS`；M7.3 is tracked in the current section below。Do not declare M7 FINAL from local evidence alone。
 
 ## M7.2 OneBot Reminder Delivery（current）
 
@@ -206,4 +207,14 @@ External visual review of M6.5.2 Stage 1 Glass and M6.5.3 Stage 1 Dark evidence 
 - Reminder failure categories are safe `delivery:*` values in the existing `Reminder.error` field；no automatic retry。
 - Runtime installs delivery before scheduler start and stops scheduler before adapter；duplicate fire produces zero duplicate outbound actions。
 - Evidence: `.ai-handoff/evidence/m72/`；fake NapCat PASS；REAL QQ E2E = `NOT_RUN`。
-- Schema/API changes = `NONE`；M7.3 = `NOT_AUTHORIZED`。
+- Schema/API changes = `NONE`；M7.3 is the separately authorized current implementation candidate below。
+
+## M7.3 Bounded Agent Copilot（current）
+
+- All Agent mutations are code-enforced confirmation writes: `task_create`, `task_update`, `task_complete`, `task_dismiss` are metadata-classified in `ToolRegistry` and never execute on the proposal turn。
+- Pending arguments are frozen, in-memory, source-scoped and thread-scoped；reject/ambiguous/replay/cross-source/restart cases are covered. Confirmation executes the frozen proposal directly through `ToolRegistry` and `TaskService`。
+- Existing `/api/v1/agent/chat` now returns actual high-level `tool_activity` and `confirmation_state`; no `/agent/confirm`, schema migration, or durable approval storage was added。
+- WebUI displays safe activity and explicit `确认`/`取消` actions；scheduled reminder copy is truthful under default Noop delivery。
+- M7-A10 local deterministic Step 0–16 uses the official fixture and real pipeline/service/runtime chain; evidence and screenshots are in `.ai-handoff/evidence/m73/`。
+- Focused backend 6, combined M4/M7.1/M7.2/M5/runtime 63, fresh installed-package full V2 512, frontend typecheck/build/Vitest 4, and full Chromium Playwright 40 passed. Real QQ M7 E2E remains `NOT_RUN`。
+- **Current gate**: `M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`; `M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。

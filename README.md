@@ -18,6 +18,8 @@
 
 详细进展、验收结果和已知风险见 [PROGRESS.md](PROGRESS.md)。产品背景与技术取舍见 [项目简介.md](项目简介.md)。安装和使用方法见 [使用文档.md](使用文档.md)。
 
+> CampusCue V2 的 M7.3 candidate 已加入 bounded Agent confirmation、真实高层 tool activity 和可复现的本地演示闭环；最终 Gate 仍等待外部审核。详见 [V2 Quick Start](docs/demo/QUICKSTART.md)。
+
 ## 架构
 
 消息进入旁路处理管道后，依次经过：

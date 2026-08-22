@@ -45,8 +45,13 @@ async def agent_chat(request: Request, payload: AgentChatRequest):
         timezone=ZoneInfo(deps.config.timezone),
         user_text=payload.message,
     )
-    reply = await deps.agent_runtime.chat(context=context, user_text=payload.message)
-    return AgentChatResponse(conversation_id=thread, message=reply, tool_activity=[])
+    result = await deps.agent_runtime.chat_with_trace(context=context, user_text=payload.message)
+    return AgentChatResponse(
+        conversation_id=thread,
+        message=result.message,
+        tool_activity=result.tool_activity,
+        confirmation_state=result.confirmation_state,
+    )
 
 
 @router.get("/threads", response_model=list[AgentThreadOut])

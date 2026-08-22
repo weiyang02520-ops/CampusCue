@@ -57,6 +57,11 @@ class ToolDefinition(ABC):
     description: str = ""
     input_schema: dict[str, Any] = {}
     permission: str = "task"
+    # M7.3 semantic metadata.  The registry, not scattered tool-name checks,
+    # is the source of truth for the Agent confirmation boundary.
+    mutation: bool = False
+    requires_confirmation: bool = False
+    activity_label: str = "已执行工具操作"
 
     @abstractmethod
     async def execute(self, *, context: ToolContext, **kwargs: Any) -> ToolResult:
@@ -99,6 +104,38 @@ class ToolRegistry:
     def list(self) -> list[ToolDefinition]:
         return list(self._tools.values())
 
+    def requires_confirmation(self, name: str) -> bool:
+        tool = self._tools.get(name)
+        return bool(tool and tool.mutation and tool.requires_confirmation)
+
+    def activity_label(self, name: str) -> str:
+        tool = self._tools.get(name)
+        return tool.activity_label if tool else "已执行工具操作"
+
+    def validate_arguments(self, name: str, arguments: dict[str, Any]) -> ToolResult | None:
+        """Return a safe validation result, or ``None`` when arguments pass.
+
+        M7.3 uses this before proposing a mutation so validation never calls a
+        write implementation.  ``execute`` reuses the same primitive below.
+        """
+        tool = self._tools.get(name)
+        if tool is None:
+            return ToolResult(ok=False, content="", error="unknown_tool")
+        if not isinstance(arguments, dict):
+            return ToolResult(ok=False, content="", error="arguments must be a JSON object")
+        if tool.input_schema:
+            validator = Draft202012Validator(tool.input_schema)
+            errors = sorted(validator.iter_errors(arguments), key=lambda e: list(e.path))
+            if errors:
+                first = errors[0]
+                where = ".".join(str(p) for p in first.path) or "(root)"
+                return ToolResult(
+                    ok=False,
+                    content="",
+                    error=f"invalid arguments: {where} {first.message}",
+                )
+        return None
+
     def provider_schemas(self) -> list[LLMToolSchema]:
         """Provider-neutral declarations for the chat request (M4 §10).
         Agent code never serializes vendor wire JSON itself."""
@@ -126,24 +163,9 @@ class ToolRegistry:
         - implementation exception: sanitized generic error (M4 §12)
         """
         tool = self._tools.get(name)
-        if tool is None:
-            return ToolResult(ok=False, content="", error="unknown_tool")
-        if not isinstance(arguments, dict):
-            return ToolResult(
-                ok=False, content="", error="arguments must be a JSON object"
-            )
-        # M4 §11: validate BEFORE calling the implementation.
-        if tool.input_schema:
-            validator = Draft202012Validator(tool.input_schema)
-            errors = sorted(validator.iter_errors(arguments), key=lambda e: list(e.path))
-            if errors:
-                first = errors[0]
-                where = ".".join(str(p) for p in first.path) or "(root)"
-                return ToolResult(
-                    ok=False,
-                    content="",
-                    error=f"invalid arguments: {where} {first.message}",
-                )
+        validation_error = self.validate_arguments(name, arguments)
+        if validation_error is not None:
+            return validation_error
         try:
             if timeout_s is None:
                 timeout_s = self._default_timeout_s

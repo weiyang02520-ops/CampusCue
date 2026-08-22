@@ -12,7 +12,7 @@ const reminderSummary = computed(() => {
   const failed = resources.reminders.find(reminder => reminder.error)
   if (failed) return '提醒发送失败：检查 QQ 连接后，后续提醒仍会按计划执行。'
   if (resources.reminders.some(reminder => reminder.status === 'fired')) return '最近提醒已触发（不等同于 QQ 已送达）。'
-  if (resources.reminders.some(reminder => reminder.status === 'scheduled')) return '提醒已计划，届时会按来源发送。'
+  if (resources.reminders.some(reminder => reminder.status === 'scheduled')) return '提醒已计划，等待触发。'
   return ''
 })
 const steps = computed(() => [

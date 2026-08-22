@@ -33,8 +33,9 @@
 - M7 ROADMAP DESIGN = PASS
 - M7.0 PRODUCT CONTRACT = PASS
 - M7.1 FIRST-USE ACTIVATION = PASS
-- M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
-- M7.3 IMPLEMENTATION = NOT_AUTHORIZED
+- M7.2 ONEBOT REMINDER DELIVERY = PASS
+- M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW
 
 ## completed
 
@@ -90,15 +91,23 @@
 
 ## 11. M7.2 ONEBOT REMINDER DELIVERY CHECKPOINT（2026-08-22）
 
-- **[REPO_CONFIRMED][CURRENT]**：Starting HEAD `2acad44e865eb99b21edf7c53e6da83e66469442`；M7.1 external review = `PASS`；M7.2 已获授权并完成实现，等待外部审核。
+- **[REPO_CONFIRMED]**：Starting HEAD `2acad44e865eb99b21edf7c53e6da83e66469442`；M7.1 external review = `PASS`；M7.2 external source review = `PASS`；Real QQ E2E = `NOT_RUN`。
 - **[IMPLEMENTED]**：closed `noop|onebot` delivery mode（默认 Noop）、source-scoped OneBot GROUP delivery、deterministic privacy-safe reminder template、safe `Reminder.error` taxonomy、duplicate fire guard、runtime startup/shutdown ordering。
 - **[CLEANUP]**：A02 真实 disconnected connection-test coverage；ActivationGuide Agent step now follows actual `/agent/threads` state；minimal reminder failure/status visibility。
 - **[EVIDENCE]**：`.ai-handoff/evidence/m72/`；fake NapCat success/disconnected/action-failure traces；REAL QQ E2E = `NOT_RUN`。
-- **[BOUNDARY]**：Schema/API changes = NONE；no automatic retry；no extra channel；M7.3 remains not authorized。
+- **[BOUNDARY]**：Schema/API changes = NONE；no automatic retry；no extra channel。
+
+## 12. M7.3 BOUNDED AGENT COPILOT CHECKPOINT（2026-08-22）
+
+- **[AUTHORIZED]**：M7.2 external review = `PASS`；M7.3 bounded Agent Copilot implementation was explicitly authorized。
+- **[IMPLEMENTED]**：All mutation tools require code-enforced confirmation; pending state is in-memory, source-scoped, thread-scoped, frozen, replay-safe and restart-cleared；actual high-level tool activity uses the existing Agent API field；WebUI confirmation actions are text-compatible。
+- **[A10]**：Official fixture runs through real TaskPipeline/TaskService/ReminderService/AgentRuntime and synthetic reminder sink in local deterministic Step 0–16；duration/evidence at `.ai-handoff/evidence/m73/`。
+- **[BOUNDARY]**：Schema changes = `NONE`；new API endpoint = `NONE`；Fake NapCat = `PASS`；Real QQ M7 E2E = `NOT_RUN`；no M7.4。
+- **[CURRENT_GATE]**：`M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`。
 
 ## next_gate
 
-[M7.2_EXTERNAL_REVIEW] Review `.ai-handoff/evidence/m72/` and the M7.2 implementation mapping. Do not authorize M7.3 from local evidence alone。
+[M7.3_EXTERNAL_REVIEW] Review `.ai-handoff/evidence/m73/`, M7-A08 confirmation traces, M7-A10 local deterministic loop, and the implementation mapping. Do not declare M7 FINAL from local evidence alone。
 
 ## architecture_decisions
 
@@ -111,4 +120,4 @@
 - **[IMPLEMENTED]**：Home 5 分钟启动引导、Connections actionable empty/disabled/failure copy、Task/Message provenance + trust presentation、Agent 手动连接入口、真实 TaskPipeline deterministic harness、显式日期+时间解析修复。
 - **[TEST_CONFIRMED]**：M7.1 backend focused 8 passed；pipeline/time regression included 85 passed；WebUI typecheck/build PASS；M7.1 Playwright 2 passed。
 - **[BOUNDARY]**：A08 未扩展 confirmation framework；A09 仅 fake delivery observer；runtime 仍 NoopDelivery；无真实 QQ/NapCat；未宣称 full five-minute E2E 或 M7 complete。
-- **[CURRENT_GATE]**：`M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.2 REMINDER DELIVERY = NOT_AUTHORIZED`；`M7.3 = NOT_AUTHORIZED`。
+- **[HISTORICAL_GATE]**：`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 REMINDER DELIVERY = PASS`；current gate is recorded in Section 12。

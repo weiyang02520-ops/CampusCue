@@ -2,7 +2,7 @@
 
 > M1-M7 详细定义与 PASS 标准。**代码存在不算 PASS**；必须达到明确验收。每 Milestone 完成后：真实测试 → 更新项目状态 → checkpoint → push → 外部审核 → 才进入下一个。
 >
-> **当前 active gate**：M5 FINAL = **PASS**；M6 = **CHANGES_REQUESTED（已完成 M6.1 修复）**；M6.5.2 GLASS = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；M6.5.3 DARK STAGE 1 = **PASS**；M6.5.3 DARK = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；NEUMORPHISM MATERIAL = **PASS**；M6.5.4.1 THEME UX = **PASS**；GLASS FINAL = **PASS**；DARK FINAL = **PASS**；NEUMORPHISM FINAL = **PASS**；M6 FINAL = **PASS**（CampusCue WebUI completed）；M7 ROADMAP DESIGN = **PASS**；M7.0 PRODUCT CONTRACT = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M7.1/M7.2/M7.3 IMPLEMENTATION = **NOT_AUTHORIZED**。
+> **当前 active gate**：M5 FINAL = **PASS**；M6 FINAL = **PASS**（CampusCue WebUI completed）；M7 ROADMAP DESIGN = **PASS**；M7.0 PRODUCT CONTRACT = **PASS**；M7.1 FIRST-USE ACTIVATION = **PASS**；M7.2 ONEBOT REMINDER DELIVERY = **PASS**；M7.3 BOUNDED AGENT COPILOT = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；M7 FINAL = **IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**；M7.4 = **NOT_AUTHORIZED**。
 
 ## M1：Independent QQ Runtime
 
@@ -146,9 +146,18 @@
 
 ### M7.2 OneBot Reminder Delivery（2026-08-22）
 
-- **状态**：`IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；M7.1 external source review = `PASS`。
+- **状态**：`PASS`；M7.1 external source review = `PASS`；Real QQ E2E = `NOT_RUN`。
 - **范围**：只实现显式 opt-in 的 OneBot GROUP reminder delivery；默认仍为 `noop`；source target 仅从 `Task.source_id` 解析。
 - **实现**：确定性提醒文案、现有 `OutgoingMessage`/`OneBotAdapter.send()` 边界、safe `Reminder.error` 分类、一次性 fire claim、启动/关闭顺序收口；不改 Schema、不新增 API、不做自动重试或第二通知渠道。
 - **UI**：ActivationGuide 的 Agent step 改为真实 `/agent/threads` 状态；Reminder failure/status 通过现有提醒数据在首页做最小可见反馈；A02 使用真实 connection-test disconnected path。
 - **证据**：`.ai-handoff/evidence/m72/`；真实 QQ E2E = `NOT_RUN`。
 - **验证**：M7.2 focused 10 passed；M7.1 + M7.2 + M3/runtime focused 55 passed；Web typecheck/build/Vitest 4；M7.1/M7.2 Playwright 3 passed。
+
+### M7.3 Bounded Agent Copilot & Demonstration Package（2026-08-22）
+
+- **状态**：`IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；M7.0/M7.1/M7.2 = `PASS`；M7 Final not yet declared。
+- **范围**：代码强制 Agent mutation confirmation；pending proposal 是 source/thread-scoped、in-memory、冻结参数、可拒绝、不可重放、重启清除；实际高层 tool activity 复用现有 Agent API 字段；WebUI 提供确认按钮并保留文本确认。
+- **A10**：官方 fixture 通过真实 TaskPipeline、SQLite、TaskService、ReminderService、AgentRuntime 和 synthetic reminder sink 完成 local deterministic Step 0–16；不使用真实 secrets，不宣称 Real QQ。
+- **交付**：`docs/demo/QUICKSTART.md`、`DEMO_SCRIPT.md`、`DEMO_TROUBLESHOOTING.md`、`v2/.env.example`、`.ai-handoff/evidence/m73/`。
+- **边界**：Schema changes = `NONE`；new API endpoint = `NONE`；no durable approval framework、automatic retry、extra channel 或 M7.4。
+- **验证**：M7.3 focused 6 passed；M4/M7.1/M7.2/M5/runtime combined 63 passed；fresh installed-package full V2 512 passed；frontend typecheck/build/Vitest 4；full Chromium Playwright 40 passed；Fake NapCat = `PASS`；Real QQ M7 E2E = `NOT_RUN`。

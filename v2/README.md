@@ -10,11 +10,16 @@
 - **M4**：Agent tool loop implementation——provider-neutral tool calls、source-scoped Task Tools、TaskService mutation gate、bounded conversation/context、显式 QQ @激活；**Real Provider Tool Call PASS（2026-08-18）**；**Real QQ Agent E2E PASS（2026-08-19）**
 - **M5**：FastAPI REST + Realtime SSE（`/api/v1`）——Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System + Backup/Restore/Import/Export；默认 loopback，schema v3
 - **M6**：Vue 3 WebUI——Home/Tasks/Messages/Calendar/Agent/Connections/Providers/Settings；Glassmorphism、Dark UI、Neumorphism 三种 visual styles；**M6 FINAL PASS（2026-08-21）**
+- **M7.1–M7.2**：5 分钟首次使用闭环、source-scoped OneBot GROUP reminder delivery（默认 Noop、显式 opt-in；Fake NapCat PASS，Real QQ NOT_RUN）
+- **M7.3 candidate**：Bounded Agent Copilot——写操作代码强制确认、source/thread-scoped in-memory pending state、真实高层 tool activity、local deterministic full-loop demo
 
-## 未实现（Not yet implemented）
+## 当前边界（Current boundary）
 
-- 端用户提醒投递 UX（M3 为调度/生命周期；delivery 注入边界 + NoopDelivery）
-- 插件系统 / MCP / RAG
+- M7.3 implementation candidate 尚未声明 M7 FINAL；等待 External Final Review。
+- Real QQ M7 reminder E2E = NOT_RUN；Fake NapCat runtime E2E = PASS。
+- 不提供万能 Agent、durable approval framework、额外通知渠道或 M7.4。
+
+演示文档：[M7 Quick Start](../docs/demo/QUICKSTART.md) · [Demo Script](../docs/demo/DEMO_SCRIPT.md)
 
 > **M2 启用方式**：`CAMPUSCUE_TASK_PIPELINE=1` + `CAMPUSCUE_DB_PATH=<验收 DB>` + `CAMPUSCUE_TIMEZONE=Asia/Shanghai`。真实 Provider 配置见 `scripts/m2_configure_provider.py`（secret 只存 env 变量名）；真实来源配置见 `scripts/m2_configure_source.py`（conversation ID 走 `CAMPUSCUE_SOURCE_CONVERSATION` 环境变量，不写 Git）。
 >

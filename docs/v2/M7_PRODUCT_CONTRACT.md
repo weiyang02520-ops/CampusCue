@@ -1,10 +1,10 @@
 # CampusCue M7.0 Product Contract
 
-> 状态：**M7.0 PRODUCT CONTRACT = PASS；M7.1 PASS；M7.2 IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+> 状态：**M7.0 PRODUCT CONTRACT = PASS；M7.1 PASS；M7.2 PASS；M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**
 >
 > 本文把 M7 Roadmap 收敛为可测试的产品契约。它不是代码实现授权。
 >
-> `M7 ROADMAP DESIGN = PASS`；`M7.0 = PASS`；`M7.1 = PASS`；`M7.2 = AUTHORIZED`；`M7.3 IMPLEMENTATION = NOT_AUTHORIZED`。
+> `M7 ROADMAP DESIGN = PASS`；`M7.0 = PASS`；`M7.1 = PASS`；`M7.2 = PASS`；`M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`。
 
 ## 1. Product Promise
 
@@ -267,9 +267,10 @@ M7 不解决 compound announcement → multiple tasks。一个 source message �
 
 - `M7 ROADMAP DESIGN = PASS`
 - `M7.0 PRODUCT CONTRACT = PASS`
-- `M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`
-- `M7.2 = NOT_AUTHORIZED`
-- `M7.3 = NOT_AUTHORIZED`
+- `M7.1 FIRST-USE ACTIVATION = PASS`
+- `M7.2 ONEBOT REMINDER DELIVERY = PASS`
+- `M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`
+- `M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW`
 
 ## 12. M7.1 implementation mapping
 
@@ -294,4 +295,4 @@ M7 不解决 compound announcement → multiple tasks。一个 source message �
 - Duplicate contract: service-level fire claim guard prevents sequential/concurrent duplicate outbound actions without a schema change。
 - Runtime lifecycle: delivery is installed after adapter start and before scheduler start; shutdown waits for scheduler fire handlers before adapter close。
 - M7-A09 evidence: deterministic fake NapCat success/disconnected/action-failure traces in `.ai-handoff/evidence/m72/`; real QQ E2E was not run。
-- API changes: **NONE**. Schema changes: **NONE**. M7.3 remains not authorized。
+- API changes: **NONE**. Schema changes: **NONE**. M7.3 is implemented in the separate bounded-copilot section and awaits external review。

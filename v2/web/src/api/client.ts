@@ -1,4 +1,4 @@
-import type { Page, Task, TaskWrite, Source, SourceWrite, SourceTest, Message, MessageDetail, Provider, ProviderWrite, ProviderTest, Reminder, Settings, Health, SystemStatus, Logs, Backup, ImportResult } from '../types/api'
+import type { Page, Task, TaskWrite, Source, SourceWrite, SourceTest, Message, MessageDetail, Provider, ProviderWrite, ProviderTest, Reminder, Settings, Health, SystemStatus, Logs, Backup, ImportResult, ConfirmationState } from '../types/api'
 const BASE = '/api/v1'
 function authHeaders(): Record<string, string> { const token = localStorage.getItem('campuscue-api-token') || import.meta.env.VITE_API_TOKEN; return token ? { Authorization: `Bearer ${token}` } : {} }
 export class ApiError extends Error { constructor(public status: number, message: string) { super(message) } }
@@ -39,6 +39,6 @@ export const api = {
   restore: (backup: Backup, confirm_replace: boolean) => request<{ restored: boolean; schema_version: number }>('/system/restore', json({ backup, confirm_replace })),
   importTasks: (payload: Record<string, unknown>) => request<ImportResult>('/system/import', json(payload)),
   exportTasks: () => request<{ kind: string; version: number; tasks: Array<Record<string, unknown>> }>('/system/export'),
-  agentChat: (body: { source_id: number; conversation_id?: string; message: string }) => request<{ conversation_id: string; message: string; tool_activity: string[] }>('/agent/chat', json(body)),
+  agentChat: (body: { source_id: number; conversation_id?: string; message: string }) => request<{ conversation_id: string; message: string; tool_activity: string[]; confirmation_state?: ConfirmationState | null }>('/agent/chat', json(body)),
   threads: () => request<Array<{ conversation_id: string; source_id: number | null; message_count: number; last_activity: number | null }>>('/agent/threads')
 }

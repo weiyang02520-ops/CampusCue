@@ -2,7 +2,7 @@
 
 > 当前状态摘要。详细内容见 canonical HANDOFF.md 与 PROJECT_STATE.md。
 
-- 阶段：**M7.2 ONEBOT REMINDER DELIVERY IMPLEMENTATION COMPLETE（AWAITING EXTERNAL REVIEW）**
+- 阶段：**M7.3 BOUNDED AGENT COPILOT IMPLEMENTATION COMPLETE（AWAITING EXTERNAL REVIEW）**
 - **M4 FINAL = PASS**
 - **M5 FINAL = PASS**（External ChatGPT）
 - **M6 = CHANGES_REQUESTED（已按外部审核修复）**
@@ -19,7 +19,7 @@
 - **NEUMORPHISM MATERIAL = PASS**；**M6.5.4.1 THEME UX = PASS**
 - **GLASS FINAL = PASS**；**DARK FINAL = PASS**；**NEUMORPHISM FINAL = PASS**
 - **M6 FINAL = PASS**（CampusCue WebUI completed）
-- **M7 ROADMAP DESIGN = PASS**；**M7.0 PRODUCT CONTRACT = PASS**；**M7.1 FIRST-USE ACTIVATION = PASS**；**M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M7.3 = NOT_AUTHORIZED**
+- **M7 ROADMAP DESIGN = PASS**；**M7.0 PRODUCT CONTRACT = PASS**；**M7.1 FIRST-USE ACTIVATION = PASS**；**M7.2 ONEBOT REMINDER DELIVERY = PASS**；**M7.3 BOUNDED AGENT COPILOT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**
 - M5 REST/SSE：PASS（Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System/Backup/Restore/Import/Export/Auth/Health）
 - M7.2 implementation：OneBot GROUP delivery is explicit opt-in; default Noop; deterministic message, safe delivery error taxonomy, duplicate fire guard, startup/shutdown ordering, and fake NapCat evidence are complete. M7.1 external review = PASS; real QQ E2E = NOT_RUN.
 - Schema：v3（settings + sources.deleted_at + indexes；migration atomic）
@@ -36,3 +36,12 @@
 - M6.5.2 Glass：降低 backdrop、统一 Base/Primary/Context/Raised/Floating semantic tiers；Home Today 去嵌套白卡；Tasks toolbar/context/rows 与本地化日期；Agent utility/prompt/composer/mobile refinement；Stage 1 证据 `.ai-handoff/visual/m652/glass/`；等待外部 Glass 视觉审核。
 - M6.5.3 Dark：Stage 1 独立 solid-surface Dark UI 覆盖 App Shell/Home/Tasks/Agent/Settings selector；7 张 evidence 位于 `.ai-handoff/visual/m653/dark/`；Dark focused 2、M6 focused 16、Glass focused 2、real integration 2、Axe/overflow/console/theme/mobile composer PASS；等待外部 Dark 视觉审核。基线 `m6.5.2-glass-baseline` 已推送。
 - M6.5.3 Dark Stage 2：完成 Calendar/Messages/Connections/Providers/Settings、Dialog/Bottom Sheet/Toast/Empty/Loading/Offline/Reconnecting 与 1440/1024/390 responsive evidence；新增 `.ai-handoff/visual/m653-stage2/dark/` 和 `.ai-handoff/visual/m653-stage2/compare/`，语义 Theme Selector + `system` media sync；Stage 1 = PASS，Dark implementation complete awaiting external visual review。
+
+## M7.3 checkpoint (2026-08-22)
+
+- M7.2 external source review = **PASS**; Real QQ M7 reminder E2E = **NOT_RUN**。
+- M7.3 implemented: metadata-driven mutation classification, in-memory source/thread-scoped frozen confirmation, deterministic confirmation parser, replay/restart/cross-source protection, actual safe `tool_activity`, existing Agent API response reuse, WebUI confirmation actions, truthful scheduled-reminder copy。
+- M7-A10 = **LOCAL DETERMINISTIC FULL LOOP PASS**; official fixture → real TaskPipeline → SQLite Task/Reminder → Agent read/activity → pending mutation → explicit confirmation → TaskService mutation → reminder lifecycle；duration/evidence in `.ai-handoff/evidence/m73/`。
+- M7.3 focused backend **6 passed**；M4/M7.1/M7.2/M5/runtime combined **63 passed**；fresh installed-package full V2 **512 passed**；Web typecheck/build/Vitest **4 passed**；full Chromium Playwright **40 passed**。
+- Schema changes = **NONE**；new API endpoint = **NONE**；Fake NapCat = **PASS**；Real QQ = **NOT_RUN**。
+- Current gate: **M7.3 = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M7 FINAL = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_FINAL_REVIEW**；no M7.4。
