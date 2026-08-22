@@ -1,8 +1,8 @@
 # CampusCue M7 Roadmap
 
-> 状态：**ROADMAP_DESIGN_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+> 状态：**M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 >
-> 本文是 M7 的范围设计，不是实现授权。M7 implementation 仍为 **NOT_AUTHORIZED**。任何代码、Schema、API 或 Agent 扩展都必须在外部审核通过后另行授权。
+> 本文是 M7 的范围设计；Product Contract 已收敛到 [`M7_PRODUCT_CONTRACT.md`](M7_PRODUCT_CONTRACT.md)，不是实现授权。M7.1/M7.2/M7.3 implementation 仍为 **NOT_AUTHORIZED**。任何代码、Schema、API 或 Agent 扩展都必须在外部审核通过后另行授权。
 
 ## 1. Current State
 

@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M7 Roadmap Design）
+## 当前（M7.0 Product Contract）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -23,14 +23,16 @@
 - **GLASS FINAL = PASS**
 - **DARK FINAL = PASS**；**NEUMORPHISM FINAL = PASS**
 - **M6 FINAL = PASS**（CampusCue WebUI completed）
-- **M7 ROADMAP = ROADMAP_DESIGN_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M7 IMPLEMENTATION = NOT_AUTHORIZED**
+- **M7 ROADMAP DESIGN = PASS**
+- **M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+- **M7.1 / M7.2 / M7.3 IMPLEMENTATION = NOT_AUTHORIZED**
 - 本 checkpoint：删除旧 Appearance section、`themeOptions`、`appearance-picker` 和隐藏兼容 CSS；保留单一 `跟随系统 / 玻璃拟态 / 深色界面 / 新拟态` 选择器，完成三主题全路由/响应式/可访问性回归，证据位于 `.ai-handoff/visual/m6-final-candidate/`。External final visual review 已通过 Glass、Dark、Neumorphism、Theme switching、persistence、backend contract、responsive、accessibility 与 regression；仅修复 Dark dialog description 的 WCAG 对比度边界，不改材质、布局、IA、业务流程、API contract、router、backend 或 schema。
 
-### M7 Roadmap Design
+### M7.0 Product Contract
 
-- `docs/v2/M7_ROADMAP.md` 已完成，当前仅等待 External ChatGPT review。
-- 推荐 M7 MVP：首次接入五分钟闭环 + 可信任务跟进 + 受边界约束的 Agent copilot/demo；Campus Data Integration 与 Collaboration deferred。
-- 本轮没有实现任何 M7 功能；M7 implementation remains NOT_AUTHORIZED。
+- `docs/v2/M7_PRODUCT_CONTRACT.md` 已完成，当前仅等待 External ChatGPT review。
+- 已锁定官方 deterministic fixture、OneBot/NapCat source scope、Primary Reminder Delivery = QQ/OneBot outbound、Test Fallback = fake delivery sink、Agent boundary、Trust Contract、M7.1 Required/Optional/Forbidden 和 M7-A01～M7-A10。
+- 本轮没有实现任何 M7 功能；M7.1/M7.2/M7.3 implementation remains NOT_AUTHORIZED。
 
 ## M6.1 修复范围
 

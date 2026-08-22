@@ -30,8 +30,9 @@
 - NEUMORPHISM MATERIAL = PASS
 - GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS
 - M6 FINAL = PASS（CampusCue WebUI completed）
-- M7 ROADMAP = ROADMAP_DESIGN_COMPLETE_AWAITING_EXTERNAL_REVIEW
-- M7 IMPLEMENTATION = NOT_AUTHORIZED
+- M7 ROADMAP DESIGN = PASS
+- M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M7.1 / M7.2 / M7.3 IMPLEMENTATION = NOT_AUTHORIZED
 
 ## completed
 
@@ -87,7 +88,7 @@
 
 ## next_gate
 
-[M7_ROADMAP] `docs/v2/M7_ROADMAP.md` 已完成产品范围、候选方向、M7.0-M7.3、Agent boundary、数据模型影响、技术债与验收标准设计。当前等待 External ChatGPT review；M7 implementation remains NOT_AUTHORIZED。
+[M7.0_PRODUCT_CONTRACT] `docs/v2/M7_PRODUCT_CONTRACT.md` 已锁定五分钟闭环、官方 fixture、source scope、Primary Reminder Delivery、Agent boundary、Trust Contract、技术债处置和 M7-A01～M7-A10。当前等待 External ChatGPT review；M7.1/M7.2/M7.3 implementation remains NOT_AUTHORIZED。
 
 ## architecture_decisions
 

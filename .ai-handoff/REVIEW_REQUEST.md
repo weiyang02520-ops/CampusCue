@@ -47,7 +47,16 @@ Evidence: `.ai-handoff/visual/m653-stage2/dark/` includes 1440 Home/Tasks/Calend
 - M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS
 - M6 FINAL = PASS
-- M7 ROADMAP = ROADMAP_DESIGN_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7 IMPLEMENTATION = NOT_AUTHORIZED
+- M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7.1 / M7.2 / M7.3 IMPLEMENTATION = NOT_AUTHORIZED
+
+## M7.0 Product Contract review
+
+- Contract: `docs/v2/M7_PRODUCT_CONTRACT.md`
+- Locked product promise: first-use source → evidence-backed task → confirmation → reminder follow-through → source-scoped grounded Agent answer within five minutes。
+- Locked Primary Reminder Delivery: QQ / OneBot outbound reminder；Test Fallback: injected fake delivery sink / fake NapCat observer。
+- Locked official fixture: fictional explicit-date 高等数学 homework message；locked source scope: one deterministic local path + existing OneBot/NapCat real path。
+- Acceptance scenarios: `M7-A01` through `M7-A10`。
+- No source/API/Schema/Agent/UI/ReminderService implementation was performed。
 
 ## M7 roadmap review
 
