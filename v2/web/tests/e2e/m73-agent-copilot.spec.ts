@@ -81,3 +81,39 @@ test('M7-A07 source switching clears the old conversation and request identity',
   expect(chatBodies[0].conversation_id).toBeUndefined()
   expect(chatBodies[1].conversation_id).toBeUndefined()
 })
+
+test('M7-A13 late Agent response from the previous source is not rendered', async ({ page }) => {
+  let releaseA!: () => void
+  const aReleased = new Promise<void>(resolve => { releaseA = resolve })
+  await mockApi(page, false, true)
+  await page.route('**/api/v1/agent/chat', async route => {
+    const body = JSON.parse(route.request().postData() || '{}')
+    if (body.message === 'A慢请求') {
+      await aReleased
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ conversation_id: 'm73-thread', message: '过期的 A 来源回答', tool_activity: [], confirmation_state: null }),
+      })
+    }
+    if (body.message === 'B来源问题') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ conversation_id: 'm73-thread-b', message: 'B 来源回答', tool_activity: [], confirmation_state: null }),
+      })
+    }
+    return route.continue()
+  })
+
+  await page.goto('/agent')
+  await page.getByLabel('对 AI 助手说').fill('A慢请求')
+  await page.getByRole('button', { name: '发送' }).click()
+  await page.locator('select').selectOption('2')
+  releaseA()
+  await expect(page.getByText('过期的 A 来源回答')).toHaveCount(0)
+  await page.getByLabel('对 AI 助手说').fill('B来源问题')
+  await page.getByRole('button', { name: '发送' }).click()
+  await expect(page.getByText('B 来源回答')).toBeVisible()
+  await expect(page.getByText('过期的 A 来源回答')).toHaveCount(0)
+})

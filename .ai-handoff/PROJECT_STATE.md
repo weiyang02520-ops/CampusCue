@@ -90,6 +90,14 @@
 - M3 Task/Reminder cross-repository atomicity remains open design risk; startup `resync_all()` recovery accepted。
 - SSE no-replay；断线后 REST refresh。
 
+## POST-M7 P1A SAFETY & DATA INTEGRITY CHECKPOINT（2026-08-22）
+
+- `M7 FINAL = PASS`；`POST-M7 P0 RELIABILITY AUDIT = PASS`；`POST-M7 P1A = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`。
+- `DAILY-USE CANDIDATE = NOT_READY`；`REAL QQ / REAL PROVIDER = NOT_AUTHORIZED`；`M8 = NOT_AUTHORIZED`。
+- Authorized work used disposable SQLite, synthetic data, Fake NapCat, local/fake provider, and a controlled worker. No production DB, real integration, new channel, SSE replay, durable Agent memory, schema/API/protocol redesign, or M8 work.
+- Evidence: `.ai-handoff/evidence/stability/p1a/`；P1A focused **17**、fresh installed-package full V2 **530**、Web typecheck/build/Vitest **4**、Chromium **42**、compileall/Anti-AstrBot/secret-PII/diff-check PASS。
+- Confirmed and fixed one restore defect: SQLite foreign-key enforcement required parent rows to be flushed before child rows. No schema change.
+
 ## 11. M7.2 ONEBOT REMINDER DELIVERY CHECKPOINT（2026-08-22）
 
 - **[REPO_CONFIRMED]**：Starting HEAD `2acad44e865eb99b21edf7c53e6da83e66469442`；M7.1 external review = `PASS`；M7.2 external source review = `PASS`；Real QQ E2E = `NOT_RUN`。

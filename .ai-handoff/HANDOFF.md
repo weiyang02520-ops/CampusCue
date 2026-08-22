@@ -229,3 +229,11 @@ External Final Review completed: M7.3 and the M7 Final Gate are PASS. Do not ope
 - Reviewed OneBot lifecycle/reconnect/dedup/action correlation, EventBus bounds/shutdown, TaskPipeline/provider errors, Task/Reminder recovery, source-scoped delivery, Agent confirmation/isolation, SSE reconnect contract, backup/restore, and runtime lifecycle。
 - Result: no confirmed P0 data-loss/secret-leak/wrong-send defect；8 P1 risks and 5 P2 follow-ups remain needs-reproduction or bounded-proof items。Real QQ E2E and Real Provider smoke remain `NOT_RUN` by design in this audit。
 - No source/schema/API/test changes；no full V2/Chromium rerun。Do not fix P1/P2 items without a new narrow authorization; stop immediately for a reproduced P0。
+
+## POST-M7 P1A SAFETY & DATA INTEGRITY (2026-08-22)
+
+- External authorization allowed only deterministic failure-injection tests and narrowly scoped fixes for listed P1 boundaries.
+- Completed local evidence for SQLite lock/commit, Task→Reminder recovery, restore, OneBot action generation, controlled stop/reopen, Agent concurrency, and Web stale responses.
+- Reproduced `REL-P1-004`: restore inserted SQLite child rows before parent rows. Fixed only by explicit `session.flush()` between parent/child groups in `v2/src/campuscue/services/system_service.py`.
+- Verification: P1A focused **17**；fresh installed-package full V2 **530**；Web E2E **42**；typecheck/build/Vitest/compileall/Anti-AstrBot/secret-PII/diff-check PASS。
+- Current gate: `POST-M7 P0 RELIABILITY AUDIT = PASS`; `POST-M7 P1A = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`; `DAILY-USE CANDIDATE = NOT_READY`; `REAL QQ / REAL PROVIDER = NOT_AUTHORIZED`; `M8 = NOT_AUTHORIZED`。

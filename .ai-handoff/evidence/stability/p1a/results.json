@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-22",
+  "gate": "POST-M7 P1A SAFETY & DATA INTEGRITY",
+  "status": "IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW",
+  "scope": "disposable SQLite, synthetic data, Fake NapCat, local/fake provider, controlled worker",
+  "scenarios": [
+    {"id": "REL-P1-002", "status": "PROVEN_SAFE", "focused_tests": 4, "side_effect_rule": "failed writes zero; explicit retry one"},
+    {"id": "REL-P1-003", "status": "PROVEN_SAFE", "focused_tests": 4, "side_effect_rule": "at most one active reminder fact per logical reminder"},
+    {"id": "REL-P1-004", "status": "CONFIRMED_BUG_FIXED", "focused_tests": 2, "side_effect_rule": "failed restore zero; valid restore one committed replacement"},
+    {"id": "REL-P1-005", "status": "PROVEN_SAFE_LOCAL_ADAPTER", "focused_tests": 1, "side_effect_rule": "one action per event; stale echo zero"},
+    {"id": "REL-P1-008", "status": "PROVEN_SAFE_CONTROLLED_WORKER", "focused_tests": 2, "side_effect_rule": "one canonical task; zero outbound sends"},
+    {"id": "AGENT_CONFIRMATION", "status": "PROVEN_SAFE", "focused_tests": 1, "side_effect_rule": "one mutation for concurrent confirmations"},
+    {"id": "AGENT_CONCURRENCY", "status": "PROVEN_SAFE", "focused_tests": 2, "side_effect_rule": "ordered same-thread turns; cross-source provider calls zero"},
+    {"id": "WEB_STALE_RESPONSE", "status": "PROVEN_SAFE", "focused_tests": 1, "side_effect_rule": "stale response rendered zero times"}
+  ],
+  "verification": {
+    "focused_python": "17 passed",
+    "full_v2_source": "530 passed",
+    "full_v2_fresh_non_editable": "530 passed",
+    "web_typecheck": "PASS",
+    "web_build": "PASS",
+    "web_vitest": "4 passed",
+    "web_chromium": "42 passed",
+    "compileall": "PASS",
+    "anti_astrbot": "PASS",
+    "secret_pii": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "not_run": ["REAL_QQ", "REAL_PROVIDER", "MULTI_RUNTIME", "SSE_REPLAY", "DURABLE_AGENT_MEMORY", "SOAK", "M8"]
+}

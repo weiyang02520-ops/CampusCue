@@ -115,12 +115,21 @@ class SystemService:
                     await session.execute(delete(table))
                 for row in sources:
                     session.add(Source(**self._coerce_datetimes(row, Source)))
+                # The ORM models intentionally keep persistence primitives
+                # relationship-free. Explicitly flush FK parents before
+                # children so a valid logical backup is deterministic under
+                # SQLite foreign_keys=ON (otherwise SQLAlchemy may batch the
+                # reminder rows before their restored task rows).
+                await session.flush()
                 for row in tasks:
                     session.add(Task(**self._coerce_datetimes(row, Task)))
+                await session.flush()
                 for row in extractions:
                     session.add(Extraction(**self._coerce_datetimes(row, Extraction)))
+                await session.flush()
                 for row in reminders:
                     session.add(Reminder(**self._coerce_datetimes(row, Reminder)))
+                await session.flush()
                 for row in providers:
                     session.add(ProviderConfig(**self._coerce_datetimes(row, ProviderConfig)))
                 for row in settings:

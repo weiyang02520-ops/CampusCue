@@ -55,3 +55,11 @@
 - Audit-only documents: `docs/stability/RELIABILITY_MATRIX.md`、`RISK_REGISTER.md`、`STABILIZATION_PLAN.md`。
 - Source/API/Schema/Test changes = **NONE**。No full 513-test V2 rerun, full 41-test Chromium rerun, Real Provider smoke, or Real QQ E2E was performed in this audit。
 - Audit result: confirmed P0 bugs **0**；P1 risks requiring reproduction **8**；P2 bounded follow-ups **5**。Highest-impact unproven boundary remains Real QQ/NapCat delivery；known M3 cross-repository atomicity and SSE no-replay limitations remain explicit。
+
+## POST-M7 P1A SAFETY & DATA INTEGRITY CHECKPOINT (2026-08-22)
+
+- **POST-M7 P0 RELIABILITY AUDIT = PASS**；**P1A = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**。
+- P1A focused storage/runtime/Agent **17 passed**；fresh installed-package full V2 **530 passed**；full Chromium **42 passed**。
+- Web typecheck/build/Vitest **4**、compileall、Anti-AstrBot、secret/PII scan、diff-check all PASS。
+- Reproduced and fixed one SQLite restore foreign-key ordering defect with explicit parent-before-child flushes in `SystemService.restore`。
+- Evidence: `.ai-handoff/evidence/stability/p1a/`。**DAILY-USE CANDIDATE = NOT_READY**；**REAL QQ / REAL PROVIDER = NOT_AUTHORIZED**；**M8 = NOT_AUTHORIZED**。

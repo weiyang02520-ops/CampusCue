@@ -174,3 +174,11 @@
 - **范围**：代码事实检查、风险登记、故障注入/真实集成/生命周期/soak 测试计划；不改源码、WebUI、Schema、API 或测试。
 - **交付**：`docs/stability/RELIABILITY_MATRIX.md`、`docs/stability/RISK_REGISTER.md`、`docs/stability/STABILIZATION_PLAN.md`。
 - **结论**：confirmed P0 = 0；P1 risks requiring reproduction = 8；P2 bounded follow-ups = 5。Real QQ E2E、Real Provider smoke 和长时间 soak 本轮未运行。
+
+### POST-M7 P1A SAFETY & DATA INTEGRITY（2026-08-22）
+
+- **状态**：`IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；M7 Final = `PASS`；Daily-Use Candidate = `NOT_READY`；Real QQ/Real Provider = `NOT_AUTHORIZED`；M8 = `NOT_AUTHORIZED`。
+- **范围**：仅 disposable SQLite、synthetic data、Fake NapCat、local/fake provider、controlled worker 的故障注入与恢复；不做 schema/API/protocol redesign、SSE replay、durable Agent memory、new channel 或 UI redesign。
+- **结果**：P1A focused 17；fresh installed-package full V2 530；Web typecheck/build/Vitest 4；full Chromium 42；compileall/Anti-AstrBot/secret-PII/diff-check PASS。
+- **修复**：复现 `REL-P1-004` SQLite restore foreign-key ordering defect；`SystemService.restore` 增加 parent-before-child flush。无 schema 变化。
+- **证据**：`.ai-handoff/evidence/stability/p1a/README.md`、`results.json`。

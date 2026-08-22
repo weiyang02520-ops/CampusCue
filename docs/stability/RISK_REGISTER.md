@@ -1,6 +1,6 @@
 # CampusCue Post-M7 Risk Register
 
-> Status: audit complete, awaiting External ChatGPT review
+> Status: P1A implementation complete, awaiting External ChatGPT review
 > Baseline: `143e85fb2511071d3fcf1e4d6040a3546cd70c2b`
 > This register records risks and proof gaps, not newly discovered source defects.
 
@@ -34,6 +34,17 @@
 - P1 risks requiring reproduction: **8**
 - P2 risks requiring bounded follow-up: **5**
 - No risk is authorized to expand M7 into M8.
+
+## P1A execution result (2026-08-22)
+
+- `REL-P1-002`: `PROVEN_SAFE` in disposable lock/commit fault injection; failed writes left zero half-rows and sessions recovered.
+- `REL-P1-003`: `PROVEN_SAFE` in Task→Reminder boundary faults and restart-equivalent reconciliation; the M3 cross-repository atomicity limitation remains explicit.
+- `REL-P1-004`: `CONFIRMED BUG -> FIXED`; restore under SQLite foreign-key enforcement inserted child rows before parents. `SystemService.restore` now flushes parent groups before child groups, and the full fresh package suite passes.
+- `REL-P1-005`: local adapter generation boundary `PROVEN_SAFE`; Real QQ/NapCat remains `NOT_AUTHORIZED` and `NOT_RUN`.
+- `REL-P1-008`: controlled terminate/kill worker recovery `PROVEN_SAFE`; production soak remains unrun.
+- Agent confirmation/source concurrency and Web stale-response boundaries are `PROVEN_SAFE` for the tested local scope.
+
+P1A did not authorize real integrations, multi-runtime claims, SSE replay, durable Agent memory, new channels, or M8.
 
 ## Immediate stop conditions
 

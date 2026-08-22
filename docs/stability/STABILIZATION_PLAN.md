@@ -14,6 +14,15 @@
 
 The purpose of stabilization is to prove the existing product boundary under real failure, not to make the boundary larger.
 
+## 1A. P1A checkpoint (2026-08-22)
+
+- `POST-M7 P0 RELIABILITY AUDIT = PASS`.
+- `POST-M7 P1A SAFETY & DATA INTEGRITY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`.
+- The authorized disposable/fake Track A subset is complete: SQLite lock/commit, Task→Reminder recovery, restore, OneBot connection generation, controlled stop/reopen, Agent concurrency, and browser stale-response coverage.
+- One restore ordering defect was reproduced and fixed with explicit parent/child flushes; no schema/API/protocol redesign was made.
+- `DAILY-USE CANDIDATE = NOT_READY`; `REAL QQ / REAL PROVIDER = NOT_AUTHORIZED`; `M8 = NOT_AUTHORIZED`.
+- Evidence: `.ai-handoff/evidence/stability/p1a/README.md` and `results.json`.
+
 ## 2. Evidence order
 
 ### Track A — P0 safety and data integrity

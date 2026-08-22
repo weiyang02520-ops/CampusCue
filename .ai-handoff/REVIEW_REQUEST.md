@@ -268,3 +268,7 @@ Current gate:
 - `M8 = NOT_AUTHORIZED`
 
 No source/API/Schema/test changes were made in this audit。Real QQ E2E and Real Provider smoke are intentionally `NOT_RUN` in this phase。
+
+## P1A external review request (2026-08-22)
+
+Review `.ai-handoff/evidence/stability/p1a/README.md` and `results.json` plus the narrow restore fix. Requested gate: `POST-M7 P1A SAFETY & DATA INTEGRITY = PASS` only if the deterministic evidence and fix are accepted. `M7 FINAL` remains PASS; `DAILY-USE CANDIDATE` remains NOT_READY; Real QQ/Real Provider and M8 remain NOT_AUTHORIZED.
