@@ -254,3 +254,5 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 
 - **[M7.3_BOUNDED_AGENT_COPILOT][CURRENT]**：所有 Agent mutation 先经 ToolRegistry metadata 分类并等待明确确认；pending proposal 为 source/thread-scoped、in-memory、冻结参数、replay-safe、restart-cleared；实际高层 tool activity 复用 `/agent/chat` 既有字段；M7-A10 local deterministic Step 0–16 evidence 位于 `.ai-handoff/evidence/m73/`；Schema/API changes = NONE；no M7.4。
 - **[M7.3_SOURCE_BOUND_THREAD_FIX][PASS]**：外部审核发现的跨 Source conversation history leakage 已修复：runtime 在读取旧 Conversation 或调用 Provider 前 fail closed；same-source continuity PASS；pending cross-source mutation = 0；WebUI 切换 source 自动清空 conversation/messages；thread summary 保留原 source binding。External Final Review = PASS；M7 Final = PASS。
+
+- **[POST-M7_P0_RELIABILITY_AUDIT][CURRENT]**：稳定性审计只产生三份 docs/stability 文档，不执行修复。已核对 OneBot、Task/Reminder、Provider、Agent、SSE、backup/restore、runtime 生命周期及现有测试证据；Real QQ/Real Provider/soak 仍待后续授权。Gate：`M7 FINAL = PASS`；`POST-M7 P0 RELIABILITY AUDIT = COMPLETE_AWAITING_EXTERNAL_REVIEW`；`DAILY-USE CANDIDATE = NOT_READY`；`M8 = NOT_AUTHORIZED`。

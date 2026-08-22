@@ -46,3 +46,12 @@
 - M7.3 focused backend **7 passed**；relevant M4/M7.1/M7.2/M7.3 backend regression **47 passed**；fresh installed-package full V2 **513 passed**；Web typecheck/build/Vitest **4 passed**；full Chromium Playwright **41 passed**。
 - Schema changes = **NONE**；new API endpoint = **NONE**；Fake NapCat = **PASS**；Real QQ = **NOT_RUN**。
 - Current gate: **M7.3 = PASS**；**M7 FINAL = PASS**；**M7.4 = NOT NEEDED / NOT AUTHORIZED**。
+
+## POST-M7 P0 reliability checkpoint (2026-08-22)
+
+- **M7 FINAL = PASS** remains unchanged。
+- **POST-M7 P0 REAL-WORLD RELIABILITY AUDIT = COMPLETE_AWAITING_EXTERNAL_REVIEW**。
+- **DAILY-USE CANDIDATE = NOT_READY**；**M8 = NOT_AUTHORIZED**。
+- Audit-only documents: `docs/stability/RELIABILITY_MATRIX.md`、`RISK_REGISTER.md`、`STABILIZATION_PLAN.md`。
+- Source/API/Schema/Test changes = **NONE**。No full 513-test V2 rerun, full 41-test Chromium rerun, Real Provider smoke, or Real QQ E2E was performed in this audit。
+- Audit result: confirmed P0 bugs **0**；P1 risks requiring reproduction **8**；P2 bounded follow-ups **5**。Highest-impact unproven boundary remains Real QQ/NapCat delivery；known M3 cross-repository atomicity and SSE no-replay limitations remain explicit。

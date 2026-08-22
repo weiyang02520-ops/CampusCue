@@ -167,3 +167,10 @@
 - **External Gate**：M7.0、M7.1、M7.2、M7.3、M7 FINAL 全部 `PASS`。
 - **Accepted limitation**：Real QQ M7 E2E = `NOT_RUN`；Fake NapCat、deterministic local pipeline、source isolation、confirmation and full-loop evidence accepted。
 - **M7.4**：`NOT NEEDED / NOT AUTHORIZED`。
+
+### POST-M7 P0 REAL-WORLD RELIABILITY AUDIT（2026-08-22）
+
+- **状态**：`COMPLETE_AWAITING_EXTERNAL_REVIEW`；M7 Final 仍为 `PASS`；Daily-Use Candidate = `NOT_READY`；M8 = `NOT_AUTHORIZED`。
+- **范围**：代码事实检查、风险登记、故障注入/真实集成/生命周期/soak 测试计划；不改源码、WebUI、Schema、API 或测试。
+- **交付**：`docs/stability/RELIABILITY_MATRIX.md`、`docs/stability/RISK_REGISTER.md`、`docs/stability/STABILIZATION_PLAN.md`。
+- **结论**：confirmed P0 = 0；P1 risks requiring reproduction = 8；P2 bounded follow-ups = 5。Real QQ E2E、Real Provider smoke 和长时间 soak 本轮未运行。

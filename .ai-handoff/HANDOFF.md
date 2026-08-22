@@ -220,3 +220,12 @@ External Final Review completed: M7.3 and the M7 Final Gate are PASS. Do not ope
 - M7-A10 local deterministic Step 0–16 uses the official fixture and real pipeline/service/runtime chain; evidence and screenshots are in `.ai-handoff/evidence/m73/`。
 - Focused M7.3 backend 7, relevant M4/M7.1/M7.2/M7.3 backend regression 47, fresh installed-package full V2 513, frontend typecheck/build/Vitest 4, and full Chromium Playwright 41 passed. Real QQ M7 E2E remains `NOT_RUN`。
 - **Current gate**: `M7.3 = PASS`; `M7 FINAL = PASS`; `M7.4 = NOT NEEDED / NOT AUTHORIZED`。
+
+## POST-M7 P0 REAL-WORLD RELIABILITY AUDIT（2026-08-22）
+
+- M7 Final remains **PASS**. This is a separate stabilization gate, not M8 authorization。
+- **POST-M7 P0 RELIABILITY AUDIT = COMPLETE_AWAITING_EXTERNAL_REVIEW**；**DAILY-USE CANDIDATE = NOT_READY**；**M8 = NOT_AUTHORIZED**。
+- Audit documents: `docs/stability/RELIABILITY_MATRIX.md`、`docs/stability/RISK_REGISTER.md`、`docs/stability/STABILIZATION_PLAN.md`。
+- Reviewed OneBot lifecycle/reconnect/dedup/action correlation, EventBus bounds/shutdown, TaskPipeline/provider errors, Task/Reminder recovery, source-scoped delivery, Agent confirmation/isolation, SSE reconnect contract, backup/restore, and runtime lifecycle。
+- Result: no confirmed P0 data-loss/secret-leak/wrong-send defect；8 P1 risks and 5 P2 follow-ups remain needs-reproduction or bounded-proof items。Real QQ E2E and Real Provider smoke remain `NOT_RUN` by design in this audit。
+- No source/schema/API/test changes；no full V2/Chromium rerun。Do not fix P1/P2 items without a new narrow authorization; stop immediately for a reproduced P0。

@@ -520,3 +520,5 @@ User
 
 - **[M7.3_BOUNDED_AGENT_COPILOT][CURRENT]**：Agent 的 `task_create/task_update/task_complete/task_dismiss` 均由代码强制确认；pending 状态只在内存中按 source/thread 保存并冻结参数；现有 `/agent/chat` 返回实际高层 `tool_activity` 与 `confirmation_state`；M7-A10 local deterministic Step 0–16 与 demo evidence 在 `.ai-handoff/evidence/m73/`；Schema/API changes = NONE；M7 Final 未声明。
 - **[M7.3_SOURCE_BOUND_THREAD_FIX][PASS]**：修复外部审核指出的跨 Source Agent history leakage：runtime 对 source-mismatched existing thread 在读取历史/Provider 前 fail closed；same-source continuity 保持；pending cross-source mutation = 0；WebUI source switch 清空 conversation/messages；thread summary 不改写旧 source binding。M7.3 = PASS；M7 Final = PASS；Real QQ M7 E2E = NOT_RUN（accepted limitation）。
+
+- **[POST-M7_P0_RELIABILITY_AUDIT][CURRENT]**：2026-08-22 只完成稳定性事实审计与测试计划；新增 `docs/stability/RELIABILITY_MATRIX.md`、`RISK_REGISTER.md`、`STABILIZATION_PLAN.md`。未改源码/API/Schema/tests，未运行全量 V2、全量 Chromium、Real Provider 或 Real QQ。Confirmed P0 = 0；P1 risks = 8；P2 follow-ups = 5。Gate：`M7 FINAL = PASS`；`POST-M7 P0 RELIABILITY AUDIT = COMPLETE_AWAITING_EXTERNAL_REVIEW`；`DAILY-USE CANDIDATE = NOT_READY`；`M8 = NOT_AUTHORIZED`。

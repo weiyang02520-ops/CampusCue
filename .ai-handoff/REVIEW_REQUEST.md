@@ -249,3 +249,22 @@ Playwright **41 passed**; M7.3 focused **PASS**; typecheck/build/Vitest,
 compileall, Anti-AstrBot, Secret/PII and diff-check **PASS**. The first 4173
 full-run failure was a dev-server lifecycle/ownership issue; the stable-server
 rerun passed 41/41 and is not a product regression.
+
+## POST-M7 P0 Reliability Audit — External Review Request（2026-08-22）
+
+Review only the three stabilization documents and the source-grounded findings:
+
+- `docs/stability/RELIABILITY_MATRIX.md`
+- `docs/stability/RISK_REGISTER.md`
+- `docs/stability/STABILIZATION_PLAN.md`
+
+Confirm whether the matrix correctly separates local evidence from real-world proof, whether the P0/P1/P2 classification is conservative, and whether the proposed Track A → real integration → lifecycle → soak order is sufficient for a daily-use candidate。Do not reopen M7 UI or authorize M8 from this review。
+
+Current gate:
+
+- `M7 FINAL = PASS`
+- `POST-M7 P0 RELIABILITY AUDIT = COMPLETE_AWAITING_EXTERNAL_REVIEW`
+- `DAILY-USE CANDIDATE = NOT_READY`
+- `M8 = NOT_AUTHORIZED`
+
+No source/API/Schema/test changes were made in this audit。Real QQ E2E and Real Provider smoke are intentionally `NOT_RUN` in this phase。

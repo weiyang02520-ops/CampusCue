@@ -109,7 +109,14 @@
 
 ## next_gate
 
-M7 is complete. Do not start M7.4 or an automatic M8; choose the next product direction only after a fresh product review。
+Post-M7 P0 reliability audit is complete and awaiting External ChatGPT review. Keep `DAILY-USE CANDIDATE = NOT_READY`; do not start M7.4 or an automatic M8. Any next implementation requires a fresh product/reliability authorization。
+
+## 13. POST-M7 P0 REAL-WORLD RELIABILITY AUDIT（2026-08-22）
+
+- **[SCOPE]**：本轮只做代码事实检查、风险登记和测试计划；未修改 `src`、`web/src`、tests、Schema 或 API。
+- **[DOCUMENTS]**：`docs/stability/RELIABILITY_MATRIX.md`、`docs/stability/RISK_REGISTER.md`、`docs/stability/STABILIZATION_PLAN.md`。
+- **[FINDING]**：confirmed P0 bugs = `0`；P1 risks requiring reproduction = `8`；P2 bounded follow-ups = `5`。未将“真实 QQ 未运行”、M3 atomicity limitation、SSE no-replay 或 Agent in-memory state 误报为已发生事故。
+- **[CURRENT_GATE]**：`M7 FINAL = PASS`；`POST-M7 P0 RELIABILITY AUDIT = COMPLETE_AWAITING_EXTERNAL_REVIEW`；`DAILY-USE CANDIDATE = NOT_READY`；`M8 = NOT_AUTHORIZED`。
 
 ## architecture_decisions
 
