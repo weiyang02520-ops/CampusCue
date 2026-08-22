@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onActivated } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ArrowUpRight, CheckCircle2, Inbox, Sparkles, CalendarClock, RefreshCw } from 'lucide-vue-next'
 import PageHeader from '../components/PageHeader.vue'
@@ -14,6 +14,7 @@ import { relative } from '../composables/useFormat'
 const tasks = useTasksStore()
 const resources = useResourcesStore()
 const app = useAppStore()
+onActivated(() => { void resources.loadThreads() })
 const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const timezone = computed(() => resources.settings.settings.timezone || browserTimezone)
 function dateKey(value: Date | string) {

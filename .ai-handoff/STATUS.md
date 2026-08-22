@@ -2,7 +2,7 @@
 
 > 当前状态摘要。详细内容见 canonical HANDOFF.md 与 PROJECT_STATE.md。
 
-- 阶段：**M7.1 FIRST-USE ACTIVATION IMPLEMENTATION COMPLETE（AWAITING EXTERNAL REVIEW）**
+- 阶段：**M7.2 ONEBOT REMINDER DELIVERY IMPLEMENTATION COMPLETE（AWAITING EXTERNAL REVIEW）**
 - **M4 FINAL = PASS**
 - **M5 FINAL = PASS**（External ChatGPT）
 - **M6 = CHANGES_REQUESTED（已按外部审核修复）**
@@ -19,8 +19,9 @@
 - **NEUMORPHISM MATERIAL = PASS**；**M6.5.4.1 THEME UX = PASS**
 - **GLASS FINAL = PASS**；**DARK FINAL = PASS**；**NEUMORPHISM FINAL = PASS**
 - **M6 FINAL = PASS**（CampusCue WebUI completed）
-- **M7 ROADMAP DESIGN = PASS**；**M7.0 PRODUCT CONTRACT = PASS**；**M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M7.2 REMINDER DELIVERY = NOT_AUTHORIZED**；**M7.3 = NOT_AUTHORIZED**
+- **M7 ROADMAP DESIGN = PASS**；**M7.0 PRODUCT CONTRACT = PASS**；**M7.1 FIRST-USE ACTIVATION = PASS**；**M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M7.3 = NOT_AUTHORIZED**
 - M5 REST/SSE：PASS（Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System/Backup/Restore/Import/Export/Auth/Health）
+- M7.2 implementation：OneBot GROUP delivery is explicit opt-in; default Noop; deterministic message, safe delivery error taxonomy, duplicate fire guard, startup/shutdown ordering, and fake NapCat evidence are complete. M7.1 external review = PASS; real QQ E2E = NOT_RUN.
 - Schema：v3（settings + sources.deleted_at + indexes；migration atomic）
 - Full V2：**488 passed**（fresh `.venv-m511fresh` non-editable）；M5/M5.1/M5.1.1 focused **24 passed**；M5.1.1 new **1 passed**
 - compileall PASS；Anti-AstrBot PASS；uvicorn local HTTP smoke PASS

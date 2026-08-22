@@ -23,7 +23,7 @@
 | 项 | 值 |
 |---|---|
 | 项目 | CampusCue V2（课讯）：校园事务 AI Agent 平台 |
-| 当前门 | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.4.1 THEME UX = PASS；GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7.1/M7.2/M7.3 IMPLEMENTATION = NOT_AUTHORIZED** |
+| 当前门 | **M5 FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 FIRST-USE ACTIVATION = PASS；M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7.3 = NOT_AUTHORIZED** |
 | 仓库 | weiyang02520-ops/CampusCue（public）；current HEAD 从 Git 实时获取 |
 | V2 核心 | 零 AstrBot 依赖；DB 事实源；OneBotAdapter（WS SERVER）边界；TaskService 唯一入口 |
 | 代码 | **v2/ 独立 implementation root**：M1-M4 完成；M5 FastAPI REST + SSE + schema v3；M5.1.1 route cleanup complete locally；Legacy frozen。最新本地 checkpoint 证据：**488 tests passed**（2026-08-20，fresh `.venv-m511fresh` non-editable） |
@@ -33,7 +33,7 @@
 
 - **门控**：每 Milestone 完成 → 真实测试 → 更新 handoff → checkpoint → push → 远程验证 → **STOP** → 外部 ChatGPT 审核 → 通过才进下一 Milestone。
 - **未经外部审核禁止自动进入下一 Milestone**。
-- **当前状态**：M5 FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7.1/M7.2/M7.3 IMPLEMENTATION = NOT_AUTHORIZED。
+- **当前状态**：M5 FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 = PASS；M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7.3 = NOT_AUTHORIZED。
 - **下一步**：等待 External ChatGPT 审核 `docs/v2/M7_PRODUCT_CONTRACT.md`；未经明确授权不得实现 M7.1+。
 - **M3 scope note**：cross-repository Task/Reminder atomicity is a known limitation/open design risk；startup `resync_all()` recovery accepted；本 checkpoint 不重新设计 M3。
 - **M4 first-version limitation**：[DESIGN_LIMITATION] M2 UNIQUE `(source_id, source_message_id)` 使同一 Agent 用户消息最多创建一个 Task；第二次 `task_create` 安全失败；无 schema v3。
@@ -249,4 +249,5 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **[EXTERNAL_REVIEW][M6.5.4.1]**：Neumorphism material implementation = PASS；Final blocker 是双重 Appearance/Visual Style 控件造成的语义冲突。
 - **[PRODUCT_DECISION][THEME_UX]**：CampusCue 只暴露一个用户选择器：System / Glassmorphism / Dark UI / Neumorphism。System 在 OS light 下解析为 Glass、OS dark 下解析为 Dark；显式材质不随 OS 改变。
 - **[ARCHITECTURE_DECISION][THEME_UX]**：backend canonical theme 仍为 `system/light/dark`；frontend `campuscue-visual-style` 永不发送 `neumorphism`，映射为 System→system、Glass→light、Dark→dark、Neu→light。
-- **[M7.1_FIRST_USE_ACTIVATION][CURRENT]**：已完成窄范围 M7.1：Home activation guide、Connections safe states、Task/Message provenance trust summary、Agent source entry、deterministic test provider + real TaskPipeline harness、A01～A07 与 fake delivery boundary tests。`pending_confirm`/Connection Test canonical support = YES；API/Schema = NONE；runtime NoopDelivery 保持不变。当前等待 External Review，禁止扩展到 M7.2/M7.3 或宣称 M7 完成。
+- **[M7.1_FIRST_USE_ACTIVATION][CURRENT]**：M7.1 external source review = PASS；`pending_confirm`/Connection Test canonical support = YES；API/Schema = NONE。
+- **[M7.2_ONEBOT_REMINDER_DELIVERY][CURRENT]**：M7.2 已实现并等待 external review；默认 Noop、显式 OneBot opt-in、GROUP source-scoped target、deterministic privacy-safe template、safe failure taxonomy、duplicate guard、runtime lifecycle ordering；证据 `.ai-handoff/evidence/m72/`；REAL QQ E2E = NOT_RUN；M7.3 未授权。

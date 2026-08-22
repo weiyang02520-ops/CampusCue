@@ -2,7 +2,7 @@
 
 > 当前操作状态（canonical，单一文档）。历史里程碑细节见 CHANGELOG_AI.md 与 CHATGPT_MEMORY.md。
 
-## 当前（M7.0 Product Contract）
+## 当前（M7.2 OneBot Reminder Delivery）
 
 - **M4 FINAL = PASS**（External ChatGPT）
 - **M5 FINAL = PASS**（External ChatGPT review completed before M6 authorization）
@@ -24,15 +24,17 @@
 - **DARK FINAL = PASS**；**NEUMORPHISM FINAL = PASS**
 - **M6 FINAL = PASS**（CampusCue WebUI completed）
 - **M7 ROADMAP DESIGN = PASS**
-- **M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
-- **M7.1 / M7.2 / M7.3 IMPLEMENTATION = NOT_AUTHORIZED**
+- **M7.0 PRODUCT CONTRACT = PASS**
+- **M7.1 FIRST-USE ACTIVATION = PASS**
+- **M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+- **M7.3 IMPLEMENTATION = NOT_AUTHORIZED**
 - 本 checkpoint：删除旧 Appearance section、`themeOptions`、`appearance-picker` 和隐藏兼容 CSS；保留单一 `跟随系统 / 玻璃拟态 / 深色界面 / 新拟态` 选择器，完成三主题全路由/响应式/可访问性回归，证据位于 `.ai-handoff/visual/m6-final-candidate/`。External final visual review 已通过 Glass、Dark、Neumorphism、Theme switching、persistence、backend contract、responsive、accessibility 与 regression；仅修复 Dark dialog description 的 WCAG 对比度边界，不改材质、布局、IA、业务流程、API contract、router、backend 或 schema。
 
 ### M7.0 Product Contract
 
 - `docs/v2/M7_PRODUCT_CONTRACT.md` 已完成，当前仅等待 External ChatGPT review。
 - 已锁定官方 deterministic fixture、OneBot/NapCat source scope、Primary Reminder Delivery = QQ/OneBot outbound、Test Fallback = fake delivery sink、Agent boundary、Trust Contract、M7.1 Required/Optional/Forbidden 和 M7-A01～M7-A10。
-- 本轮没有实现任何 M7 功能；M7.1/M7.2/M7.3 implementation remains NOT_AUTHORIZED。
+- M7.1/M7.2 implementation details and evidence are recorded below；M7.3 remains NOT_AUTHORIZED。
 
 ## M6.1 修复范围
 
@@ -193,5 +195,15 @@ External visual review of M6.5.2 Stage 1 Glass and M6.5.3 Stage 1 Dark evidence 
 - Implemented only the approved M7.1 slice: source activation guidance, existing connection test reuse, deterministic local pipeline harness, provenance/trust presentation, manual grounded-Agent entry, and named M7-A01～A07/fake reminder tests.
 - `pending_confirm` canonical support = YES；Connection-test canonical support = YES；API changes = NONE；Schema changes = NONE。
 - Explicit date+clock normalization now preserves the official fixture deadline as `2026-08-28T14:00:00Z` while preserving bare-date behavior.
-- M7.1 evidence: `.ai-handoff/evidence/m71/`。No real QQ/NapCat operation, production reminder delivery, Agent memory/planning, or M6 redesign was performed。
-- **CURRENT GATE**：`M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.2 = NOT_AUTHORIZED`；`M7.3 = NOT_AUTHORIZED`。Do not declare M7 complete or full five-minute E2E PASS。
+- M7.1 evidence: `.ai-handoff/evidence/m71/`；external source review = `PASS`。
+- **CURRENT GATE**：`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.3 = NOT_AUTHORIZED`。Do not declare M7 complete or full five-minute E2E PASS。
+
+## M7.2 OneBot Reminder Delivery（current）
+
+- Delivery mode is closed `noop|onebot`; default external delivery is OFF。
+- Only enabled, non-deleted OneBot GROUP sources are eligible, resolved strictly through `Task.source_id`。
+- Existing `OutgoingMessage` and `OneBotAdapter.send()` are reused; no protocol JSON is built in ReminderService。
+- Reminder failure categories are safe `delivery:*` values in the existing `Reminder.error` field；no automatic retry。
+- Runtime installs delivery before scheduler start and stops scheduler before adapter；duplicate fire produces zero duplicate outbound actions。
+- Evidence: `.ai-handoff/evidence/m72/`；fake NapCat PASS；REAL QQ E2E = `NOT_RUN`。
+- Schema/API changes = `NONE`；M7.3 = `NOT_AUTHORIZED`。

@@ -27,7 +27,7 @@
 | 项 | 值 | Provenance |
 |---|---|---|
 | 项目 | CampusCue V2（课讯）——校园事务 AI Agent 平台 | [USER_STATED] |
-| 当前 Milestone | **M5 FINAL = PASS；M6 = CHANGES_REQUESTED（已完成 M6.1 修复）；M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS；M6.5.4.1 THEME UX = PASS；GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS；M6 FINAL = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7.1/M7.2/M7.3 IMPLEMENTATION = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
+| 当前 Milestone | **M5 FINAL = PASS；M6 = PASS；M7 ROADMAP DESIGN = PASS；M7.0 PRODUCT CONTRACT = PASS；M7.1 FIRST-USE ACTIVATION = PASS；M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7.3 = NOT_AUTHORIZED** | [REPO_CONFIRMED][CURRENT] |
 | M1 结论 | 独立 QQ Runtime 实现（M1）+ correctness 8 项修复（M1.1）+ 真实 QQ/NapCat 验证（M1.2）全部 PASS；**真实 QQ hello→received:hello 已在 2026-08-10 验证** | [EXTERNAL_REVIEW] |
 | V2 代码根 | `v2/`（v2/src/campuscue，独立 implementation root，ADR-011） | [REPO_CONFIRMED] |
 | Legacy | `campuscue/` / `astrbot/` / `dashboard/` = reference/frozen（不改） | [REPO_CONFIRMED] |
@@ -514,5 +514,6 @@ User
 - **[EXTERNAL_REVIEW][M6.5.4.1]**：Neumorphism material implementation = PASS；Final blocker was conflicting user-facing Appearance Mode and Visual Style controls，已收敛为单一 System / Glass / Dark / Neumorphism selector。
 - **[PRODUCT_DECISION][THEME_UX]**：System resolves to Glass on light OS appearance and Dark on dark OS appearance；explicit Glass/Dark/Neu are OS-independent；reload persistence and live System OS switching are required.
 - **[ARCHITECTURE_DECISION][THEME_UX]**：Canonical backend enum remains `system/light/dark`; frontend-only material preference persists locally and never sends `theme=neumorphism`。
-- **[M7.0_PRODUCT_CONTRACT][CURRENT_GATE]**：M7 roadmap design 已通过外部审核；`docs/v2/M7_PRODUCT_CONTRACT.md` 已锁定五分钟闭环、官方 fixture、OneBot/NapCat source scope、Primary Reminder Delivery、Agent boundary、Trust Contract 和 M7-A01～M7-A10；当前等待 External ChatGPT review；`M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.1/M7.2/M7.3 IMPLEMENTATION = NOT_AUTHORIZED`。
-- **[M7.1_FIRST_USE_ACTIVATION][CURRENT_GATE]**：M7.0 Product Contract = `PASS`；M7.1 已授权并完成实现，状态为 `IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`。实现复用现有 `pending_confirm`、Connection Test、TaskPipeline、provenance 与 source-scoped Agent tools；API/Schema changes = NONE。M7.2 production reminder、M7.3、full five-minute E2E 和 M7 complete 均未声明。
+- **[M7.0_PRODUCT_CONTRACT][CURRENT_GATE]**：M7 roadmap design 与 Product Contract 均通过外部审核；M7.1 已通过外部 source review；M7.2 当前等待 External ChatGPT review；M7.3 未授权。
+- **[M7.1_FIRST_USE_ACTIVATION][CURRENT_GATE]**：M7.1 external source review = `PASS`；实现复用现有 `pending_confirm`、Connection Test、TaskPipeline、provenance 与 source-scoped Agent tools；API/Schema changes = NONE。
+- **[M7.2_ONEBOT_REMINDER_DELIVERY][CURRENT]**：显式 `noop|onebot` delivery mode，默认 Noop；只支持 enabled/non-deleted OneBot GROUP，严格从 `Task.source_id` 解析；复用 `OutgoingMessage`/`OneBotAdapter.send()`；safe `Reminder.error`、一次性 fire guard、scheduler/adapter lifecycle ordering 已实现。Fake NapCat success/disconnected/action-failure evidence 在 `.ai-handoff/evidence/m72/`；REAL QQ E2E = `NOT_RUN`；M7.3 未授权。

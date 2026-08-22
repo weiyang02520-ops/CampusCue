@@ -31,8 +31,10 @@
 - GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS
 - M6 FINAL = PASS（CampusCue WebUI completed）
 - M7 ROADMAP DESIGN = PASS
-- M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
-- M7.1 / M7.2 / M7.3 IMPLEMENTATION = NOT_AUTHORIZED
+- M7.0 PRODUCT CONTRACT = PASS
+- M7.1 FIRST-USE ACTIVATION = PASS
+- M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M7.3 IMPLEMENTATION = NOT_AUTHORIZED
 
 ## completed
 
@@ -86,9 +88,17 @@
 - M3 Task/Reminder cross-repository atomicity remains open design risk; startup `resync_all()` recovery accepted。
 - SSE no-replay；断线后 REST refresh。
 
+## 11. M7.2 ONEBOT REMINDER DELIVERY CHECKPOINT（2026-08-22）
+
+- **[REPO_CONFIRMED][CURRENT]**：Starting HEAD `2acad44e865eb99b21edf7c53e6da83e66469442`；M7.1 external review = `PASS`；M7.2 已获授权并完成实现，等待外部审核。
+- **[IMPLEMENTED]**：closed `noop|onebot` delivery mode（默认 Noop）、source-scoped OneBot GROUP delivery、deterministic privacy-safe reminder template、safe `Reminder.error` taxonomy、duplicate fire guard、runtime startup/shutdown ordering。
+- **[CLEANUP]**：A02 真实 disconnected connection-test coverage；ActivationGuide Agent step now follows actual `/agent/threads` state；minimal reminder failure/status visibility。
+- **[EVIDENCE]**：`.ai-handoff/evidence/m72/`；fake NapCat success/disconnected/action-failure traces；REAL QQ E2E = `NOT_RUN`。
+- **[BOUNDARY]**：Schema/API changes = NONE；no automatic retry；no extra channel；M7.3 remains not authorized。
+
 ## next_gate
 
-[M7.0_PRODUCT_CONTRACT] `docs/v2/M7_PRODUCT_CONTRACT.md` 已锁定五分钟闭环、官方 fixture、source scope、Primary Reminder Delivery、Agent boundary、Trust Contract、技术债处置和 M7-A01～M7-A10。当前等待 External ChatGPT review；M7.1/M7.2/M7.3 implementation remains NOT_AUTHORIZED。
+[M7.2_EXTERNAL_REVIEW] Review `.ai-handoff/evidence/m72/` and the M7.2 implementation mapping. Do not authorize M7.3 from local evidence alone。
 
 ## architecture_decisions
 

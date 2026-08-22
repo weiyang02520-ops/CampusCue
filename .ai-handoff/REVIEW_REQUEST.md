@@ -187,4 +187,12 @@ Review scope is limited to M7-A01～A07: source activation and safe failure copy
 
 Do not review or approve production QQ reminder delivery, Agent memory/planning, schema/API redesign, full Step 0–16 five-minute completion, or M7.2/M7.3.
 
-**CURRENT GATE**：`M7.0 PRODUCT CONTRACT = PASS`；`M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.2 = NOT_AUTHORIZED`；`M7.3 = NOT_AUTHORIZED`。
+**CURRENT GATE**：`M7.0 PRODUCT CONTRACT = PASS`；`M7.1 FIRST-USE ACTIVATION = PASS`；`M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.3 = NOT_AUTHORIZED`。
+
+## M7.2 OneBot Reminder Delivery — External Review Request
+
+Review `.ai-handoff/evidence/m72/`, `docs/v2/M7_PRODUCT_CONTRACT.md` M7.2 mapping, and the focused delivery/runtime tests.
+
+Review only: explicit `noop|onebot` opt-in, source-scoped OneBot GROUP target resolution, deterministic privacy-safe message, safe failure persistence, duplicate suppression, scheduler/adapter lifecycle ordering, fake NapCat success/failure traces, and minimal reminder status UX.
+
+Do not approve real QQ delivery from this evidence: `REAL QQ E2E = NOT_RUN`. Do not authorize M7.3, Agent memory/planning, extra notification channels, schema/API redesign, or a full Step 0–16 M7 claim.

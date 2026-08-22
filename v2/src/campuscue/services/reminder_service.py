@@ -21,6 +21,7 @@ scheduler-framework-agnostic and tests can inject a fake.
 from __future__ import annotations
 
 import logging
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -111,6 +112,10 @@ class ReminderService:
         # M3.1-F: safe by default — direct construction + fire() must never
         # fail because _delivery is unset. NoopDelivery = no end-user UX claim.
         self._delivery: object = NoopDelivery()
+        # A process-local claim guard is sufficient for the single-runtime
+        # scheduler architecture. It covers the full delivery attempt so a
+        # duplicate callback cannot produce two outbound actions.
+        self._fire_lock = asyncio.Lock()
 
     # ---------------------------------------------------------------- planning
 
@@ -289,36 +294,47 @@ class ReminderService:
         """Due reminder handler. Re-checks LATEST task state (defense in depth,
         §15): task must still exist, be pending, and reminder still scheduled.
         Returns True when a delivery callback was invoked."""
-        try:
-            reminder = await self._reminders.get(reminder_id)
-        except Exception:
-            return False
-        if reminder.status != ReminderStatus.SCHEDULED.value:
-            return False
-        try:
-            task = await self._tasks.get(reminder.task_id)
-        except Exception:
-            # task deleted -> close fact, no delivery
-            await self._reminders.mark_cancelled(reminder_id, now=self._clock.utcnow())
-            return False
-        if task.status != TaskStatus.PENDING.value:
-            # done/dismissed -> close fact, no delivery
-            await self._reminders.mark_cancelled(reminder_id, now=self._clock.utcnow())
-            return False
-        reminder = await self._reminders.mark_fired(reminder_id, run_at=self._clock.utcnow())
-        await self._publish_safely(
-            "reminder.fired",
-            {
-                "id": reminder.id,
-                "task_id": reminder.task_id,
-                "status": reminder.status,
-                "trigger_at": reminder.trigger_at.isoformat(),
-            },
-            reminder.id,
-        )
-        # platform-neutral delivery boundary (injected; M3 tests use fake sink)
-        await self._deliver(reminder, task)
-        return True
+        async with self._fire_lock:
+            try:
+                reminder = await self._reminders.get(reminder_id)
+            except Exception:
+                return False
+            if reminder.status != ReminderStatus.SCHEDULED.value:
+                return False
+            try:
+                task = await self._tasks.get(reminder.task_id)
+            except Exception:
+                # task deleted -> close fact, no delivery
+                await self._reminders.mark_cancelled(reminder_id, now=self._clock.utcnow())
+                return False
+            if task.status != TaskStatus.PENDING.value:
+                # done/dismissed -> close fact, no delivery
+                await self._reminders.mark_cancelled(reminder_id, now=self._clock.utcnow())
+                return False
+            reminder = await self._reminders.mark_fired(reminder_id, run_at=self._clock.utcnow())
+            error = None
+            try:
+                # platform-neutral delivery boundary (injected; M3 tests use fake sink)
+                await self._deliver(reminder, task)
+            except Exception as exc:
+                error = getattr(exc, "code", "delivery:action_failed")
+                if not isinstance(error, str) or not error.startswith("delivery:"):
+                    error = "delivery:action_failed"
+                reminder = await self._reminders.mark_fired(
+                    reminder_id, run_at=self._clock.utcnow(), error=error
+                )
+            await self._publish_safely(
+                "reminder.fired",
+                {
+                    "id": reminder.id,
+                    "task_id": reminder.task_id,
+                    "status": reminder.status,
+                    "trigger_at": reminder.trigger_at.isoformat(),
+                    "error": error,
+                },
+                reminder.id,
+            )
+            return True
 
     async def _deliver(self, reminder: Reminder, task: Task) -> None:
         """Injected delivery sink (NoopDelivery by default — M3 does not claim

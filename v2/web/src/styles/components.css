@@ -1062,3 +1062,7 @@ html.glass-no-filter .agent-shell,html.glass-no-filter .agent-context,html.glass
 .style-preview-system::before { inset:12px 18px 10px; border-radius:8px; background:linear-gradient(135deg,#f6f9ff 0 48%,#27333f 49% 100%); box-shadow:0 8px 12px rgba(54,82,120,.16); }
 .style-preview-system i { left:28px; bottom:19px; width:28px; height:4px; border-radius:4px; background:#2f6fdb; }
 @media (max-width:900px) and (min-width:768px) { .visual-style-picker { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+:root[data-theme='dark'] .form-help,
+:root[data-visual-theme='dark'] .form-help { color:#a2afba }
+:root[data-theme='dark'] .button-primary,
+:root[data-visual-theme='dark'] .button-primary { color:#07121f }

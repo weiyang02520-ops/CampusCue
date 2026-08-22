@@ -47,6 +47,8 @@ class CampusRuntime:
         self._source_repo = None
         self._extraction_repo = None
         self._provider_repo = None
+        self._reminder_service = None
+        self._reminder_scheduler = None
         self._realtime = None
         self._api_server = None
         self._api_task = None
@@ -86,6 +88,7 @@ class CampusRuntime:
                 on_connection=self._on_adapter_connection,
             )
             await self.adapter.start()
+            await self._activate_reminder_delivery()
             if self.config.api.enabled:
                 await self._init_api()
             import time as _time
@@ -206,7 +209,26 @@ class CampusRuntime:
         # M3 scheduler lifecycle: DB ready -> resync from facts -> start
         if reminder_scheduler is not None and reminder_service is not None:
             await reminder_service.resync_all()
-            reminder_scheduler.start()
+
+    async def _activate_reminder_delivery(self) -> None:
+        """Install the configured delivery before the scheduler can fire."""
+        scheduler = getattr(self, "_reminder_scheduler", None)
+        service = getattr(self, "_reminder_service", None)
+        if scheduler is None or service is None:
+            return
+        if self.config.reminders.delivery_mode == "onebot":
+            from campuscue.services.reminder_delivery import OneBotReminderDelivery
+            from zoneinfo import ZoneInfo
+
+            assert self.adapter is not None and self._source_repo is not None
+            service.set_delivery(
+                OneBotReminderDelivery(
+                    self.adapter,
+                    self._source_repo,
+                    timezone=ZoneInfo(self.config.reminders.timezone),
+                )
+            )
+        scheduler.start()
 
     async def _init_agent(
         self,
@@ -408,6 +430,13 @@ class CampusRuntime:
         if self._api_log_handler is not None:
             logging.getLogger("campuscue").removeHandler(self._api_log_handler)
             self._api_log_handler = None
+        rs = getattr(self, "_reminder_scheduler", None)
+        if rs is not None:
+            try:
+                await rs.shutdown(wait=True)
+            except Exception:
+                pass
+            self._reminder_scheduler = None
         if self.adapter is not None:
             try:
                 await self.adapter.stop()
@@ -418,13 +447,6 @@ class CampusRuntime:
                 await self.bus.shutdown(timeout_s=1.0)
             except Exception:
                 pass
-        rs = getattr(self, "_reminder_scheduler", None)
-        if rs is not None:
-            try:
-                await rs.shutdown(wait=False)
-            except Exception:
-                pass
-            self._reminder_scheduler = None
         await self._dispose_database()
 
     async def _dispose_database(self) -> None:
@@ -457,14 +479,8 @@ class CampusRuntime:
         if self._api_log_handler is not None:
             logging.getLogger("campuscue").removeHandler(self._api_log_handler)
             self._api_log_handler = None
-        # 1) stop accepting new ingress (close WS server + active connection)
-        if self.adapter is not None:
-            await self.adapter.stop()
-        # 2) bounded drain of in-flight handlers
-        if self.bus is not None:
-            await self.bus.shutdown(timeout_s=3.0)
-        # 2b) stop ReminderScheduler cleanly (wait in-flight fire handlers;
-        #     no orphan background work — M3 §17)
+        # 1) stop scheduling new reminder fires and wait for delivery attempts
+        # before closing the adapter they may be using.
         rs = getattr(self, "_reminder_scheduler", None)
         if rs is not None:
             try:
@@ -472,7 +488,13 @@ class CampusRuntime:
             except Exception:
                 logger.exception("reminder scheduler shutdown failed")
             self._reminder_scheduler = None
-        # 3) dispose owned DB (M2 opt-in)
+        # 2) stop accepting new ingress (close WS server + active connection)
+        if self.adapter is not None:
+            await self.adapter.stop()
+        # 3) bounded drain of in-flight handlers
+        if self.bus is not None:
+            await self.bus.shutdown(timeout_s=3.0)
+        # 4) dispose owned DB (M2 opt-in)
         await self._dispose_database()
         self.state = RuntimeState.STOPPED
         logger.info("campus runtime STOPPED")

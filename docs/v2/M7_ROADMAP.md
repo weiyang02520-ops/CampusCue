@@ -1,7 +1,8 @@
 # CampusCue M7 Roadmap
 
-> 状态：**M7.0 PRODUCT CONTRACT = PASS；M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+> 状态：**M7.0 PRODUCT CONTRACT = PASS；M7.1 PASS；M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 >
+> M7.1 已通过外部审核；M7.2 已完成实现并等待外部审核；M7.3 仍为 **NOT_AUTHORIZED**。
 > 本文是 M7 的范围设计；Product Contract 已收敛到 [`M7_PRODUCT_CONTRACT.md`](M7_PRODUCT_CONTRACT.md)。M7.1 已按窄范围授权并完成实现，等待外部审核；M7.2/M7.3 仍为 **NOT_AUTHORIZED**。
 
 ## 1. Current State
@@ -347,8 +348,8 @@ This roadmap is complete for external review only；M7.1 implementation is separ
 - `M6 FINAL = PASS`
 - `M7 ROADMAP DESIGN = PASS`
 - `M7.0 PRODUCT CONTRACT = PASS`
-- `M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`
-- `M7.2 REMINDER DELIVERY = NOT_AUTHORIZED`
+- `M7.1 FIRST-USE ACTIVATION = PASS`
+- `M7.2 ONEBOT REMINDER DELIVERY = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`
 - `M7.3 = NOT_AUTHORIZED`
 
-M7.1 implementation mapping and evidence are in [`M7_PRODUCT_CONTRACT.md`](M7_PRODUCT_CONTRACT.md) and `.ai-handoff/evidence/m71/`. No full M7 or five-minute Step 0–16 completion is claimed。
+M7.1/M7.2 implementation mapping and evidence are in [`M7_PRODUCT_CONTRACT.md`](M7_PRODUCT_CONTRACT.md), `.ai-handoff/evidence/m71/` and `.ai-handoff/evidence/m72/`. No full M7 or five-minute Step 0–16 completion is claimed。

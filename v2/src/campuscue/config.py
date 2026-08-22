@@ -41,13 +41,20 @@ class TaskPipelineConfig:
 
 @dataclass(frozen=True)
 class ReminderConfig:
-    """M3 reminder policy knobs (bounded, fail-fast, configurable)."""
+    """Reminder policy knobs plus an explicit external delivery opt-in."""
 
     enabled: bool = False  # CAMPUSCUE_REMINDERS=1
     timezone: str = "Asia/Shanghai"
     min_lead_seconds: float = 60.0
     quiet_start_hour: int = 23
     quiet_end_hour: int = 8
+    delivery_mode: str = "noop"  # closed set: noop (default) | onebot
+
+    def __post_init__(self) -> None:
+        if self.delivery_mode not in {"noop", "onebot"}:
+            raise ValueError("delivery_mode must be one of: noop, onebot")
+        if self.delivery_mode == "onebot" and not self.enabled:
+            raise ValueError("delivery_mode=onebot requires reminders enabled")
 
 
 @dataclass(frozen=True)
@@ -275,6 +282,7 @@ def load_config() -> RuntimeConfig:
             min_lead_seconds=float(os.environ.get("CAMPUSCUE_REMINDER_MIN_LEAD_S", "60")),
             quiet_start_hour=int(os.environ.get("CAMPUSCUE_REMINDER_QUIET_START", "23")),
             quiet_end_hour=int(os.environ.get("CAMPUSCUE_REMINDER_QUIET_END", "8")),
+            delivery_mode=os.environ.get("CAMPUSCUE_REMINDER_DELIVERY", "noop").strip().lower(),
         ),
         agent=agent,
         api=api,

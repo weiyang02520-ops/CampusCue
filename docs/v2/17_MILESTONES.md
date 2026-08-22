@@ -143,3 +143,12 @@
 ## 每 Milestone 后的 Gate
 
 真实测试 → 更新 .ai-handoff（HANDOFF/PROJECT_STATE/STATUS）→ checkpoint（secret scan + 测试）→ commit → push → 远程验证 → 外部 ChatGPT 审核 → 审核通过才进入下一 Milestone。
+
+### M7.2 OneBot Reminder Delivery（2026-08-22）
+
+- **状态**：`IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；M7.1 external source review = `PASS`。
+- **范围**：只实现显式 opt-in 的 OneBot GROUP reminder delivery；默认仍为 `noop`；source target 仅从 `Task.source_id` 解析。
+- **实现**：确定性提醒文案、现有 `OutgoingMessage`/`OneBotAdapter.send()` 边界、safe `Reminder.error` 分类、一次性 fire claim、启动/关闭顺序收口；不改 Schema、不新增 API、不做自动重试或第二通知渠道。
+- **UI**：ActivationGuide 的 Agent step 改为真实 `/agent/threads` 状态；Reminder failure/status 通过现有提醒数据在首页做最小可见反馈；A02 使用真实 connection-test disconnected path。
+- **证据**：`.ai-handoff/evidence/m72/`；真实 QQ E2E = `NOT_RUN`。
+- **验证**：M7.2 focused 10 passed；M7.1 + M7.2 + M3/runtime focused 55 passed；Web typecheck/build/Vitest 4；M7.1/M7.2 Playwright 3 passed。
