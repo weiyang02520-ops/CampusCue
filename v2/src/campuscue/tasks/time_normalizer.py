@@ -78,6 +78,24 @@ def resolve_deadline(phrase: str, current_time: datetime, tz: ZoneInfo) -> Resol
             dt = local_now.replace(year=year, month=month, day=day, hour=23, minute=59, second=0, microsecond=0)
         except ValueError:
             return ResolvedDeadline(deadline=None, is_explicit=False, reason="invalid_date")
+        # An explicit calendar date may also carry an explicit clock.  Keep
+        # the existing bare-date convention (23:59), but do not discard a
+        # clock in the official M7 activation fixture such as
+        # ``2026年8月28日22:00前``.
+        if cm := _CLOCK_RE.search(stripped[m.end():]):
+            hour = int(cm.group("hour"))
+            minute = int(cm.group("minute") or 0)
+            marker = cm.group("marker")
+            if marker in ("晚上", "晚", "夜里", "夜晚") and hour == 12:
+                hour, minute = 23, 59
+            elif marker in ("下午", "傍晚", "晚上", "晚", "夜里", "夜晚") and hour < 12:
+                hour += 12
+            elif marker in ("凌晨", "早上", "上午") and hour == 12:
+                hour = 0
+            dt = dt.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            date_reason = "explicit_date+clock"
+        else:
+            date_reason = "explicit_date"
         if dt < local_now - PAST_TOLERANCE:
             # M2b.1.1 (Finding F): ONLY yearless dates may use cross-year
             # inference ("8月10日" after Aug 10 -> next year). An EXPLICITLY
@@ -86,7 +104,7 @@ def resolve_deadline(phrase: str, current_time: datetime, tz: ZoneInfo) -> Resol
             if has_explicit_year:
                 return ResolvedDeadline(deadline=None, is_explicit=False, reason="past_rejected:explicit_date")
             dt = dt.replace(year=year + 1)  # cross-year: "8月10日" after Aug 10 -> next year
-        return _check_future(dt, local_now, is_explicit=True, reason="explicit_date")
+        return _check_future(dt, local_now, is_explicit=True, reason=date_reason)
 
     if _MONTH_END_RE.search(stripped):
         next_month_first = (local_now.replace(day=28) + timedelta(days=4)).replace(day=1)

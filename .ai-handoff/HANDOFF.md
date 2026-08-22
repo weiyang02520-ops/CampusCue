@@ -186,3 +186,12 @@ External visual review of M6.5.2 Stage 1 Glass and M6.5.3 Stage 1 Dark evidence 
 - typecheck/build PASS；M6 focused Playwright **16 passed**；Glass material Playwright **1 passed**；axe 0（focused suite）；responsive 390/599/768/1024/1440 PASS。
 - Glass evidence 已通过内部视觉检查：Shell atmosphere 连续、Agent marker 可透过 tint + blur 感知、Glass container / opaque content / raised composer 层级可分辨。
 - **M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**（historical direction gate）；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## M7.1 First-use Activation（current）
+
+- Starting baseline `7b915e0c421b0969a104df7ac9e1251a9875b33d`；M7.0 Product Contract = `PASS`。
+- Implemented only the approved M7.1 slice: source activation guidance, existing connection test reuse, deterministic local pipeline harness, provenance/trust presentation, manual grounded-Agent entry, and named M7-A01～A07/fake reminder tests.
+- `pending_confirm` canonical support = YES；Connection-test canonical support = YES；API changes = NONE；Schema changes = NONE。
+- Explicit date+clock normalization now preserves the official fixture deadline as `2026-08-28T14:00:00Z` while preserving bare-date behavior.
+- M7.1 evidence: `.ai-handoff/evidence/m71/`。No real QQ/NapCat operation, production reminder delivery, Agent memory/planning, or M6 redesign was performed。
+- **CURRENT GATE**：`M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.2 = NOT_AUTHORIZED`；`M7.3 = NOT_AUTHORIZED`。Do not declare M7 complete or full five-minute E2E PASS。

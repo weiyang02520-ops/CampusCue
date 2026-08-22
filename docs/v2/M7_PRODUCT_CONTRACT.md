@@ -1,10 +1,10 @@
 # CampusCue M7.0 Product Contract
 
-> 状态：**IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+> 状态：**M7.0 PRODUCT CONTRACT = PASS；M7.1 IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 >
 > 本文把 M7 Roadmap 收敛为可测试的产品契约。它不是代码实现授权。
 >
-> `M7 ROADMAP DESIGN = PASS`；`M7.0 = AUTHORIZED`；`M7.1 / M7.2 / M7.3 IMPLEMENTATION = NOT_AUTHORIZED`。
+> `M7 ROADMAP DESIGN = PASS`；`M7.0 = PASS`；`M7.1 = AUTHORIZED`；`M7.2 / M7.3 IMPLEMENTATION = NOT_AUTHORIZED`。
 
 ## 1. Product Promise
 
@@ -266,9 +266,20 @@ M7 不解决 compound announcement → multiple tasks。一个 source message �
 ## 11. Gate
 
 - `M7 ROADMAP DESIGN = PASS`
-- `M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`
-- `M7.1 IMPLEMENTATION = NOT_AUTHORIZED`
+- `M7.0 PRODUCT CONTRACT = PASS`
+- `M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`
 - `M7.2 = NOT_AUTHORIZED`
 - `M7.3 = NOT_AUTHORIZED`
 
-本契约通过 External ChatGPT 审核后，才可以另行授权一个更窄的 M7.1 implementation prompt。
+## 12. M7.1 implementation mapping
+
+- `pending_confirm` canonical support: **YES** — present in `TaskStatus`, DB check constraint, TaskService, API schema and WebUI labels; reused without schema change.
+- Connection-test canonical support: **YES** — existing `POST /api/v1/sources/{source_id}/test` reports adapter status; reused without a new endpoint.
+- Official fixture path: test-only deterministic provider + `CampusEvent` through the real `TaskPipeline` and SQLite; no production fixture branch or second connector.
+- Official fixture deadline parsing now preserves explicit date+clock (`2026年8月28日22:00前`) as `2026-08-28T14:00:00Z`; bare-date behavior remains unchanged.
+- Trust presentation: Home activation guide, task provenance summary, message detail evidence/reason, and source-scoped Agent entry copy.
+- Connection failure presentation: source-scoped test result, disabled-source guidance, and safe retry/status copy; no secret or traceback exposure.
+- Agent boundary: M7-A06/A07 tests prove canonical task tool invocation and zero cross-source leakage. M7-A08 is not expanded beyond the existing mutation boundary.
+- Reminder boundary: fake delivery observer test only; runtime remains `NoopDelivery`, and production QQ/OneBot reminder delivery remains M7.2.
+- API changes: **NONE**. Schema changes: **NONE**.
+- M7.1 evidence directory: `.ai-handoff/evidence/m71/`.

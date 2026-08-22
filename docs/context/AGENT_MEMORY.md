@@ -249,3 +249,4 @@ UNIT VERIFIED / CONTRACT VERIFIED / INTEGRATION VERIFIED / REAL ENV VERIFIED / V
 - **[EXTERNAL_REVIEW][M6.5.4.1]**：Neumorphism material implementation = PASS；Final blocker 是双重 Appearance/Visual Style 控件造成的语义冲突。
 - **[PRODUCT_DECISION][THEME_UX]**：CampusCue 只暴露一个用户选择器：System / Glassmorphism / Dark UI / Neumorphism。System 在 OS light 下解析为 Glass、OS dark 下解析为 Dark；显式材质不随 OS 改变。
 - **[ARCHITECTURE_DECISION][THEME_UX]**：backend canonical theme 仍为 `system/light/dark`；frontend `campuscue-visual-style` 永不发送 `neumorphism`，映射为 System→system、Glass→light、Dark→dark、Neu→light。
+- **[M7.1_FIRST_USE_ACTIVATION][CURRENT]**：已完成窄范围 M7.1：Home activation guide、Connections safe states、Task/Message provenance trust summary、Agent source entry、deterministic test provider + real TaskPipeline harness、A01～A07 与 fake delivery boundary tests。`pending_confirm`/Connection Test canonical support = YES；API/Schema = NONE；runtime NoopDelivery 保持不变。当前等待 External Review，禁止扩展到 M7.2/M7.3 或宣称 M7 完成。

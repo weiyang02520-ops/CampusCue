@@ -15,6 +15,7 @@ from campuscue.api.app import create_app
 from campuscue.api.dependencies import APIDependencies
 from campuscue.api.realtime import RealtimeHub
 from campuscue.config import ApiConfig
+from campuscue.core.events import CampusEvent, ConversationType, EventType
 from campuscue.providers.models import LLMResponse
 from campuscue.providers.manager import ProviderManager
 from campuscue.repositories.repositories import (ExtractionRepository, ProviderConfigRepository, ReminderRepository, SettingRepository, SourceRepository, TaskRepository)
@@ -25,6 +26,7 @@ from campuscue.services.source_service import SourceService
 from campuscue.services.system_service import SystemService
 from campuscue.services.task_service import TaskService
 from campuscue.storage.database import Database, DatabaseConfig
+from campuscue.tasks.pipeline import TaskPipeline
 from campuscue.tools.registry import ToolRegistry
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,6 +52,35 @@ class _Provider:
     max_context_tokens = 4096
     async def chat(self, request):
         return LLMResponse(role="assistant", content="这是根据当前校园安排生成的确定性回答。", usage={}, raw={})
+
+
+class _ExtractionProvider:
+    provider_type = "test_fixture"
+    model = "m71-deterministic"
+    max_context_tokens = 4096
+
+    async def chat(self, request):
+        return LLMResponse(
+            role="assistant",
+            content=json.dumps({
+                "has_task": True,
+                "category": "homework",
+                "title": "高等数学第三章作业",
+                "course": "高等数学",
+                "deadline_phrase": "2026年8月28日22:00前",
+                "confidence": 0.96,
+                "reason": "明确课程、事项与截止时间",
+            }, ensure_ascii=False),
+            usage={}, raw={},
+        )
+
+
+class _FixtureProviderManager:
+    def __init__(self):
+        self.provider = _ExtractionProvider()
+
+    async def get_default(self):
+        return self.provider
 
 
 class _Upstream(BaseHTTPRequestHandler):
@@ -82,6 +113,28 @@ def build_app():
         asyncio.run(task_repo.create(title=title, description=None, category=category, course=course, deadline=datetime.now(timezone.utc) + timedelta(days=days) if days else None, status=task_status, priority=priority, confidence=.95 if message_id else None, source_id=source.id, source_message_id=message_id, source_text_reference=f"校园通知：{title}" if message_id else None))
         if message_id:
             asyncio.run(extraction_repo.create(source_id=source.id, source_message_id=message_id, trace_id=f"trace-{message_id}", provider="CampusCue", model="campus-small", status="success", confidence=.95, normalized_result=json.dumps({"title": title}, ensure_ascii=False), audit=json.dumps({"l5": {}}, ensure_ascii=False)))
+    activation_pipeline = TaskPipeline(
+        sources=source_repo,
+        extractions=extraction_repo,
+        task_service=tasks,
+        provider_manager=_FixtureProviderManager(),
+        timezone=ZoneInfo("Asia/Shanghai"),
+    )
+    asyncio.run(activation_pipeline.handle(CampusEvent(
+        event_id="m71-web-event",
+        trace_id="m71-web-trace",
+        platform="onebot",
+        adapter_id="synthetic",
+        event_type=EventType.GROUP_MESSAGE,
+        self_id="10001",
+        message_id="m71-official",
+        conversation_id="campus-study",
+        conversation_type=ConversationType.GROUP,
+        sender_id="m71-student",
+        sender_name="",
+        text="高等数学第三章作业请于 2026 年 8 月 28 日 22:00 前提交。",
+        timestamp=datetime(2026, 8, 20, 12, 0, tzinfo=timezone.utc),
+    )))
     asyncio.run(provider_repo.create(name="校园助手模型", base_url="http://127.0.0.1:6397/v1", model="campus-small", secret_reference="CAMPUSCUE_TEST_KEY", enabled=True))
     fake_provider = CampusAgentRuntime(tools=ToolRegistry(), provider=_Provider(), timezone=ZoneInfo("Asia/Shanghai"), max_context_tokens=4096)
     deps = APIDependencies(config=ApiConfig(enabled=True, host="127.0.0.1", port=6200, require_auth=True, token=TOKEN, timezone="Asia/Shanghai"), runtime=_Runtime(), database=database, source_service=sources, task_service=tasks, reminder_service=reminders, provider_service=providers, settings_service=settings, system_service=system, agent_runtime=fake_provider, realtime=realtime)

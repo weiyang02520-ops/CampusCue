@@ -1,8 +1,8 @@
 # CampusCue M7 Roadmap
 
-> 状态：**M7.0 PRODUCT CONTRACT = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
+> 状态：**M7.0 PRODUCT CONTRACT = PASS；M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW**
 >
-> 本文是 M7 的范围设计；Product Contract 已收敛到 [`M7_PRODUCT_CONTRACT.md`](M7_PRODUCT_CONTRACT.md)，不是实现授权。M7.1/M7.2/M7.3 implementation 仍为 **NOT_AUTHORIZED**。任何代码、Schema、API 或 Agent 扩展都必须在外部审核通过后另行授权。
+> 本文是 M7 的范围设计；Product Contract 已收敛到 [`M7_PRODUCT_CONTRACT.md`](M7_PRODUCT_CONTRACT.md)。M7.1 已按窄范围授权并完成实现，等待外部审核；M7.2/M7.3 仍为 **NOT_AUTHORIZED**。
 
 ## 1. Current State
 
@@ -342,9 +342,13 @@ The following are explicitly outside M7:
 
 ### Authorization gate
 
-This roadmap is complete for external review only。
+This roadmap is complete for external review only；M7.1 implementation is separately gated below。
 
 - `M6 FINAL = PASS`
-- `M7 ROADMAP = ROADMAP_DESIGN_COMPLETE_AWAITING_EXTERNAL_REVIEW`
-- `M7 implementation = NOT_AUTHORIZED`
-- No code, API, Schema, Agent, UI or deployment implementation should begin until the roadmap is externally approved and a narrower implementation prompt is issued。
+- `M7 ROADMAP DESIGN = PASS`
+- `M7.0 PRODUCT CONTRACT = PASS`
+- `M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`
+- `M7.2 REMINDER DELIVERY = NOT_AUTHORIZED`
+- `M7.3 = NOT_AUTHORIZED`
+
+M7.1 implementation mapping and evidence are in [`M7_PRODUCT_CONTRACT.md`](M7_PRODUCT_CONTRACT.md) and `.ai-handoff/evidence/m71/`. No full M7 or five-minute Step 0–16 completion is claimed。

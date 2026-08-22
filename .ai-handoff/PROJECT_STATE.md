@@ -93,3 +93,12 @@
 ## architecture_decisions
 
 - ADR-001 ~ ADR-013 + M4/M5 decisions in `.ai-handoff/DECISIONS.md` / docs。
+
+## 10. M7.1 FIRST-USE ACTIVATION CHECKPOINT（2026-08-22）
+
+- **[REPO_CONFIRMED][CURRENT]**：Starting HEAD `7b915e0c421b0969a104df7ac9e1251a9875b33d`；M7.0 Product Contract = `PASS`；M7.1 已获授权并完成实现，等待外部审核。
+- **[SOURCE_AUDIT]**：`pending_confirm` 在 TaskStatus/DB/TaskService/API/WebUI 均为 canonical；Connection Test 复用 `POST /api/v1/sources/{source_id}/test`；API/Schema changes = NONE。
+- **[IMPLEMENTED]**：Home 5 分钟启动引导、Connections actionable empty/disabled/failure copy、Task/Message provenance + trust presentation、Agent 手动连接入口、真实 TaskPipeline deterministic harness、显式日期+时间解析修复。
+- **[TEST_CONFIRMED]**：M7.1 backend focused 8 passed；pipeline/time regression included 85 passed；WebUI typecheck/build PASS；M7.1 Playwright 2 passed。
+- **[BOUNDARY]**：A08 未扩展 confirmation framework；A09 仅 fake delivery observer；runtime 仍 NoopDelivery；无真实 QQ/NapCat；未宣称 full five-minute E2E 或 M7 complete。
+- **[CURRENT_GATE]**：`M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.2 REMINDER DELIVERY = NOT_AUTHORIZED`；`M7.3 = NOT_AUTHORIZED`。

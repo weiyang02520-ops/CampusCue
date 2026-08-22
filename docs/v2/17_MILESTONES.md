@@ -124,6 +124,15 @@
 
 ## M7：Full E2E
 
+### M7.1 First-use Activation（2026-08-22）
+
+- **状态**：`IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；M7.0 Product Contract = `PASS`。
+- **实现**：复用现有 Connections/source test、真实 L0–L7 TaskPipeline、`pending_confirm` canonical status、任务/消息 provenance、Home 轻量 5 分钟启动引导、三主题兼容的 trust summary、Agent 手动入口和 source-scoped canonical read tests。
+- **官方 fixture**：`高等数学第三章作业请于 2026 年 8 月 28 日 22:00 前提交。`，通过 deterministic test provider + `CampusEvent` 进入真实 extraction pipeline；明确日期+时间解析为 `2026-08-28T14:00:00Z`。
+- **场景**：M7-A01～A07 focused backend tests 全绿；A08 未扩展为新 confirmation framework；A09 仅 fake delivery boundary observer；A10 仅完成 Activation 证据，不宣称完整五分钟 E2E。
+- **边界**：Schema/API changes = NONE；runtime 仍为 `NoopDelivery`；无真实 QQ/NapCat、无 M7.2 production reminder、无 Agent memory/planning、无 M6 UI redesign。
+- **证据**：`.ai-handoff/evidence/m71/`。
+
 **范围**：完整真实链路。
 
 **验收（REAL ENV VERIFIED）**：

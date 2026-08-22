@@ -178,3 +178,13 @@ Questions: Is the backdrop quieter while still making the material legible? Are 
 - Confirm the three-plane relationship: Atmospheric Backdrop → Glass Workspace/Context → opaque readable content → Raised Composer. Task rows/message bubbles/calendar cells must not become individually blurred。
 - No Dark expansion, no Neumorphism expansion, no IA/data/API/store/router/backend/schema/business logic changes。
 - **M6.5.1 GLASS = EXTERNAL_VISUAL_REVIEW_PASS**（historical direction gate）；**M6.5.2 GLASS = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW**；**GLASS FINAL = NOT YET DECLARED**；**DARK REVIEW = PENDING**；**NEUMORPHISM REVIEW = PENDING**；**M6 FINAL = NOT YET DECLARED**；**M7 = NOT_AUTHORIZED**。
+
+## M7.1 First-use Activation — External Review Request
+
+Review the implementation mapping in `docs/v2/M7_PRODUCT_CONTRACT.md`, the backend scenario tests in `v2/tests/integration/test_m71_first_use_activation.py`, and the UI evidence under `.ai-handoff/evidence/m71/`.
+
+Review scope is limited to M7-A01～A07: source activation and safe failure copy, official fixture through the real AI-first pipeline, uncertain no-deadline handling, provenance/trust visibility, canonical Agent tool call, and zero cross-source leakage. The fake reminder observer is contract feasibility evidence only.
+
+Do not review or approve production QQ reminder delivery, Agent memory/planning, schema/API redesign, full Step 0–16 five-minute completion, or M7.2/M7.3.
+
+**CURRENT GATE**：`M7.0 PRODUCT CONTRACT = PASS`；`M7.1 FIRST-USE ACTIVATION = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_REVIEW`；`M7.2 = NOT_AUTHORIZED`；`M7.3 = NOT_AUTHORIZED`。
