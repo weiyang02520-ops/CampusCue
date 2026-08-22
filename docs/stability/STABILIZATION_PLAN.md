@@ -1,8 +1,8 @@
 # CampusCue Post-M7 Stabilization Plan
 
-> Phase: POST-M7 P0 REAL-WORLD RELIABILITY AUDIT  
-> Current gate: `COMPLETE_AWAITING_EXTERNAL_REVIEW`  
-> Baseline: `143e85fb2511071d3fcf1e4d6040a3546cd70c2b`  
+> Phase: POST-M7 P0 REAL-WORLD RELIABILITY AUDIT
+> Current gate: `COMPLETE_AWAITING_EXTERNAL_REVIEW`
+> Baseline: `143e85fb2511071d3fcf1e4d6040a3546cd70c2b`
 > This is a test and evidence plan. It is not an implementation authorization.
 
 ## 1. Current decision

@@ -1,8 +1,8 @@
 # CampusCue Post-M7 Reliability Matrix
 
-> Audit: POST-M7 P0 REAL-WORLD RELIABILITY AUDIT  
-> Audit date: 2026-08-22  
-> Baseline: `143e85fb2511071d3fcf1e4d6040a3546cd70c2b` (`HEAD == origin/main`)  
+> Audit: POST-M7 P0 REAL-WORLD RELIABILITY AUDIT
+> Audit date: 2026-08-22
+> Baseline: `143e85fb2511071d3fcf1e4d6040a3546cd70c2b` (`HEAD == origin/main`)
 > Scope: evidence review and test planning only. No source, schema, API, or test changes were made.
 
 ## Gate

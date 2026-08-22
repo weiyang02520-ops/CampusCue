@@ -1,7 +1,7 @@
 # CampusCue Post-M7 Risk Register
 
-> Status: audit complete, awaiting External ChatGPT review  
-> Baseline: `143e85fb2511071d3fcf1e4d6040a3546cd70c2b`  
+> Status: audit complete, awaiting External ChatGPT review
+> Baseline: `143e85fb2511071d3fcf1e4d6040a3546cd70c2b`
 > This register records risks and proof gaps, not newly discovered source defects.
 
 ## Severity rules
