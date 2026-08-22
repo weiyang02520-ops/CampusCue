@@ -2,7 +2,7 @@
 
 > 当前状态摘要。详细内容见 canonical HANDOFF.md 与 PROJECT_STATE.md。
 
-- 阶段：**M6 FINAL = PASS（External final visual review complete）**
+- 阶段：**M7 ROADMAP DESIGN COMPLETE（AWAITING EXTERNAL REVIEW；IMPLEMENTATION NOT AUTHORIZED）**
 - **M4 FINAL = PASS**
 - **M5 FINAL = PASS**（External ChatGPT）
 - **M6 = CHANGES_REQUESTED（已按外部审核修复）**
@@ -19,7 +19,7 @@
 - **NEUMORPHISM MATERIAL = PASS**；**M6.5.4.1 THEME UX = PASS**
 - **GLASS FINAL = PASS**；**DARK FINAL = PASS**；**NEUMORPHISM FINAL = PASS**
 - **M6 FINAL = PASS**（CampusCue WebUI completed）
-- **M7 = NOT_AUTHORIZED**
+- **M7 ROADMAP = ROADMAP_DESIGN_COMPLETE_AWAITING_EXTERNAL_REVIEW**；**M7 IMPLEMENTATION = NOT_AUTHORIZED**
 - M5 REST/SSE：PASS（Tasks/Sources/Messages/Reminders/Providers/Agent/Settings/System/Backup/Restore/Import/Export/Auth/Health）
 - Schema：v3（settings + sources.deleted_at + indexes；migration atomic）
 - Full V2：**488 passed**（fresh `.venv-m511fresh` non-editable）；M5/M5.1/M5.1.1 focused **24 passed**；M5.1.1 new **1 passed**

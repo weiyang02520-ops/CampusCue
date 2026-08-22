@@ -30,7 +30,8 @@
 - NEUMORPHISM MATERIAL = PASS
 - GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS
 - M6 FINAL = PASS（CampusCue WebUI completed）
-- M7 = NOT_AUTHORIZED
+- M7 ROADMAP = ROADMAP_DESIGN_COMPLETE_AWAITING_EXTERNAL_REVIEW
+- M7 IMPLEMENTATION = NOT_AUTHORIZED
 
 ## completed
 
@@ -86,7 +87,7 @@
 
 ## next_gate
 
-[M6_FINAL] CampusCue WebUI completed。Supported visual styles: Glassmorphism、Dark UI、Neumorphism。Final visual review、theme UX、backend contract、responsive、accessibility 与 regression 均 PASS。M7 remains NOT_AUTHORIZED。
+[M7_ROADMAP] `docs/v2/M7_ROADMAP.md` 已完成产品范围、候选方向、M7.0-M7.3、Agent boundary、数据模型影响、技术债与验收标准设计。当前等待 External ChatGPT review；M7 implementation remains NOT_AUTHORIZED。
 
 ## architecture_decisions
 

@@ -47,7 +47,14 @@ Evidence: `.ai-handoff/visual/m653-stage2/dark/` includes 1440 Home/Tasks/Calend
 - M6.5.3 DARK STAGE 1 = PASS；M6.5.3 DARK = IMPLEMENTATION_COMPLETE_AWAITING_EXTERNAL_VISUAL_REVIEW
 - GLASS FINAL = PASS；DARK FINAL = PASS；NEUMORPHISM FINAL = PASS
 - M6 FINAL = PASS
-- M7 = NOT_AUTHORIZED
+- M7 ROADMAP = ROADMAP_DESIGN_COMPLETE_AWAITING_EXTERNAL_REVIEW；M7 IMPLEMENTATION = NOT_AUTHORIZED
+
+## M7 roadmap review
+
+- Roadmap: `docs/v2/M7_ROADMAP.md`
+- Review scope: first-use five-minute loop、Task Intelligence、bounded Agent boundary、Productization、data model impact、technical debt、risks、M7.0-M7.3 acceptance criteria。
+- Explicit deferrals: broad Campus Data Integration、Collaboration、durable Agent memory、generic autonomous Agent、M6 UI iteration。
+- This is a planning artifact only。Do not implement M7 until External ChatGPT approves the roadmap and issues a narrower implementation prompt。
 
 ## M6.2 scope
 
